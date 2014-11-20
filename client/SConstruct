@@ -1,0 +1,19 @@
+env = Environment()
+
+env.Append( CPPPATH = [ "/usr/local/include", "../amqpcpp-master/include", "include/", "/home/me/RabbitMQ/rabbitmq-c-master/librabbitmq" ] )
+env.Append( CCFLAGS = [ "-Wall", "-pedantic", "-g", "-O0", "-std=c++0x" ] )
+env.Append( LINKFLAGS = [ "-Wl,-rpath,../rabbitmq-c-master/" ] )
+env.Append( LIBPATH = [ "/usr/local/lib", ".", "../amqpcpp-master" ] )
+env.Append ( LIBS = [ "boost_thread", "RabbitClient", "amqpcpp", "rabbitmq" ] )
+
+sources = Split ("""
+    simpleClient.cpp
+    simpleConsumer.cpp 
+    connectionDetails.cpp 
+    rabbitProxy.cpp 
+    simplePublisher.cpp 
+    """)
+
+env.StaticLibrary( "RabbitClient", sources )
+
+env.Program( "RabbitTest", [ "tester.cpp"] )
