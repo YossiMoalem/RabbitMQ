@@ -16,7 +16,8 @@ struct connectionDetailsParam
 
    std::string m_userName;
    std::string m_password;
-   std::vector < std::pair< std::string, int> >m_address;
+   std::vector <  std::string > m_hosts;
+   std::vector <  int > m_ports;
 };
 
 class connectionDetails
@@ -26,15 +27,16 @@ class connectionDetails
                     const std::string& i_password,
                     const std::string& i_host,
                     int port) ;
-   const std::pair<std::string, int>&  getFirstHost();
-   const std::pair<std::string, int>&  getNextHost();
+   const std::pair<std::string, int>  getFirstHost();
+   const std::pair<std::string, int>  getNextHost();
    bool isLastHost () const;
 
    static std::string createConnectionString( const connectionDetails& i_connectionDetails);
 
 private:
    connectionDetailsParam m_connectionParams;
-   std::vector< std::pair< std::string, int> >::iterator m_currentAddress;
+   std::vector< std::string>::iterator m_currentHost;
+   std::vector< int >::iterator  m_currentPort;
 
 };
 
