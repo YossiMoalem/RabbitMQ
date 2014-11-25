@@ -1,6 +1,5 @@
 #include "simpleClient.h"
 #include <boost/ref.hpp>
-#include <boost/thread/thread.hpp>
 
 #include <AMQPcpp.h>
 
@@ -21,11 +20,11 @@ simpleClient::simpleClient(const connectionDetails& i_connectionDetails,
 
 int simpleClient::start()
 {
-    boost::thread_group threads;
-    threads.create_thread( boost::ref(m_publisher) );
-    threads.create_thread( boost::ref(m_consumer) );
-    threads.join_all();
-
+    //TODO: Think: should creating the threads be the client responsibility, or
+    //should the workers export "start" method that will spawn the threadsm, and 
+    //client should only call it??
+    m_threads.create_thread( boost::ref(m_publisher) );
+    m_threads.create_thread( boost::ref(m_consumer) );
     return 0;
 }
 
@@ -33,6 +32,7 @@ int simpleClient::stop(bool immediate)
 {
     m_publisher.stop(immediate);
     m_consumer.stop(immediate);
+    m_threads.join_all();
     return 0;
 }
 

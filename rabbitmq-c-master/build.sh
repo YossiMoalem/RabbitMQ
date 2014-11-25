@@ -5,5 +5,5 @@ cmake --build .
 cd librabbitmq
 sudo make install
 pwd
-ln -s ./build/librabbitmq/librabbitmq.so ../../
-ln -s ./build/librabbitmq/librabbitmq.so.1 ../../
+ln -sf ./build/librabbitmq/librabbitmq.so ../../
+ln -sf ./build/librabbitmq/librabbitmq.so.1 ../../

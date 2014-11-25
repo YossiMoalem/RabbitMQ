@@ -2,6 +2,7 @@
 #define SIMPLE_CLIENT_H
 
 #include <boost/noncopyable.hpp>
+#include <boost/thread/thread.hpp>
 #include <string>
 
 #include "connectionDetails.h"
@@ -45,6 +46,7 @@ class simpleClient : public boost::noncopyable
    MessageQueue m_messageQueueReceived;
    simplePublisher m_publisher;
    simpleConsumer m_consumer;
+   boost::thread_group m_threads;
 };
 
 
