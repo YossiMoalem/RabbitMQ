@@ -1,89 +1,40 @@
 #include "simpleClient.h"
-#include <boost/ref.hpp>
-
-#include <AMQPcpp.h>
-
-#define SELF_ROUTING(KEY) "ALL:"+KEY
-#define DESTINATION_ROUTING(KEY)  KEY+":ALL"
+#include "clientImpl.h"
 
 simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
-        const std::string& i_exchangeName, 
-        const std::string& i_consumerID,
-        RabbitMQNotifiableIntf* i_handler) :
-    m_connectionDetails(i_connectionDetails),
-    m_exchangeName(i_exchangeName),
-    m_consumerID(i_consumerID),
-    m_onMessageCB(nullptr),
-    m_handler(i_handler),
-    m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
-    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+    const std::string& i_exchangeName, 
+    const std::string& i_consumerID,
+    RabbitMQNotifiableIntf* i_handler) :
+  p_impl( new RabbitClientImpl (i_connectionDetails,
+        i_exchangeName,
+        i_consumerID,
+        i_handler))
 {}
 
 simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
-        const std::string& i_exchangeName, 
-        const std::string& i_consumerID,
-        int (*i_onMessageCB)(AMQPMessage*) ) :
-    m_connectionDetails(i_connectionDetails),
-    m_exchangeName(i_exchangeName),
-    m_consumerID(i_consumerID),
-    m_onMessageCB(i_onMessageCB),
-    m_handler(nullptr),
-    m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
-    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+    const std::string& i_exchangeName, 
+    const std::string& i_consumerID,
+    int (*i_onMessageCB)(AMQPMessage*) ):
+  p_impl( new RabbitClientImpl (i_connectionDetails,
+        i_exchangeName,
+        i_consumerID,
+        i_onMessageCB ) )
 {}
 
-int simpleClient::start()
-{
-    //TODO: Think: should creating the threads be the client responsibility, or
-    //should the workers export "start" method that will spawn the threadsm, and 
-    //client should only call it??
-    m_threads.create_thread( boost::ref(m_publisher) );
-    m_threads.create_thread( boost::ref(m_consumer) );
-    return 0;
-}
+int simpleClient::start()                  { return p_impl->start(); }
+int simpleClient::stop(bool immediate)     { return p_impl->stop(immediate);}
 
-int simpleClient::stop(bool immediate)
-{
-    m_publisher.stop(immediate);
-    m_consumer.stop(immediate);
-    m_threads.join_all();
-    return 0;
-}
-
-int simpleClient::sendUnicast(const std::string& i_message, const std::string& i_destination) 
-{
-    return send(i_message, SELF_ROUTING( i_destination ) );
-}
-
+int simpleClient::sendUnicast(const std::string& i_message, const std::string& i_destination)
+{ return p_impl->sendUnicast (i_message,i_destination); }
 int simpleClient::sendMulticast(const std::string& i_message, const std::string& i_destination)
-{
-    return send(i_message, DESTINATION_ROUTING( i_destination ) );
-}
-
-int simpleClient::send(const std::string& i_message, 
-                    const std::string& i_destination)
-{
-    RABBIT_DEBUG ("Client:: Going to push msg: "<< i_message << " to : " << i_destination );
-    m_messageQueueToSend.add(Protocol(i_message, i_destination ));
-    return 0;
-}
+{ return p_impl->sendMulticast(i_message,i_destination); }
 
 int simpleClient::bindToSelf(const std::string& i_key)
-{ 
-  return m_consumer.bind( SELF_ROUTING( i_key ) );
-}
-
+{ return p_impl->bindToSelf(i_key); }
 int simpleClient::bindToDestination(const std::string& i_key)
-{ 
-  return m_consumer.bind( DESTINATION_ROUTING( i_key ) );
-}
-
+{ return p_impl->bindToDestination(i_key); }
 int simpleClient::unbindFromSelf(const std::string& i_key)
-{ 
-  return m_consumer.unbind( SELF_ROUTING( i_key ) );
-}
-
+{ return p_impl->unbindFromSelf(i_key); }
 int simpleClient::unbindFromDestination(const std::string& i_key)
-{ 
-  return m_consumer.unbind( DESTINATION_ROUTING( i_key ) );
-}
+{ return p_impl->unbindFromDestination(i_key); }
+

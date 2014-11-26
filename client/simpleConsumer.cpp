@@ -1,4 +1,6 @@
 #include "simpleConsumer.h"
+#include "clientImpl.h"
+#include "common.h"
 #include "simpleClient.h"
 
 #include <AMQPcpp.h>
@@ -11,7 +13,7 @@ simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails,
         const std::string& i_consumerID,
         int (*i_onMessageCB)(AMQPMessage*),
         RabbitMQNotifiableIntf* i_handler,
-        simpleClient* i_pOwner ):
+        RabbitClientImpl* i_pOwner ):
     m_onMessageCB(i_onMessageCB),
     m_handler(i_handler),
     m_rabbitProxy(i_connectionDetails),

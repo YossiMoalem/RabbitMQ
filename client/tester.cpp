@@ -1,4 +1,5 @@
 #include "simpleClient.h"
+#include <boost/thread.hpp>
 
 //TODO: find a way to remove this
 #include <AMQPcpp.h>
@@ -39,10 +40,21 @@ class BindTester
        RABBIT_DEBUG ( "Tester:: Tester started ");
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Send message to relevant/nonrelevane queue:");
-       RABBIT_DEBUG ("Tester:: Going to send lalalila to the relevant queue. Should be recieved");
-       client.sendUnicast(std::string("lalalila"), std::string("USR1"));
-       RABBIT_DEBUG ("Tester:: Going to send kukuruku to NON relevant queue. Should NOT be recieved");
-       client.sendUnicast(std::string("kukuriku "), std::string("kuku"));
+       RABBIT_DEBUG ("Tester:: Going to send 6 lalalila messages to the relevant queue. Should be recieved");
+       sleep (timeToFlushAllMessages);
+       client.sendUnicast(std::string("lalalila1"), std::string("USR1"));
+       client.sendUnicast(std::string("lalalila2"), std::string("USR1"));
+       client.sendUnicast(std::string("lalalila3"), std::string("USR1"));
+       client.sendUnicast(std::string("lalalila4"), std::string("USR1"));
+       client.sendUnicast(std::string("lalalila5"), std::string("USR1"));
+       client.sendUnicast(std::string("lalalila6"), std::string("USR1"));
+       RABBIT_DEBUG ("Tester:: Going to send 6 kukuruku messages to NON relevant queue. Should NOT be recieved");
+       client.sendUnicast(std::string("kukuriku 1"), std::string("kuku"));
+       client.sendUnicast(std::string("kukuriku 2"), std::string("kuku"));
+       client.sendUnicast(std::string("kukuriku 3"), std::string("kuku"));
+       client.sendUnicast(std::string("kukuriku 4"), std::string("kuku"));
+       client.sendUnicast(std::string("kukuriku 5"), std::string("kuku"));
+       client.sendUnicast(std::string("kukuriku 6"), std::string("kuku"));
        sleep (timeToFlushAllMessages);
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Bind to the Non relevant queue ");
@@ -191,8 +203,8 @@ class ContinousSendTester
 \*****************************************************************************/
 int main ()
 {
-  //BindTester tester;
-  MeasureTester tester;
+  BindTester tester;
+  //MeasureTester tester;
   //RepeatedBindTester tester;
   //ContinousSendTester tester;
   boost::thread testerThread(tester);

@@ -35,7 +35,6 @@ int RabbitProxy::connect()
             //in normal impl, I'd use the rev ral, and use it to connect.
             (void)m_connectionDetails.getNextHost();
         }
-      MessageQueue m_messageQueueReceived;
     }
 }
 

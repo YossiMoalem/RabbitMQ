@@ -9,7 +9,7 @@
 class AMQPMessage;
 class AMQPQueue;
 class AMQPExchange;
-class simpleClient;
+class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
 
 class simpleConsumer : boost::noncopyable
@@ -20,7 +20,7 @@ class simpleConsumer : boost::noncopyable
        const std::string& i_consumerID,
        int (*i_onMessageCB)(AMQPMessage*),
        RabbitMQNotifiableIntf* i_handler,
-       simpleClient* i_pOwner );
+       RabbitClientImpl* i_pOwner );
 
    virtual void operator ()();
    virtual void stop(bool immediate);
@@ -48,7 +48,7 @@ class simpleConsumer : boost::noncopyable
    AMQPExchange*                  m_exchange ;
    const std::string              m_exchangeName;
    std::unordered_set<std::string> m_subscriptionsList;
-   simpleClient*                  m_pOwner;
+   RabbitClientImpl*              m_pOwner;
 
 };
 

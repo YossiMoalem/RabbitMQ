@@ -1,7 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "SynchronizedQueue.h"
 #include <iostream>
 #include <sstream>
 
@@ -33,6 +32,4 @@ class clientMessage
     std::string m_destination;
 };
 typedef clientMessage Protocol;
-
-typedef SynchronizedQueue<Protocol> MessageQueue;
 #endif

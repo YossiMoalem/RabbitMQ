@@ -6,6 +6,7 @@
 #include "common.h"
 #include "connectionDetails.h"
 #include "rabbitProxy.h"
+#include "BlockingQueue.h"
 
 class AMQPExchange;
 
@@ -15,7 +16,7 @@ class simplePublisher : boost::noncopyable
    simplePublisher( const connectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
        const std::string& i_consumerID,
-       MessageQueue& m_messageQueueToSend
+       BlockingQueue<Protocol>& m_messageQueueToSend
        );
 
    virtual void operator ()();
@@ -24,7 +25,7 @@ class simplePublisher : boost::noncopyable
  private:
    RabbitProxy m_rabbitProxy;
    const std::string m_consumerID;
-   MessageQueue& m_messageQueueToSend;
+   BlockingQueue<Protocol>& m_messageQueueToSend;
    StopStatus m_stopStatus;
    AMQPExchange* m_exchange ;
    const std::string m_exchangeName;
