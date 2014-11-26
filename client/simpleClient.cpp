@@ -9,13 +9,27 @@
 simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
+        RabbitMQNotifiableIntf* i_handler) :
+    m_connectionDetails(i_connectionDetails),
+    m_exchangeName(i_exchangeName),
+    m_consumerID(i_consumerID),
+    m_onMessageCB(nullptr),
+    m_handler(i_handler),
+    m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
+    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+{}
+
+simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
+        const std::string& i_exchangeName, 
+        const std::string& i_consumerID,
         int (*i_onMessageCB)(AMQPMessage*) ) :
     m_connectionDetails(i_connectionDetails),
     m_exchangeName(i_exchangeName),
     m_consumerID(i_consumerID),
     m_onMessageCB(i_onMessageCB),
+    m_handler(nullptr),
     m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
-    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, this)
+    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
 {}
 
 int simpleClient::start()

@@ -14,9 +14,20 @@ class AMQPExchange;
 class AMQP;
 class AMQPQueue;
 
+class RabbitMQNotifiableIntf
+{
+ public:
+  virtual int onMessageRecieve (AMQPMessage* i_mas) = 0;
+};
+
 class simpleClient : public boost::noncopyable
 {
  public:
+   simpleClient(const connectionDetails& i_connectionDetails, 
+           const std::string& i_exchangeName, 
+           const std::string& i_consumerID,
+           RabbitMQNotifiableIntf* i_handler) ; 
+
    simpleClient(const connectionDetails& i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
@@ -42,6 +53,7 @@ class simpleClient : public boost::noncopyable
    const std::string m_exchangeName;
    const std::string m_consumerID;
    int (*m_onMessageCB)(AMQPMessage*) ;
+   RabbitMQNotifiableIntf* m_handler;
    MessageQueue m_messageQueueToSend;
    MessageQueue m_messageQueueReceived;
    simplePublisher m_publisher;

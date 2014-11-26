@@ -69,28 +69,21 @@ class BindTester
 /*****************************************************************************\
  *  Measure Tester 
 \*****************************************************************************/
-static timeval firstRecieveTime = {0, 0};
-static timeval lastRecieveTime = {0, 0};
-static timeval firstSendTime = {0, 0};
-static timeval lastSendTime = {0, 0};
-unsigned int numOfRecieved = 0;
-unsigned int numOfMessagesToSend = 1000000;
-
-class MeasureTester
+class MeasureTester : public RabbitMQNotifiableIntf
 {
  public:
+   MeasureTester ():
+       firstRecieveTime ( ),
+       lastRecieveTime ( ),
+       firstSendTime ( ),
+       lastSendTime ( ),
+       numOfRecieved ( 0 ),
+       numOfMessagesToSend ( 1000000 )
+   { }
    int operator ()()
    {
-
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", [] ( AMQPMessage * message )->int {
-               if (firstRecieveTime.tv_sec == 0)
-                    gettimeofday(&firstRecieveTime, nullptr); 
-                else
-                    gettimeofday(&lastRecieveTime, nullptr);
-                ++numOfRecieved;
-                return 0;
-               } );
+       simpleClient client (cnd, "EXC1", "USR1", this);
        client.start();
        sleep(timeToConnect);
        RABBIT_DEBUG("Tester:: Tester Started");
@@ -108,6 +101,24 @@ class MeasureTester
 
        return 0;
    }
+
+   int onMessageRecieve (AMQPMessage* i_message)
+   {
+       if (firstRecieveTime.tv_sec == 0)
+           gettimeofday(&firstRecieveTime, nullptr); 
+       else
+           gettimeofday(&lastRecieveTime, nullptr);
+       ++numOfRecieved;
+       return 0;
+
+   }
+ private:
+   timeval firstRecieveTime;
+   timeval lastRecieveTime;
+   timeval firstSendTime;
+   timeval lastSendTime;
+   unsigned int numOfRecieved;
+   unsigned int numOfMessagesToSend;
 };
 
 /*****************************************************************************\
@@ -181,11 +192,10 @@ class ContinousSendTester
 int main ()
 {
   //BindTester tester;
-  //MeasureTester tester;
+  MeasureTester tester;
   //RepeatedBindTester tester;
-  ContinousSendTester tester;
+  //ContinousSendTester tester;
   boost::thread testerThread(tester);
-
+  RABBIT_DEBUG ("Tester:: Test finished");
   testerThread.join();
-
 }

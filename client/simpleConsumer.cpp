@@ -10,8 +10,10 @@ simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails,
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         int (*i_onMessageCB)(AMQPMessage*),
+        RabbitMQNotifiableIntf* i_handler,
         simpleClient* i_pOwner ):
     m_onMessageCB(i_onMessageCB),
+    m_handler(i_handler),
     m_rabbitProxy(i_connectionDetails),
     m_consumerID(i_consumerID),
     m_routingKey(i_consumerID),
@@ -74,7 +76,12 @@ int simpleConsumer::onMessageRecieve(AMQPMessage* i_message)
     i_message->getQueue()->unBind( m_exchangeName, message_text.substr(strlen( s_unbindPrefix ) ) );
     return 0;
   }
-  return (*m_onMessageCB)(i_message);
+  int status = 0;
+  if ( m_onMessageCB )
+      status = (*m_onMessageCB)(i_message);
+  if (m_handler)
+    status = m_handler->onMessageRecieve(i_message);
+  return status;
 }
 
 int simpleConsumer::rebind()
