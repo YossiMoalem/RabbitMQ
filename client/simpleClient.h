@@ -17,7 +17,7 @@ class AMQPQueue;
 class RabbitMQNotifiableIntf
 {
  public:
-  virtual int onMessageRecieve (AMQPMessage* i_mas) = 0;
+  virtual int onMessageReceive (AMQPMessage* i_mas) = 0;
 };
 
 class simpleClient : public boost::noncopyable

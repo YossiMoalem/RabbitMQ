@@ -24,7 +24,7 @@ class BindTester
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;
                message_text.assign(msg, messageLength);
-               std::cout <<"Free CB:: Recieved: "<<message_text << std::endl;
+               std::cout <<"Free CB:: Received: "<<message_text << std::endl;
                return 0;
                } );
        client.start();
@@ -39,16 +39,16 @@ class BindTester
        RABBIT_DEBUG ( "Tester:: Tester started ");
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Send message to relevant/nonrelevane queue:");
-       RABBIT_DEBUG ("Tester:: Going to send lalalila to the relevant queue. Shold be recieved");
+       RABBIT_DEBUG ("Tester:: Going to send lalalila to the relevant queue. Should be recieved");
        client.sendUnicast(std::string("lalalila"), std::string("USR1"));
-       RABBIT_DEBUG ("Tester:: Going to send kukuruku to NON relevant queue. Shold NOT be recieved");
+       RABBIT_DEBUG ("Tester:: Going to send kukuruku to NON relevant queue. Should NOT be recieved");
        client.sendUnicast(std::string("kukuriku "), std::string("kuku"));
        sleep (timeToFlushAllMessages);
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Bind to the Non relevant queue ");
        RABBIT_DEBUG ("Tester:: Going to send bind command");
        client.bindToDestination ("kuku");
-       RABBIT_DEBUG ("Tester:: Going to send mamamia to previous NON relevant queue, after binding to it. Shold recieved");
+       RABBIT_DEBUG ("Tester:: Going to send mamamia to previous NON relevant queue, after binding to it. Should recieved");
        sleep (timeToBindUnbind);
        client.sendMulticast(std::string("mamamia"), std::string("kuku"));
        sleep (timeToFlushAllMessages);
@@ -56,7 +56,7 @@ class BindTester
        RABBIT_DEBUG ("Tester:: + unbind from the Non relevant queue ");
        RABBIT_DEBUG ("Tester:: Going to send Unbind command");
        client.unbindFromDestination ("kuku");
-       RABBIT_DEBUG ("Tester:: Going to send kalamari to previously binded queue, after unbinding it. Shold NOT recieved");
+       RABBIT_DEBUG ("Tester:: Going to send kalamari to previously binded queue, after unbinding it. Should NOT recieved");
        sleep (timeToBindUnbind);
        client.sendMulticast(std::string("Kalamari"), std::string("kuku"));
        sleep (timeToFlushAllMessages);
@@ -73,11 +73,11 @@ class MeasureTester : public RabbitMQNotifiableIntf
 {
  public:
    MeasureTester ():
-       firstRecieveTime ( ),
-       lastRecieveTime ( ),
+       firstReceiveTime ( ),
+       lastReceiveTime ( ),
        firstSendTime ( ),
        lastSendTime ( ),
-       numOfRecieved ( 0 ),
+       numOfReceived ( 0 ),
        numOfMessagesToSend ( 1000000 )
    { }
    int operator ()()
@@ -94,30 +94,30 @@ class MeasureTester : public RabbitMQNotifiableIntf
        gettimeofday(&lastSendTime, nullptr);
        sleep(timeToFlushAllMessages);
        RABBIT_DEBUG("-----------------------------------------");
-       RABBIT_DEBUG("Messages Recieved  : " << numOfRecieved);
+       RABBIT_DEBUG("Messages Received  : " << numOfReceived);
        RABBIT_DEBUG("Sending Time                           (ms) : " << SUB_TV(lastSendTime, firstSendTime )) ;
-       RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastRecieveTime, firstRecieveTime ) );
-       RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastRecieveTime, firstSendTime)) ;
+       RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastReceiveTime, firstReceiveTime ) );
+       RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastReceiveTime, firstSendTime)) ;
 
        return 0;
    }
 
-   int onMessageRecieve (AMQPMessage* i_message)
+   int onMessageReceive (AMQPMessage* i_message)
    {
-       if (firstRecieveTime.tv_sec == 0)
-           gettimeofday(&firstRecieveTime, nullptr); 
+       if (firstReceiveTime.tv_sec == 0)
+           gettimeofday(&firstReceiveTime, nullptr); 
        else
-           gettimeofday(&lastRecieveTime, nullptr);
-       ++numOfRecieved;
+           gettimeofday(&lastReceiveTime, nullptr);
+       ++numOfReceived;
        return 0;
 
    }
  private:
-   timeval firstRecieveTime;
-   timeval lastRecieveTime;
+   timeval firstReceiveTime;
+   timeval lastReceiveTime;
    timeval firstSendTime;
    timeval lastSendTime;
-   unsigned int numOfRecieved;
+   unsigned int numOfReceived;
    unsigned int numOfMessagesToSend;
 };
 
@@ -136,7 +136,7 @@ class RepeatedBindTester
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;
                message_text.assign(msg, messageLength);
-               std::cout <<"Free CB:: Recieved: "<<message_text << std::endl;
+               std::cout <<"Free CB:: Received: "<<message_text << std::endl;
                return 0;
                } );
        client.start();
@@ -161,7 +161,7 @@ class ContinousSendTester
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;
                message_text.assign(msg, messageLength);
-               std::cout <<"Free CB:: Recieved: "<<message_text << std::endl;
+               std::cout <<"Free CB:: Received: "<<message_text << std::endl;
                return 0;
                } );
        client.start();

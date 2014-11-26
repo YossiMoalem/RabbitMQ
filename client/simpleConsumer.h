@@ -33,7 +33,7 @@ class simpleConsumer : boost::noncopyable
    static const char * const s_unbindPrefix;
 
  private:
-   int onMessageRecieve(AMQPMessage* i_message);
+   int onMessageReceive(AMQPMessage* i_message);
    int rebind();
    int doBind(const std::string& i_key);
 

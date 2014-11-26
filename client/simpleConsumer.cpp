@@ -41,7 +41,7 @@ void simpleConsumer::operator()()
       //TODO: really???
       m_incomingMessages->Bind( m_exchangeName, std::string("ALL:") + m_routingKey);
 
-      m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageRecieve (i_message); } );
+      m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageReceive (i_message); } );
       //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
       rebind();
       m_incomingMessages->Consume(AMQP_NOACK);
@@ -54,7 +54,7 @@ void simpleConsumer::stop(bool immediate)
     //TODO: and??
 }
 
-int simpleConsumer::onMessageRecieve(AMQPMessage* i_message)
+int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
 {
     uint32_t messageLength = 0;
     const char * msg = i_message->getMessage(&messageLength);
@@ -80,7 +80,7 @@ int simpleConsumer::onMessageRecieve(AMQPMessage* i_message)
   if ( m_onMessageCB )
       status = (*m_onMessageCB)(i_message);
   if (m_handler)
-    status = m_handler->onMessageRecieve(i_message);
+    status = m_handler->onMessageReceive(i_message);
   return status;
 }
 
