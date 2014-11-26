@@ -11,6 +11,7 @@ int RabbitProxy::connect()
         if( m_connectionHolder != NULL )
         {
             delete m_connectionHolder;
+            m_connectionHolder = nullptr;
         }
         //TODO: this is just to reset the host pointer.
         //in normal impl, I'd use the rev ral, and use it to connect.

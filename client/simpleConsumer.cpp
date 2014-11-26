@@ -41,7 +41,7 @@ void simpleConsumer::operator()()
 
       m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageRecieve (i_message); } );
       //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
-      //threadsForRebind.create_thread(rebind_when_connecting);
+      rebind();
       m_incomingMessages->Consume(AMQP_NOACK);
     }
 } 
@@ -49,6 +49,7 @@ void simpleConsumer::operator()()
 void simpleConsumer::stop(bool immediate)
 {
     m_stopStatus = (immediate) ? SS_StopImmediate : SS_StopGracefull;
+    //TODO: and??
 }
 
 int simpleConsumer::onMessageRecieve(AMQPMessage* i_message)
@@ -76,14 +77,30 @@ int simpleConsumer::onMessageRecieve(AMQPMessage* i_message)
   return (*m_onMessageCB)(i_message);
 }
 
+int simpleConsumer::rebind()
+{
+    for( auto key : m_subscriptionsList )
+    {
+        doBind(key);
+    }
+    return 0;
+}
 int simpleConsumer::bind(const std::string& i_key)
 { 
-  std::string bindMessage ( simpleConsumer::s_bindPrefix + i_key );
-  return m_pOwner->sendUnicast( bindMessage, m_consumerID);
+  m_subscriptionsList.insert(i_key);
+  return doBind(i_key);
 }
 
 int simpleConsumer::unbind(const std::string& i_key)
 { 
   std::string unbindMessage ( simpleConsumer::s_unbindPrefix + i_key );
+  m_subscriptionsList.erase(i_key);
   return m_pOwner->sendUnicast( unbindMessage, m_consumerID);
+}
+
+
+int simpleConsumer::doBind(const std::string& i_key)
+{
+  std::string bindMessage ( simpleConsumer::s_bindPrefix + i_key );
+  return m_pOwner->sendUnicast( bindMessage, m_consumerID);
 }

@@ -32,6 +32,8 @@ class simpleConsumer : boost::noncopyable
 
  private:
    int onMessageRecieve(AMQPMessage* i_message);
+   int rebind();
+   int doBind(const std::string& i_key);
 
  private:
    int (*m_onMessageCB)(AMQPMessage*);
