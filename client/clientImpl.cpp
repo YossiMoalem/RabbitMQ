@@ -9,27 +9,29 @@
 RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
+        ExchangeType       i_exchangeType,
         RabbitMQNotifiableIntf* i_handler) :
     m_connectionDetails(i_connectionDetails),
     m_exchangeName(i_exchangeName),
     m_consumerID(i_consumerID),
     m_onMessageCB(nullptr),
     m_handler(i_handler),
-    m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
-    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+    m_publisher(m_connectionDetails, m_exchangeName, i_exchangeType, m_consumerID, m_messageQueueToSend),
+    m_consumer(m_connectionDetails, m_exchangeName, i_exchangeType, m_consumerID, m_onMessageCB, m_handler, this)
 {}
 
 RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
+        ExchangeType       i_exchangeType,
         int (*i_onMessageCB)(AMQPMessage*) ) :
     m_connectionDetails(i_connectionDetails),
     m_exchangeName(i_exchangeName),
     m_consumerID(i_consumerID),
     m_onMessageCB(i_onMessageCB),
     m_handler(nullptr),
-    m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
-    m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+    m_publisher(m_connectionDetails, m_exchangeName, i_exchangeType, m_consumerID, m_messageQueueToSend),
+    m_consumer(m_connectionDetails, m_exchangeName, i_exchangeType, m_consumerID, m_onMessageCB, m_handler, this)
 {}
 
 int RabbitClientImpl::start()

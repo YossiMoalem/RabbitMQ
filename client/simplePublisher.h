@@ -9,12 +9,14 @@
 #include "BlockingQueue.h"
 
 class AMQPExchange;
+enum class ExchangeType;
 
 class simplePublisher : boost::noncopyable
 {
  public:
    simplePublisher( const connectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
+       ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
        BlockingQueue<Protocol>& m_messageQueueToSend
        );
@@ -29,6 +31,7 @@ class simplePublisher : boost::noncopyable
    StopStatus m_stopStatus;
    AMQPExchange* m_exchange ;
    const std::string m_exchangeName;
+   ExchangeType                    m_exchageType;
 };
 
 #endif

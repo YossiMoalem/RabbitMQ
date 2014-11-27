@@ -10,6 +10,7 @@ const char * const simpleConsumer::s_unbindPrefix = "UNBIND::";
 
 simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
+        ExchangeType       i_exchangeType,
         const std::string& i_consumerID,
         int (*i_onMessageCB)(AMQPMessage*),
         RabbitMQNotifiableIntf* i_handler,
@@ -19,9 +20,10 @@ simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails,
     m_rabbitProxy(i_connectionDetails),
     m_consumerID(i_consumerID),
     m_routingKey(i_consumerID),
-    m_stopStatus(SS_Continue),
+    m_stopStatus(StopStatus::Continue),
     m_exchange(NULL),
     m_exchangeName(i_exchangeName),
+    m_exchageType(i_exchangeType),
     m_pOwner(i_pOwner)
 {}
     
@@ -32,11 +34,7 @@ void simpleConsumer::operator()()
     {
       m_rabbitProxy.init();
     m_exchange = m_rabbitProxy.m_connectionHolder->createExchange(m_exchangeName);
-    //TODO: yet, another crap allert. 
-    //This is just to make Adam (adam@liveu.tv) happy.
-    //Once I change the type to be enum, 
-    //use it here. Cannot be bothrerd with crap of stings that will be deleted soon anyway
-    m_exchange->Declare(m_exchangeName, "direct");
+    m_exchange->Declare(m_exchangeName, ExchangeTypeStr[ (int)m_exchageType ] );
 
       m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
       m_incomingMessages->Declare(m_consumerID); 
@@ -52,7 +50,7 @@ void simpleConsumer::operator()()
 
 void simpleConsumer::stop(bool immediate)
 {
-    m_stopStatus = (immediate) ? SS_StopImmediate : SS_StopGracefull;
+    m_stopStatus = (immediate) ? StopStatus::StopImmediate : StopStatus::StopGracefull;
     //TODO: and??
 }
 

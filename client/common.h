@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+#include "simpleClient.h"
 
 #define RABBIT_DEBUG(MSG) do{\
     std::stringstream ss;\
@@ -10,11 +11,11 @@
     std::cerr << ss.str();\
 }while(0);
 
-enum StopStatus
+enum class StopStatus
 {
-    SS_Continue = 0,
-    SS_StopGracefull = 1,
-    SS_StopImmediate = 2
+   Continue = 0,
+   StopGracefull = 1,
+   StopImmediate = 2
 };
 class clientMessage
 {
@@ -32,4 +33,6 @@ class clientMessage
     std::string m_destination;
 };
 typedef clientMessage Protocol;
+
+static const char* const ExchangeTypeStr[ (int)ExchangeType::Last ] = {"direct", "topic", "fanout"};
 #endif

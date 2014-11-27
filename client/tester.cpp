@@ -1,5 +1,6 @@
 #include "simpleClient.h"
 #include <boost/thread.hpp>
+#include "common.h"
 
 //TODO: find a way to remove this
 #include <AMQPcpp.h>
@@ -20,7 +21,7 @@ class BindTester
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", [] ( AMQPMessage * message )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( AMQPMessage * message )->int {
                uint32_t messageLength = 0;
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;
@@ -95,7 +96,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", this);
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, this);
        client.start();
        sleep(timeToConnect);
        RABBIT_DEBUG("Tester:: Tester Started");
@@ -143,7 +144,7 @@ class RepeatedBindTester
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", [] ( AMQPMessage * message )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( AMQPMessage * message )->int {
                uint32_t messageLength = 0;
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;
@@ -168,7 +169,7 @@ class ContinousSendTester
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", [] ( AMQPMessage * message )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( AMQPMessage * message )->int {
                uint32_t messageLength = 0;
                const char * msg = message->getMessage(&messageLength);
                std::string message_text;

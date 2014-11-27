@@ -17,17 +17,27 @@ class RabbitMQNotifiableIntf
   virtual int onMessageReceive (AMQPMessage* i_mas) = 0;
 };
 
+enum class ExchangeType
+{
+    Direct,
+    Topic,
+    Fanout,
+    Last
+};
+
 class simpleClient : public boost::noncopyable
 {
  public:
    simpleClient(const connectionDetails& i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
+           ExchangeType       i_exchangeType,
            RabbitMQNotifiableIntf* i_handler);
 
    simpleClient(const connectionDetails& i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
+           ExchangeType       i_exchangeType,
            int (*i_onMessageCB)(AMQPMessage*) );
 
    int start();

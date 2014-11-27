@@ -4,19 +4,21 @@
 #include <unordered_set>
 
 #include "rabbitProxy.h"
-#include "common.h"
 
 class AMQPMessage;
 class AMQPQueue;
 class AMQPExchange;
 class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
+enum class ExchangeType;
+enum class StopStatus;
 
 class simpleConsumer : boost::noncopyable
 {
  public:
    simpleConsumer( const connectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
+       ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
        int (*i_onMessageCB)(AMQPMessage*),
        RabbitMQNotifiableIntf* i_handler,
@@ -47,9 +49,9 @@ class simpleConsumer : boost::noncopyable
    StopStatus                     m_stopStatus;
    AMQPExchange*                  m_exchange ;
    const std::string              m_exchangeName;
+  ExchangeType                    m_exchageType;
    std::unordered_set<std::string> m_subscriptionsList;
    RabbitClientImpl*              m_pOwner;
-
 };
 
 #endif
