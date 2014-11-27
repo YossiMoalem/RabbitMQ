@@ -43,8 +43,8 @@ class simpleClient : public boost::noncopyable
    int start();
    int stop(bool immediate);
 
-   int sendUnicast      (const std::string& i_message, const std::string& i_destination);
-   int sendMulticast    (const std::string& i_message, const std::string& i_destination);
+   int sendUnicast      (const std::string& i_message, const std::string& i_destination, const std::string& i_senderID);
+   int sendMulticast    (const std::string& i_message, const std::string& i_destination, const std::string& i_senderID);
 
    int bindToSelf           (const std::string& i_key);
    int bindToDestination    (const std::string& i_key);

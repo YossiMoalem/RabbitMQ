@@ -13,6 +13,7 @@ sources = Split ("""
     rabbitProxy.cpp 
     simplePublisher.cpp 
     clientImpl.cpp
+    RabbitMessage.cpp
     """)
 
 env.StaticLibrary( "RabbitClient", sources )

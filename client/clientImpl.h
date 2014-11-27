@@ -32,17 +32,14 @@ class RabbitClientImpl : public boost::noncopyable
    int start();
    int stop(bool immediate);
 
-   int sendUnicast(const std::string& i_message, const std::string& i_destination);
-   int sendMulticast(const std::string& i_message, const std::string& i_destination);
+   int sendMessage(const std::string& i_message, 
+       const std::string& i_destination, 
+       const std::string& i_senderID, 
+       DeliveryType i_deliveryType);
 
-   int bindToSelf(const std::string& i_key);
-   int bindToDestination(const std::string& i_key);
-   int unbindFromSelf(const std::string& i_key);
-   int unbindFromDestination(const std::string& i_key);
-
- private:
-   int send(const std::string& i_message, 
-           const std::string& i_destination) ;
+   int bind(const std::string& i_key, DeliveryType i_deliveryType);
+   int unbind(const std::string& i_key, DeliveryType i_deliveryType);
+   int sendRawMessage (RabbitMessageBase* i_message);
 
  private:
    const connectionDetails m_connectionDetails;
@@ -50,7 +47,7 @@ class RabbitClientImpl : public boost::noncopyable
    const std::string m_consumerID;
    int (*m_onMessageCB)(AMQPMessage*) ;
    RabbitMQNotifiableIntf* m_handler;
-   BlockingQueue<Protocol> m_messageQueueToSend;
+   BlockingQueue<RabbitMessageBase*> m_messageQueueToSend;
    simplePublisher m_publisher;
    simpleConsumer m_consumer;
    boost::thread_group m_threads;

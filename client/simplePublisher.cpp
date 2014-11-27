@@ -6,7 +6,7 @@ simplePublisher::simplePublisher(const connectionDetails& i_connectionDetails,
     const std::string& i_exchangeName, 
     ExchangeType       i_exchangeType,
     const std::string& i_consumerID,
-    BlockingQueue<Protocol>& i_messageQueueToSend):
+    BlockingQueue<RabbitMessageBase*>& i_messageQueueToSend):
   m_rabbitProxy(i_connectionDetails),
   m_consumerID(i_consumerID),
   m_messageQueueToSend(i_messageQueueToSend),
@@ -31,23 +31,28 @@ void simplePublisher::operator()()
         m_exchange->setHeader("Content-encoding", "UTF-8");
         m_exchange->setHeader("Delivery-mode", 1);
 
-        Protocol  message;
+        RabbitMessageBase* pMessage = nullptr;
         //TODO: add normal/immediate stop logic
         try
         {
             for (;;)
             {
-                m_messageQueueToSend.pop(message);
-                RABBIT_DEBUG ("Publisher:: going to publish " << message.m_text <<" To: "<<message.m_destination);
-                m_exchange->Publish(message.m_text, message.m_destination);
+                m_messageQueueToSend.pop(pMessage);
+                std::string destination = pMessage->getDestination();
+                m_exchange->Publish( pMessage->serialize(), destination );
+                //TODO
+                RABBIT_DEBUG("Publisher:: Going to publish message: " << pMessage->toString() );
+                delete pMessage;
+                pMessage = nullptr;
             }
         } catch (AMQPException e) {
-            //m_messageQueueToSend.push_front(message); ??
+            //m_pMessage->ueueToSend.push_front(message); ??
             RABBIT_DEBUG ("Publisher:: got exception " << e.getMessage());
 
         }
     }
 } 
+
 
 void simplePublisher::stop(bool immediate)
 {

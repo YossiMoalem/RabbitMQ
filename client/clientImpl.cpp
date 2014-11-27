@@ -3,9 +3,6 @@
 
 #include <AMQPcpp.h>
 
-#define SELF_ROUTING(KEY) "ALL:"+KEY
-#define DESTINATION_ROUTING(KEY)  KEY+":ALL"
-
 RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
@@ -36,9 +33,6 @@ RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails,
 
 int RabbitClientImpl::start()
 {
-    //TODO: Think: should creating the threads be the client responsibility, or
-    //should the workers export "start" method that will spawn the threadsm, and 
-    //client should only call it??
     m_threads.create_thread( boost::ref(m_publisher) );
     m_threads.create_thread( boost::ref(m_consumer) );
     return 0;
@@ -52,41 +46,30 @@ int RabbitClientImpl::stop(bool immediate)
     return 0;
 }
 
-int RabbitClientImpl::sendUnicast(const std::string& i_message, const std::string& i_destination) 
+int RabbitClientImpl::sendMessage(const std::string& i_message, 
+        const std::string& i_destination, 
+        const std::string& i_senderID, 
+        DeliveryType i_deliveryType)
 {
-    return send(i_message, SELF_ROUTING( i_destination ) );
+    return sendRawMessage(new PostMessage(i_message, i_destination, i_senderID, i_deliveryType ) );
 }
 
-int RabbitClientImpl::sendMulticast(const std::string& i_message, const std::string& i_destination)
-{
-    return send(i_message, DESTINATION_ROUTING( i_destination ) );
-}
-
-int RabbitClientImpl::send(const std::string& i_message, 
-                    const std::string& i_destination)
+int RabbitClientImpl::sendRawMessage(RabbitMessageBase* i_pMessage)
 {
     //TODO: check  if publisher is connected. If not - only send bind commands
-    RABBIT_DEBUG ("Client:: Going to push msg: "<< i_message << " to : " << i_destination );
-    m_messageQueueToSend.push(Protocol(i_message, i_destination ));
+    //TODO: write more info 
+    RABBIT_DEBUG ("Client:: Going to push msg type "<< (int) i_pMessage->messageType()
+            << " to : " << i_pMessage->getDestination() );
+    m_messageQueueToSend.push( i_pMessage );
     return 0;
 }
 
-int RabbitClientImpl::bindToSelf(const std::string& i_key)
+int RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  return m_consumer.bind( SELF_ROUTING( i_key ) );
+  return m_consumer.bind( i_key, i_deliveryType );
 }
 
-int RabbitClientImpl::bindToDestination(const std::string& i_key)
+int RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  return m_consumer.bind( DESTINATION_ROUTING( i_key ) );
-}
-
-int RabbitClientImpl::unbindFromSelf(const std::string& i_key)
-{ 
-  return m_consumer.unbind( SELF_ROUTING( i_key ) );
-}
-
-int RabbitClientImpl::unbindFromDestination(const std::string& i_key)
-{ 
-  return m_consumer.unbind( DESTINATION_ROUTING( i_key ) );
+  return m_consumer.unbind( i_key, i_deliveryType );
 }

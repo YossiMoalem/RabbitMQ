@@ -10,8 +10,10 @@ class AMQPQueue;
 class AMQPExchange;
 class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
+
 enum class ExchangeType;
 enum class StopStatus;
+enum class DeliveryType;
 
 class simpleConsumer : boost::noncopyable
 {
@@ -27,17 +29,13 @@ class simpleConsumer : boost::noncopyable
    virtual void operator ()();
    virtual void stop(bool immediate);
 
-   int bind(const std::string& i_key);
-   int unbind(const std::string& i_key);
-
- public:
-   static const char * const s_bindPrefix;
-   static const char * const s_unbindPrefix;
+   int bind(const std::string& i_key, DeliveryType i_deliveryType );
+   int unbind(const std::string& i_key, DeliveryType i_deliveryType );
 
  private:
    int onMessageReceive(AMQPMessage* i_message);
    int rebind();
-   int doBind(const std::string& i_key);
+   int doBind(const std::string& i_key, DeliveryType i_deliveryType);
 
  private:
    int (*m_onMessageCB)(AMQPMessage*);

@@ -5,9 +5,6 @@
 
 #include <AMQPcpp.h>
 
-const char * const simpleConsumer::s_bindPrefix = "BIND::";
-const char * const simpleConsumer::s_unbindPrefix = "UNBIND::";
-
 simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails, 
         const std::string& i_exchangeName, 
         ExchangeType       i_exchangeType,
@@ -39,7 +36,7 @@ void simpleConsumer::operator()()
       m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
       m_incomingMessages->Declare(m_consumerID); 
       //TODO: really???
-      m_incomingMessages->Bind( m_exchangeName, std::string("ALL:") + m_routingKey);
+      m_incomingMessages->Bind( m_exchangeName, std::string("ALL_") + m_routingKey);
 
       m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageReceive (i_message); } );
       //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
@@ -56,58 +53,75 @@ void simpleConsumer::stop(bool immediate)
 
 int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
 {
+    int status = 0;
     uint32_t messageLength = 0;
     const char * msg = i_message->getMessage(&messageLength);
-    std::string message_text;
-    message_text.assign(msg, messageLength);
+    std::string serializedMessage;
+    serializedMessage.assign(msg, messageLength);
+    RabbitMessageBase* pMessage = RabbitMessageBase::desirialize(serializedMessage);
 
-    RABBIT_DEBUG ("Consumer:: got message : " <<message_text);
-  //TODO: I asume the message length is greater than BIND_PREFIX and UNBIND_PREFIX
-  if (message_text.compare (0, strlen( s_bindPrefix ), s_bindPrefix ) == 0 ) 
-  {
-    RABBIT_DEBUG ("Consumer:: Going to bind to "<< message_text.substr(strlen( s_bindPrefix ) ));
-    i_message->getQueue()->Bind( m_exchangeName, message_text.substr(strlen( s_bindPrefix ) ) );
-    return 0;
-  }
+    if (pMessage != nullptr)
+    {
+        RABBIT_DEBUG("Consuner:: Got message: " <<pMessage->toString() );
+        switch (pMessage->messageType())
+        {
+            case MessageType::Post:
+                {
+                    //PostMessage* pPostMessage = static_cast<PostMessage*>(pMessage);
+                    if ( m_onMessageCB )
+                        status = (*m_onMessageCB)(i_message);
+                    if (m_handler)
+                        status = m_handler->onMessageReceive(i_message);
+                }
+                break;
+            case MessageType::Bind:
+                {
+                    BindMessage* pBindMessage = static_cast<BindMessage*>(pMessage);
+                    i_message->getQueue()->Bind( m_exchangeName, pBindMessage->bindKey());
+                }
+                break;
+            case MessageType::Unbind:
+                {
+                    UnbindMessage* pUnbindMessage = static_cast<UnbindMessage*>(pMessage);
+                    i_message->getQueue()->unBind( m_exchangeName, pUnbindMessage->unbindKey());
+                }
+                break;
+            default:
+                {
+                    RABBIT_DEBUG("Unknown Message type : "
+                            <<"Serialized Message: " << serializedMessage );
+                }
+        }
+        delete pMessage;
+    }
+    return status;
 
-  if ( message_text.compare (0, strlen( s_unbindPrefix ), s_unbindPrefix ) == 0 ) 
-  {
-    RABBIT_DEBUG ("Consumer:: Going to unbind from  "<< message_text.substr(strlen( s_unbindPrefix ) ));
-    i_message->getQueue()->unBind( m_exchangeName, message_text.substr(strlen( s_unbindPrefix ) ) );
-    return 0;
-  }
-  int status = 0;
-  if ( m_onMessageCB )
-      status = (*m_onMessageCB)(i_message);
-  if (m_handler)
-    status = m_handler->onMessageReceive(i_message);
-  return status;
 }
 
 int simpleConsumer::rebind()
 {
     for( auto key : m_subscriptionsList )
     {
-        doBind(key);
+        //// TODO:
+        //doBind(key);
     }
     return 0;
 }
-int simpleConsumer::bind(const std::string& i_key)
+int simpleConsumer::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
+    //TODO: 
   m_subscriptionsList.insert(i_key);
-  return doBind(i_key);
+  return doBind(i_key, i_deliveryType);
 }
 
-int simpleConsumer::unbind(const std::string& i_key)
+int simpleConsumer::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  std::string unbindMessage ( simpleConsumer::s_unbindPrefix + i_key );
   m_subscriptionsList.erase(i_key);
-  return m_pOwner->sendUnicast( unbindMessage, m_consumerID);
+  return m_pOwner->sendRawMessage( new UnbindMessage (i_key, m_consumerID, i_deliveryType));
 }
 
 
-int simpleConsumer::doBind(const std::string& i_key)
+int simpleConsumer::doBind(const std::string& i_key, DeliveryType i_deliveryType)
 {
-  std::string bindMessage ( simpleConsumer::s_bindPrefix + i_key );
-  return m_pOwner->sendUnicast( bindMessage, m_consumerID);
+  return m_pOwner->sendRawMessage(new BindMessage(i_key, m_consumerID, i_deliveryType));
 }

@@ -247,7 +247,6 @@ class AMQPExchange : public AMQPBase {
 		void checkType();
 		void sendDeclareCommand();
 		void sendDeleteCommand();
-		void sendPublishCommand();
 
 		void sendBindCommand(const char * queueName, const char * key);
 		void sendPublishCommand(amqp_bytes_t messageByte, const char * key);
