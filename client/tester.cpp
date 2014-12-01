@@ -1,9 +1,5 @@
 #include "simpleClient.h"
 #include <boost/thread.hpp>
-#include "common.h"
-
-//TODO: find a way to remove this
-#include <AMQPcpp.h>
 
 #include <sys/time.h>
 

@@ -53,7 +53,7 @@ class simpleClient : public boost::noncopyable
    int unbindFromDestination(const std::string& i_key);
 
  private:
-   RabbitClientImpl* p_impl;
+   RabbitClientImpl* m_pRabbitClient;
 
 };
 

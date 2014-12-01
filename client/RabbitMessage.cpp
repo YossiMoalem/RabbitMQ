@@ -1,10 +1,11 @@
 #include "RabbitMessage.h"
+#include "internalTypes.h"
 #include <cstdlib>
 
 /********************************************************************************\
  * RabbitMessageBase
  ********************************************************************************/
-RabbitMessageBase* RabbitMessageBase::desirialize (const std::string& i_serialized)
+RabbitMessageBase* RabbitMessageBase::deserialize (const std::string& i_serialized)
 {
     std::istringstream istream(i_serialized);
     int messageType;
@@ -29,6 +30,11 @@ std::string RabbitMessageBase::serialize () const
        res << (int) messageType() << ",";
        doSerialize(res);
        return res.str();
+}
+
+std::ostream& operator<< ( std::ostream& ostream, const RabbitMessageBase& inst )
+{
+  return ostream <<inst.toString();
 }
 
 /********************************************************************************\

@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "common.h"
 #include "RabbitMessage.h"
 #include "connectionDetails.h"
 #include "rabbitProxy.h"
@@ -29,7 +28,7 @@ class simplePublisher : boost::noncopyable
    RabbitProxy m_rabbitProxy;
    const std::string m_consumerID;
    BlockingQueue<RabbitMessageBase*>& m_messageQueueToSend;
-   StopStatus m_stopStatus;
+   RunStatus m_runStatus;
    AMQPExchange* m_exchange ;
    const std::string m_exchangeName;
    ExchangeType                    m_exchageType;

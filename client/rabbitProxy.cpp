@@ -1,5 +1,5 @@
 #include "rabbitProxy.h"
-#include "common.h"
+#include "internalTypes.h"
 
 #include <AMQPcpp.h>
 

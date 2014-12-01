@@ -1,13 +1,17 @@
 #include <iostream>
 #include <sstream>
 
-#include "common.h"
+#include "Types.h"
 
+//enum class MessageType;
+//remove
+#include "internalTypes.h"
 /********************************************************************************\
  * RabbitMessageBase
  ********************************************************************************/
 class RabbitMessageBase
 {
+  friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
    RabbitMessageBase (
            const std::string i_destination,
@@ -17,16 +21,18 @@ class RabbitMessageBase
     { };
    virtual ~RabbitMessageBase() {}
 
+   RabbitMessageBase( const RabbitMessageBase& ) = delete;
+   RabbitMessageBase& operator= (const RabbitMessageBase& ) = delete;
 
-   static RabbitMessageBase* desirialize (const std::string& i_serializes);
+   static RabbitMessageBase* deserialize (const std::string& i_serializes);
    std::string serialize () const ;
 
    virtual std::string getDestination() const = 0;
    virtual MessageType messageType() const = 0;
-   virtual std::string toString () const = 0;
 
  protected:
    virtual void doSerialize (std::stringstream& o_serializer) const = 0;
+   virtual std::string toString () const = 0;
 
  protected:
    DeliveryType m_deliveryType;
@@ -38,6 +44,7 @@ class RabbitMessageBase
  ********************************************************************************/
 class PostMessage : public RabbitMessageBase
 {
+  friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
    PostMessage( const std::string i_text, 
            const std::string i_destination,
@@ -74,6 +81,7 @@ class PostMessage : public RabbitMessageBase
  ********************************************************************************/
 class UnbindMessage : public RabbitMessageBase
 {
+  friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
 
    UnbindMessage( const std::string i_key, 
@@ -104,6 +112,7 @@ class UnbindMessage : public RabbitMessageBase
  ********************************************************************************/
 class BindMessage : public RabbitMessageBase
 {
+  friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
    BindMessage( const std::string i_key, 
            const std::string i_destination,

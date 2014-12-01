@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "rabbitProxy.h"
-#include "common.h" //for CAllbackType
+#include "internalTypes.h"
 
 class AMQPMessage;
 class AMQPQueue;
@@ -13,7 +13,7 @@ class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
 
 enum class ExchangeType;
-enum class StopStatus;
+enum class RunStatus;
 enum class DeliveryType;
 
 class simpleConsumer : boost::noncopyable
@@ -45,7 +45,7 @@ class simpleConsumer : boost::noncopyable
    const std::string              m_consumerID;
    AMQPQueue*                     m_incomingMessages;
    const std::string              m_routingKey;
-   StopStatus                     m_stopStatus;
+   RunStatus                  m_runStatus;
    AMQPExchange*                  m_exchange ;
    const std::string              m_exchangeName;
   ExchangeType                    m_exchageType;

@@ -1,6 +1,5 @@
 #include "simpleConsumer.h"
 #include "clientImpl.h"
-#include "common.h"
 #include "simpleClient.h"
 
 #include <AMQPcpp.h>
@@ -17,7 +16,7 @@ simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails,
     m_rabbitProxy(i_connectionDetails),
     m_consumerID(i_consumerID),
     m_routingKey(i_consumerID),
-    m_stopStatus(StopStatus::Continue),
+    m_runStatus(RunStatus::Continue),
     m_exchange(NULL),
     m_exchangeName(i_exchangeName),
     m_exchageType(i_exchangeType),
@@ -47,7 +46,7 @@ void simpleConsumer::operator()()
 
 void simpleConsumer::stop(bool immediate)
 {
-    m_stopStatus = (immediate) ? StopStatus::StopImmediate : StopStatus::StopGracefull;
+    m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
     //TODO: and??
 }
 
@@ -58,11 +57,11 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
     const char * msg = i_message->getMessage(&messageLength);
     std::string serializedMessage;
     serializedMessage.assign(msg, messageLength);
-    RabbitMessageBase* pMessage = RabbitMessageBase::desirialize(serializedMessage);
+    RabbitMessageBase* pMessage = RabbitMessageBase::deserialize(serializedMessage);
 
     if (pMessage != nullptr)
     {
-        RABBIT_DEBUG("Consuner:: Got message: " <<pMessage->toString() );
+        RABBIT_DEBUG("Consuner:: Got message: " <<*pMessage );
         switch (pMessage->messageType())
         {
             case MessageType::Post:

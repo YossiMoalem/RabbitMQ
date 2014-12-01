@@ -1,5 +1,4 @@
 #include "simplePublisher.h"
-#include "common.h"
 #include "simpleClient.h" //Remove, for ExchangeTypeStr
 #include <AMQPcpp.h>
 
@@ -11,7 +10,7 @@ simplePublisher::simplePublisher(const connectionDetails& i_connectionDetails,
   m_rabbitProxy(i_connectionDetails),
   m_consumerID(i_consumerID),
   m_messageQueueToSend(i_messageQueueToSend),
-  m_stopStatus(StopStatus::Continue),
+  m_runStatus(RunStatus::Continue),
   m_exchange(NULL),
   m_exchangeName(i_exchangeName),
   m_exchageType(i_exchangeType)
@@ -41,8 +40,7 @@ void simplePublisher::operator()()
                 m_messageQueueToSend.pop(pMessage);
                 std::string destination = pMessage->getDestination();
                 m_exchange->Publish( pMessage->serialize(), destination );
-                //TODO
-                RABBIT_DEBUG("Publisher:: Going to publish message: " << pMessage->toString() );
+                RABBIT_DEBUG("Publisher:: Going to publish message: " << *pMessage );
                 delete pMessage;
                 pMessage = nullptr;
             }
@@ -57,5 +55,5 @@ void simplePublisher::operator()()
 
 void simplePublisher::stop(bool immediate)
 {
-    m_stopStatus = (immediate) ? StopStatus::StopImmediate : StopStatus::StopGracefull;
+    m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
 }
