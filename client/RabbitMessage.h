@@ -16,8 +16,8 @@ class RabbitMessageBase
    RabbitMessageBase (
            const std::string i_destination,
            DeliveryType i_deliveryType) :
-       m_deliveryType(i_deliveryType),
-       m_destination(i_destination)
+       m_destination(i_destination),
+       m_deliveryType(i_deliveryType)
     { };
    virtual ~RabbitMessageBase() {}
 
@@ -30,6 +30,7 @@ class RabbitMessageBase
    virtual std::string getRoutingKey() const = 0;
    //virtual std::string getDestination() const = 0;
    virtual MessageType messageType() const = 0;
+   std::string m_destination;
 
  protected:
    virtual void doSerialize (std::stringstream& o_serializer) const = 0;
@@ -37,7 +38,6 @@ class RabbitMessageBase
 
  protected:
    DeliveryType m_deliveryType;
-   std::string m_destination;
 };
 
 /********************************************************************************\

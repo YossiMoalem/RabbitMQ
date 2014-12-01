@@ -1,13 +1,8 @@
 #ifndef INTERNAL_TYPES_H
 #define INTERNAL_TYPES_H
 
-#define RABBIT_DEBUG(MSG) do{\
-    std::stringstream ss;\
-    ss<< MSG <<std::endl;\
-    std::cerr << ss.str();\
-}while(0);
+#include "Types.h"
 
-#include <functional>
 
 enum class DeliveryType;
 
@@ -25,6 +20,6 @@ enum class MessageType
     Unbind
 };
 
-typedef std::function<int (std::string o_messageText, std::string o_senderID, DeliveryType o_deliverySTatus )> CallbackType;
 
+static const char* const ExchangeTypeStr[ (int)ExchangeType::Last ] = {"direct", "topic", "fanout"};
 #endif
