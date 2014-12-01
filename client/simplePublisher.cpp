@@ -1,5 +1,6 @@
 #include "simplePublisher.h"
 #include "common.h"
+#include "simpleClient.h" //Remove, for ExchangeTypeStr
 #include <AMQPcpp.h>
 
 simplePublisher::simplePublisher(const connectionDetails& i_connectionDetails, 

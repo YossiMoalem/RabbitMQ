@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "rabbitProxy.h"
+#include "common.h" //for CAllbackType
 
 class AMQPMessage;
 class AMQPQueue;
@@ -22,7 +23,7 @@ class simpleConsumer : boost::noncopyable
        const std::string& i_exchangeName, 
        ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
-       int (*i_onMessageCB)(AMQPMessage*),
+       CallbackType       i_onMessageCB,
        RabbitMQNotifiableIntf* i_handler,
        RabbitClientImpl* i_pOwner );
 
@@ -38,7 +39,7 @@ class simpleConsumer : boost::noncopyable
    int doBind(const std::string& i_key, DeliveryType i_deliveryType);
 
  private:
-   int (*m_onMessageCB)(AMQPMessage*);
+   CallbackType                   m_onMessageCB;
    RabbitMQNotifiableIntf*        m_handler;
    RabbitProxy                    m_rabbitProxy;
    const std::string              m_consumerID;

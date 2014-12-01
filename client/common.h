@@ -1,13 +1,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "simpleClient.h"
-
 #define RABBIT_DEBUG(MSG) do{\
     std::stringstream ss;\
     ss<< MSG <<std::endl;\
     std::cerr << ss.str();\
 }while(0);
+
+#include <functional>
+class AMQPMessage;
 
 enum class StopStatus
 {
@@ -29,6 +30,6 @@ enum class MessageType
     Unbind
 };
 
+typedef std::function<int (std::string o_messageText, std::string o_senderID)> CallbackType;
 
-static const char* const ExchangeTypeStr[ (int)ExchangeType::Last ] = {"direct", "topic", "fanout"};
 #endif

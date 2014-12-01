@@ -17,7 +17,7 @@ simpleClient::simpleClient(const connectionDetails& i_connectionDetails,
     const std::string& i_exchangeName, 
     const std::string& i_consumerID,
     ExchangeType       i_exchangeType,
-    int (*i_onMessageCB)(AMQPMessage*) ):
+    CallbackType        i_onMessageCB ) :
   p_impl( new RabbitClientImpl (i_connectionDetails,
         i_exchangeName,
         i_consumerID,

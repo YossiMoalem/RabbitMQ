@@ -27,7 +27,7 @@ class RabbitClientImpl : public boost::noncopyable
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
-           int (*i_onMessageCB)(AMQPMessage*) );
+           CallbackType       i_onMessageCB );
 
    int start();
    int stop(bool immediate);
@@ -45,7 +45,7 @@ class RabbitClientImpl : public boost::noncopyable
    const connectionDetails m_connectionDetails;
    const std::string m_exchangeName;
    const std::string m_consumerID;
-   int (*m_onMessageCB)(AMQPMessage*) ;
+   CallbackType      m_onMessageCB;
    RabbitMQNotifiableIntf* m_handler;
    BlockingQueue<RabbitMessageBase*> m_messageQueueToSend;
    simplePublisher m_publisher;

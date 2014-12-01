@@ -6,10 +6,10 @@
 #include <AMQPcpp.h>
 
 simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails, 
-        const std::string& i_exchangeName, 
-        ExchangeType       i_exchangeType,
-        const std::string& i_consumerID,
-        int (*i_onMessageCB)(AMQPMessage*),
+        const std::string&  i_exchangeName, 
+        ExchangeType        i_exchangeType,
+        const std::string&  i_consumerID,
+        CallbackType        i_onMessageCB,
         RabbitMQNotifiableIntf* i_handler,
         RabbitClientImpl* i_pOwner ):
     m_onMessageCB(i_onMessageCB),
@@ -67,11 +67,11 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
         {
             case MessageType::Post:
                 {
-                    //PostMessage* pPostMessage = static_cast<PostMessage*>(pMessage);
+                    PostMessage* pPostMessage = static_cast<PostMessage*>(pMessage);
                     if ( m_onMessageCB )
-                        status = (*m_onMessageCB)(i_message);
+                        status = (m_onMessageCB)(pPostMessage->getText(), pPostMessage->m_sender);
                     if (m_handler)
-                        status = m_handler->onMessageReceive(i_message);
+                        status = m_handler->onMessageReceive(pPostMessage->getText(), pPostMessage->m_sender);
                 }
                 break;
             case MessageType::Bind:

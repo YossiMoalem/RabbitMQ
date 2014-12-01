@@ -21,7 +21,7 @@ RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails,
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         ExchangeType       i_exchangeType,
-        int (*i_onMessageCB)(AMQPMessage*) ) :
+        CallbackType        i_onMessageCB ) :
     m_connectionDetails(i_connectionDetails),
     m_exchangeName(i_exchangeName),
     m_consumerID(i_consumerID),

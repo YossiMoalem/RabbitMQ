@@ -7,14 +7,13 @@
 #include "connectionDetails.h"
 #include "simpleConsumer.h"
 
-
 class AMQPMessage;
 class RabbitClientImpl;
 
 class RabbitMQNotifiableIntf 
 {
  public:
-  virtual int onMessageReceive (AMQPMessage* i_mas) = 0;
+  virtual int onMessageReceive (std::string o_message, std::string o_sender) = 0;
 };
 
 enum class ExchangeType
@@ -24,6 +23,8 @@ enum class ExchangeType
     Fanout,
     Last
 };
+//TODO: does not really needs to be here
+static const char* const ExchangeTypeStr[ (int)ExchangeType::Last ] = {"direct", "topic", "fanout"};
 
 class simpleClient : public boost::noncopyable
 {
@@ -38,7 +39,7 @@ class simpleClient : public boost::noncopyable
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
-           int (*i_onMessageCB)(AMQPMessage*) );
+           CallbackType       i_onMessageCB );
 
    int start();
    int stop(bool immediate);
