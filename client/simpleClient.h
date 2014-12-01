@@ -13,7 +13,7 @@ class RabbitClientImpl;
 class RabbitMQNotifiableIntf 
 {
  public:
-  virtual int onMessageReceive (std::string o_message, std::string o_sender) = 0;
+  virtual int onMessageReceive (std::string o_message, std::string o_sender, DeliveryType o_deliveryType) = 0;
 };
 
 enum class ExchangeType

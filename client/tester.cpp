@@ -17,7 +17,7 @@ class BindTester
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Direct, [] ( std::string message, std::string o_sender )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Direct, [] ( std::string message, std::string o_sender, DeliveryType )->int {
                std::cout <<"Free CB:: Received: "<<message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -110,7 +110,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
        return 0;
    }
 
-   int onMessageReceive (std::string, std::string)
+   int onMessageReceive (std::string, std::string, DeliveryType)
    {
        if (firstReceiveTime.tv_sec == 0)
            gettimeofday(&firstReceiveTime, nullptr); 
@@ -139,7 +139,7 @@ class RepeatedBindTester
    int operator ()()
    {
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( std::string o_message, std::string o_sender )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( std::string o_message, std::string o_sender, DeliveryType )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -162,7 +162,7 @@ class ContinousSendTester
    {
        std::string myID ("MyId");
        connectionDetails cnd("adam", "adam", "rabbit1", 5672);
-       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( std::string o_message, std::string o_sender )->int {
+       simpleClient client (cnd, "EXC1", "USR1", ExchangeType::Topic, [] ( std::string o_message, std::string o_sender, DeliveryType )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;

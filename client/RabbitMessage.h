@@ -69,6 +69,11 @@ class PostMessage : public RabbitMessageBase
      return MessageType::Post;
    }
 
+   DeliveryType deliveryType() const
+   {
+     return m_deliveryType;
+   }
+
  public:
    std::string m_sender;
 

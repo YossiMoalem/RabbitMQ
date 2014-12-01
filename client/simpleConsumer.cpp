@@ -68,9 +68,9 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
                 {
                     PostMessage* pPostMessage = static_cast<PostMessage*>(pMessage);
                     if ( m_onMessageCB )
-                        status = (m_onMessageCB)(pPostMessage->getText(), pPostMessage->m_sender);
+                        status = (m_onMessageCB)(pPostMessage->getText(), pPostMessage->m_sender, pPostMessage->deliveryType());
                     if (m_handler)
-                        status = m_handler->onMessageReceive(pPostMessage->getText(), pPostMessage->m_sender);
+                        status = m_handler->onMessageReceive(pPostMessage->getText(), pPostMessage->m_sender, pPostMessage->deliveryType());
                 }
                 break;
             case MessageType::Bind:
