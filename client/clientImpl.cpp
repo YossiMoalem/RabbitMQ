@@ -59,7 +59,7 @@ int RabbitClientImpl::sendRawMessage(RabbitMessageBase* i_pMessage)
     //TODO: check  if publisher is connected. If not - only send bind commands
     //TODO: write more info 
     RABBIT_DEBUG ("Client:: Going to push msg type "<< (int) i_pMessage->messageType()
-            << " to : " << i_pMessage->getDestination() );
+            << " to : " << i_pMessage->getRoutingKey() );
     m_messageQueueToSend.push( i_pMessage );
     return 0;
 }

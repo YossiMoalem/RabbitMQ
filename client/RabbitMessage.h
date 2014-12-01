@@ -27,7 +27,8 @@ class RabbitMessageBase
    static RabbitMessageBase* deserialize (const std::string& i_serializes);
    std::string serialize () const ;
 
-   virtual std::string getDestination() const = 0;
+   virtual std::string getRoutingKey() const = 0;
+   //virtual std::string getDestination() const = 0;
    virtual MessageType messageType() const = 0;
 
  protected:
@@ -57,7 +58,7 @@ class PostMessage : public RabbitMessageBase
 
    void doSerialize (std::stringstream& o_serializer) const;
    static PostMessage* doDeserialize (const std::string& i_serialized);
-   std::string getDestination() const;
+   //std::string getDestination() const;
    virtual std::string toString () const;
 
    const std::string getText () const
@@ -73,6 +74,8 @@ class PostMessage : public RabbitMessageBase
    {
      return m_deliveryType;
    }
+
+   std::string getRoutingKey() const;
 
  public:
    std::string m_sender;
@@ -100,8 +103,9 @@ class UnbindMessage : public RabbitMessageBase
    MessageType messageType() const;
    void doSerialize (std::stringstream& o_serializer) const;
    virtual std::string toString () const;
+   //std::string getDestination() const;
 
-   std::string getDestination() const
+   std::string getRoutingKey() const
    {
        return "ALL_" + m_destination;
    }
@@ -132,11 +136,12 @@ class BindMessage : public RabbitMessageBase
      return MessageType::Bind;
    }
 
+   //std::string getDestination() const;
    std::string bindKey() const;
    void doSerialize (std::stringstream& o_serializer) const;
    virtual std::string toString () const;
 
-   std::string getDestination() const
+   std::string getRoutingKey() const
    {
        return "ALL_" + m_destination;
    }

@@ -69,7 +69,7 @@ std::ostream& operator<< ( std::ostream& ostream, const RabbitMessageBase& inst 
 
 std::string BindMessage::toString() const 
 {
-  return std::string ("Bind " + getDestination() + " To " + bindKey() );
+  return std::string ("Bind " + getRoutingKey() + " To " + bindKey() );
 }
 
 /********************************************************************************\
@@ -109,7 +109,7 @@ std::string BindMessage::toString() const
 
 std::string UnbindMessage::toString() const 
 {
-  return std::string ("Unbind " + getDestination() + " From " + unbindKey() );
+  return std::string ("Unbind " + getRoutingKey() + " From " + unbindKey() );
 }
 
 /********************************************************************************\
@@ -137,14 +137,14 @@ std::string UnbindMessage::toString() const
            << m_text;
    }
 
-   std::string PostMessage::getDestination() const
+   std::string PostMessage::getRoutingKey() const
    {
        if (m_deliveryType == DeliveryType::Unicast)
            return "ALL_" + m_destination;
-       return m_destination + "_ALL";
+       return m_sender + "_ALL";
    }
 
 std::string PostMessage::toString() const
 {
-  return std::string("Send " + getText() + " From " + m_sender + " To " + getDestination() );
+  return std::string("Send " + getText() + " From " + m_sender + " To " + getRoutingKey() );
 }

@@ -32,9 +32,9 @@ int simpleClient::sendUnicast(const std::string& i_message, const std::string& i
 { 
     return m_pRabbitClient->sendMessage(i_message,i_destination, i_senderID, DeliveryType::Unicast); 
 }
-int simpleClient::sendMulticast(const std::string& i_message, const std::string& i_destination, const std::string& i_senderID)
+int simpleClient::sendMulticast(const std::string& i_message, const std::string& i_senderID)
 { 
-    return m_pRabbitClient->sendMessage(i_message,i_destination, i_senderID, DeliveryType::Multicast); 
+    return m_pRabbitClient->sendMessage(i_message, "", i_senderID, DeliveryType::Multicast); 
 }
 
 

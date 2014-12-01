@@ -38,8 +38,8 @@ void simplePublisher::operator()()
             for (;;)
             {
                 m_messageQueueToSend.pop(pMessage);
-                std::string destination = pMessage->getDestination();
-                m_exchange->Publish( pMessage->serialize(), destination );
+                std::string routingKey= pMessage->getRoutingKey();
+                m_exchange->Publish( pMessage->serialize(), routingKey );
                 RABBIT_DEBUG("Publisher:: Going to publish message: " << *pMessage );
                 delete pMessage;
                 pMessage = nullptr;
