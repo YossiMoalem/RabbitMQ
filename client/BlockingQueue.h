@@ -23,12 +23,21 @@ public:
       QueueBlocked
     };
 
-    BlockingQueue () : m_queueState(QueueState::QueueOpen) 
+    BlockingQueue () : m_queueState(QueueState::QueueOpen),
+                       m_runStatus(RunStatus::Continue)
     {}
 
     void setQueueState( QueueState i_newState )
     {
       m_queueState = i_newState;
+    }
+
+    void terminate (bool immediate)
+    {
+      boost::mutex::scoped_lock lock(m_queueMutex);
+      m_queueState = QueueState::QueueBlocked;
+      m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
+      the_condition_variable.notify_all();
     }
 
     ReturnStatus push(Data const& data, bool highPriority = false ) 
@@ -55,7 +64,7 @@ public:
     {
         boost::mutex::scoped_lock lock(m_queueMutex);
         return m_queue.empty();
-    }
+    } 
 
     bool try_pop(Data& popped_value)
     {
@@ -73,13 +82,26 @@ public:
     void pop(Data& popped_value)
     {
         boost::mutex::scoped_lock lock(m_queueMutex);
-        while(m_queue.empty())
+        while( m_queue.empty() && m_runStatus == RunStatus::Continue )
         {
             the_condition_variable.wait(lock);
         }
         
-        popped_value=m_queue.front();
-        m_queue.pop_front();
+        if (m_runStatus == RunStatus::StopImmediate)
+        {
+          while (!m_queue.empty())
+          {
+            delete (m_queue.front());
+            m_queue.pop_front();
+          }
+          popped_value = nullptr;
+        } else if ( m_queue.empty() ) {
+          assert (m_runStatus == RunStatus::StopGracefull);
+          popped_value = nullptr;
+        } else {
+          popped_value=m_queue.front();
+          m_queue.pop_front();
+        }
     }
 
 private:
@@ -87,5 +109,6 @@ private:
     mutable boost::mutex m_queueMutex;
     boost::condition_variable the_condition_variable;
     QueueState m_queueState;
+    RunStatus  m_runStatus;
 };
 #endif

@@ -15,13 +15,18 @@ class RabbitProxy : boost::noncopyable
  public:
     RabbitProxy (const connectionDetails& i_connectionDetails) :
         m_connectionDetails( i_connectionDetails),
-        m_connectionHolder(NULL)
+        m_connectionHolder(NULL),
+        m_stop(false)
     { }
-    int connect();
-    int init();
+    bool connect();
+    bool init();
+
+    void stop();
 
  //protected:
     connectionDetails m_connectionDetails;
     AMQP* m_connectionHolder;
+ protected:
+    volatile bool m_stop;
 };
 #endif

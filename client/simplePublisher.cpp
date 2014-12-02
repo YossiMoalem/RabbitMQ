@@ -21,7 +21,11 @@ void simplePublisher::operator()()
     RABBIT_DEBUG ("Publisher:: Publisher started ");
     while (1)
     {
-        m_rabbitProxy.init();
+        if ( m_rabbitProxy.init() == false)
+        {
+            RABBIT_DEBUG("Publisher:: Publisher failed to (re)connect. Exiting. ");
+            return;
+        }
         m_exchange = m_rabbitProxy.m_connectionHolder->createExchange(m_exchangeName);
         m_exchange->Declare(m_exchangeName, ExchangeTypeStr[ (int)m_exchageType ] );
         //TODO: find a nice way to do this.
@@ -34,12 +38,18 @@ void simplePublisher::operator()()
         m_messageQueueToSend.setQueueState(MessageQueue::QueueState::QueueOpen);
 
         RabbitMessageBase* pMessage = nullptr;
-        //TODO: add normal/immediate stop logic
         try
         {
             for (;;)
             {
                 m_messageQueueToSend.pop(pMessage);
+                if(pMessage == nullptr || m_runStatus == RunStatus::StopImmediate)
+                {
+                    RABBIT_DEBUG("Publisher:: either, got stopImmediat, or, "
+                            <<" got stop, and no more messages in the queue. Exiting");
+                    assert (m_runStatus != RunStatus::Continue);
+                    return;
+                }
                 std::string routingKey= pMessage->getRoutingKey();
                 m_exchange->Publish( pMessage->serialize(), routingKey );
                 RABBIT_DEBUG("Publisher:: Going to publish message: " << *pMessage );
@@ -59,4 +69,6 @@ void simplePublisher::operator()()
 void simplePublisher::stop(bool immediate)
 {
     m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
+    m_rabbitProxy.stop();
+    m_messageQueueToSend.terminate(immediate);
 }

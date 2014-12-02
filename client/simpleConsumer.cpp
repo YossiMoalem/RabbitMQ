@@ -28,30 +28,39 @@ void simpleConsumer::operator()()
     RABBIT_DEBUG ("Consumer:: Consumer started ");
     while (1)
     {
-      m_rabbitProxy.init();
-    m_exchange = m_rabbitProxy.m_connectionHolder->createExchange(m_exchangeName);
-    m_exchange->Declare(m_exchangeName, ExchangeTypeStr[ (int)m_exchageType ] );
+        if (m_rabbitProxy.init() == false )
+        {
+            RABBIT_DEBUG("Consumer:: Consumer failed to (re)connect. Exiting. ");
+            return;
+        }
+        m_exchange = m_rabbitProxy.m_connectionHolder->createExchange(m_exchangeName);
+        m_exchange->Declare(m_exchangeName, ExchangeTypeStr[ (int)m_exchageType ] );
 
-      m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
-      m_incomingMessages->Declare(m_consumerID); 
-      //TODO: really???
-      m_incomingMessages->Bind( m_exchangeName, std::string("ALL_") + m_routingKey);
+        m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
+        m_incomingMessages->Declare(m_consumerID); 
+        //TODO: really???
+        m_incomingMessages->Bind( m_exchangeName, std::string("ALL_") + m_routingKey);
 
-      m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageReceive (i_message); } );
-      //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
-      rebind();
-      m_incomingMessages->Consume(AMQP_NOACK);
+        m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageReceive (i_message); } );
+        //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
+        rebind();
+        m_incomingMessages->Consume(AMQP_NOACK);
     }
 } 
 
 void simpleConsumer::stop(bool immediate)
 {
     m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
-    //TODO: and??
+    m_rabbitProxy.stop();
 }
 
 int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
 {
+    if (m_runStatus == RunStatus::StopImmediate)
+    {
+        RABBIT_DEBUG("Consumer:: Consumer got StopImmediate command.Exiting");
+        pthread_exit(nullptr);
+    }
     int status = 0;
     uint32_t messageLength = 0;
     const char * msg = i_message->getMessage(&messageLength);
@@ -92,6 +101,11 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
                 }
         }
         delete pMessage;
+    }
+    if (m_runStatus != RunStatus::Continue)
+    {
+        RABBIT_DEBUG("Consumer:: Consumer got Stop command.Exiting");
+        pthread_exit(nullptr);
     }
     return status;
 

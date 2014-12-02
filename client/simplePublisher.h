@@ -25,13 +25,13 @@ class simplePublisher : boost::noncopyable
    virtual void stop(bool immediate);
 
  private:
-   RabbitProxy m_rabbitProxy;
-   const std::string m_consumerID;
-   MessageQueue& m_messageQueueToSend;
-   RunStatus m_runStatus;
-   AMQPExchange* m_exchange ;
-   const std::string m_exchangeName;
-   ExchangeType                    m_exchageType;
+   RabbitProxy        m_rabbitProxy;
+   const std::string  m_consumerID;
+   MessageQueue&      m_messageQueueToSend;
+   RunStatus          m_runStatus;
+   AMQPExchange*      m_exchange ;
+   const std::string  m_exchangeName;
+   ExchangeType       m_exchageType;
 };
 
 #endif

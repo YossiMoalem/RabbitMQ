@@ -3,9 +3,11 @@
 
 #include <AMQPcpp.h>
 
-int RabbitProxy::connect()
+#include <assert.h>
+
+bool RabbitProxy::connect()
 {
-    for (;;)
+    while (!m_stop)
     {
       RABBIT_DEBUG ("RabbitProxy:: Attempting to connect");
         if( m_connectionHolder != NULL )
@@ -22,7 +24,7 @@ int RabbitProxy::connect()
             // providing connection DETAILS.
             m_connectionHolder = new AMQP( connectionDetails::createConnectionString(m_connectionDetails));
             RABBIT_DEBUG ("RabbitProxy:: Connected ");
-            return 0;
+            return true;
         }
         catch ( AMQPException e )
         {
@@ -36,11 +38,18 @@ int RabbitProxy::connect()
             (void)m_connectionDetails.getNextHost();
         }
     }
+    assert (m_stop);
+    RABBIT_DEBUG("RabbitProxy:: Got stop command. exiting");
+    return false;
 }
 
-int RabbitProxy::init()
+void RabbitProxy::stop ()
 {
-    connect();
-    return 0;
+    m_stop = true;
+}
+
+bool RabbitProxy::init()
+{
+  return connect();
 }
 

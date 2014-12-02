@@ -1,5 +1,6 @@
 #include "clientImpl.h"
 #include <boost/ref.hpp>
+#include <signal.h>//for pthread kill
 
 #include <AMQPcpp.h>
 
@@ -33,8 +34,8 @@ RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails,
 
 int RabbitClientImpl::start()
 {
-    m_threads.create_thread( boost::ref(m_publisher) );
-    m_threads.create_thread( boost::ref(m_consumer) );
+    m_publisherThread = boost::thread( boost::ref(m_publisher) );
+    m_consumerThread = boost::thread( boost::ref(m_consumer) );
     return 0;
 }
 
@@ -42,7 +43,18 @@ int RabbitClientImpl::stop(bool immediate)
 {
     m_publisher.stop(immediate);
     m_consumer.stop(immediate);
-    m_threads.join_all();
+    m_publisherThread.join();
+    if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
+    {
+        //The consumer it probably stuck on consume(). Till I'll be able to interupt it
+        //I can only forcefully kill it...
+        //TODO: Maybe send "terminate" message??
+        ::pthread_cancel(m_consumerThread.native_handle());
+        if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
+        {
+            ::pthread_kill(m_consumerThread.native_handle(), 9);
+        }
+    }
     return 0;
 }
 

@@ -47,15 +47,16 @@ class RabbitClientImpl : public boost::noncopyable
    ReturnStatus doSendMessage(RabbitMessageBase* i_message, bool highPriority);
 
  private:
-   const connectionDetails m_connectionDetails;
-   const std::string m_exchangeName;
-   const std::string m_consumerID;
-   CallbackType      m_onMessageCB;
-   RabbitMQNotifiableIntf* m_handler;
-   MessageQueue    m_messageQueueToSend;
-   simplePublisher m_publisher;
-   simpleConsumer m_consumer;
-   boost::thread_group m_threads;
+   const connectionDetails  m_connectionDetails;
+   const std::string        m_exchangeName;
+   const std::string        m_consumerID;
+   CallbackType             m_onMessageCB;
+   RabbitMQNotifiableIntf*  m_handler;
+   MessageQueue             m_messageQueueToSend;
+   simplePublisher          m_publisher;
+   simpleConsumer           m_consumer;
+   boost::thread            m_consumerThread;
+   boost::thread            m_publisherThread;
 };
 
 
