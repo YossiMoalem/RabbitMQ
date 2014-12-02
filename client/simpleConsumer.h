@@ -2,6 +2,7 @@
 #define SIMPLE_CONSUMER_H
 
 #include <unordered_set>
+#include <boost/functional/hash.hpp>
 
 #include "rabbitProxy.h"
 #include "internalTypes.h"
@@ -30,13 +31,13 @@ class simpleConsumer : boost::noncopyable
    virtual void operator ()();
    virtual void stop(bool immediate);
 
-   int bind(const std::string& i_key, DeliveryType i_deliveryType );
-   int unbind(const std::string& i_key, DeliveryType i_deliveryType );
+   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType );
+   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType );
 
  private:
    int onMessageReceive(AMQPMessage* i_message);
    int rebind();
-   int doBind(const std::string& i_key, DeliveryType i_deliveryType);
+   ReturnStatus doBind(const std::string& i_key, DeliveryType i_deliveryType);
 
  private:
    CallbackType                   m_onMessageCB;
@@ -49,8 +50,11 @@ class simpleConsumer : boost::noncopyable
    AMQPExchange*                  m_exchange ;
    const std::string              m_exchangeName;
   ExchangeType                    m_exchageType;
-   std::unordered_set<std::string> m_subscriptionsList;
    RabbitClientImpl*              m_pOwner;
+   std::unordered_set<
+       std::pair <std::string, int>, 
+       boost::hash <std::pair< std::string, int> >  
+           > m_subscriptionsList;
 };
 
 #endif

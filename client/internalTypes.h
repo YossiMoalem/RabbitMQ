@@ -5,6 +5,9 @@
 
 
 enum class DeliveryType;
+class RabbitMessageBase;
+template<typename Data>
+class BlockingQueue;
 
 enum class RunStatus 
 {
@@ -22,4 +25,6 @@ enum class MessageType
 
 
 static const char* const ExchangeTypeStr[ (int)ExchangeType::Last ] = {"direct", "topic", "fanout"};
+
+typedef BlockingQueue<RabbitMessageBase*> MessageQueue;
 #endif

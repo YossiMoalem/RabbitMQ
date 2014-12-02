@@ -101,26 +101,24 @@ int simpleConsumer::rebind()
 {
     for( auto key : m_subscriptionsList )
     {
-        //// TODO:
-        //doBind(key);
+        doBind(key.first, (DeliveryType)key.second);
     }
     return 0;
 }
-int simpleConsumer::bind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus simpleConsumer::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-    //TODO: 
-  m_subscriptionsList.insert(i_key);
+  m_subscriptionsList.insert(std::pair<std::string, int>(i_key, (int)i_deliveryType) );
   return doBind(i_key, i_deliveryType);
 }
 
-int simpleConsumer::unbind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus simpleConsumer::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  m_subscriptionsList.erase(i_key);
-  return m_pOwner->sendRawMessage( new UnbindMessage (i_key, m_consumerID, i_deliveryType));
+  m_subscriptionsList.erase(std::pair<std::string, int> (i_key, (int)i_deliveryType) );
+  return m_pOwner->sendMessage( new UnbindMessage (i_key, m_consumerID, i_deliveryType));
 }
 
 
-int simpleConsumer::doBind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus simpleConsumer::doBind(const std::string& i_key, DeliveryType i_deliveryType)
 {
-  return m_pOwner->sendRawMessage(new BindMessage(i_key, m_consumerID, i_deliveryType));
+  return m_pOwner->sendMessage(new BindMessage(i_key, m_consumerID, i_deliveryType));
 }

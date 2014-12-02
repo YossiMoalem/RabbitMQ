@@ -32,6 +32,13 @@ enum class DeliveryType
     Multicast
 };
 
+enum class ReturnStatus
+{
+    Ok,
+    ClientDisconnected,
+    ClientSuttingDown
+};
+
 typedef std::function<int (	std::string		o_senderID,
               std::string   o_destination,
 							DeliveryType	o_deliveryType,

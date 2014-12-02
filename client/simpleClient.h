@@ -27,15 +27,15 @@ class simpleClient : public boost::noncopyable
    int start();
    int stop(bool immediate);
 
-   int sendUnicast      (	const std::string& i_message,
+   ReturnStatus sendUnicast      (	const std::string& i_message,
 							const std::string& i_destination,
 							const std::string& i_senderID );
-   int sendMulticast    (const std::string& i_message, const std::string& i_senderID);
+   ReturnStatus sendMulticast    (const std::string& i_message, const std::string& i_senderID);
 
-   int bindToSelf           (const std::string& i_key);
-   int bindToDestination    (const std::string& i_key);
-   int unbindFromSelf       (const std::string& i_key);
-   int unbindFromDestination(const std::string& i_key);
+   ReturnStatus bindToSelf           (const std::string& i_key);
+   ReturnStatus bindToDestination    (const std::string& i_key);
+   ReturnStatus unbindFromSelf       (const std::string& i_key);
+   ReturnStatus unbindFromDestination(const std::string& i_key);
 
  private:
    RabbitClientImpl* m_pRabbitClient;

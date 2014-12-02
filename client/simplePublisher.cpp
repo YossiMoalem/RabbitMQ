@@ -6,7 +6,7 @@ simplePublisher::simplePublisher(const connectionDetails& i_connectionDetails,
     const std::string& i_exchangeName, 
     ExchangeType       i_exchangeType,
     const std::string& i_consumerID,
-    BlockingQueue<RabbitMessageBase*>& i_messageQueueToSend):
+    MessageQueue& i_messageQueueToSend):
   m_rabbitProxy(i_connectionDetails),
   m_consumerID(i_consumerID),
   m_messageQueueToSend(i_messageQueueToSend),
@@ -31,6 +31,8 @@ void simplePublisher::operator()()
         m_exchange->setHeader("Content-encoding", "UTF-8");
         m_exchange->setHeader("Delivery-mode", 1);
 
+        m_messageQueueToSend.setQueueState(MessageQueue::QueueState::QueueOpen);
+
         RabbitMessageBase* pMessage = nullptr;
         //TODO: add normal/immediate stop logic
         try
@@ -46,6 +48,7 @@ void simplePublisher::operator()()
             }
         } catch (AMQPException e) {
             //m_pMessage->ueueToSend.push_front(message); ??
+            m_messageQueueToSend.setQueueState(MessageQueue::QueueState::HighPriorityDataOnly);
             RABBIT_DEBUG ("Publisher:: got exception " << e.getMessage());
 
         }

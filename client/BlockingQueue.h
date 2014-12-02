@@ -9,12 +9,46 @@ template<typename Data>
 class BlockingQueue : public boost::noncopyable
 {
 public:
-    void push(Data const& data)
+    enum class ReturnStatus
+    {
+      Ok,
+      QueueOpenForHigPriorityDataOnly,
+      QueueBlocked
+    };
+
+    enum class QueueState
+    {
+      QueueOpen,
+      HighPriorityDataOnly,
+      QueueBlocked
+    };
+
+    BlockingQueue () : m_queueState(QueueState::QueueOpen) 
+    {}
+
+    void setQueueState( QueueState i_newState )
+    {
+      m_queueState = i_newState;
+    }
+
+    ReturnStatus push(Data const& data, bool highPriority = false ) 
     {
         boost::mutex::scoped_lock lock(m_queueMutex);
-        m_queue.push_back(data);
-        lock.unlock();
-        the_condition_variable.notify_all();
+        if(m_queueState == QueueState::QueueOpen || 
+            ( m_queueState == QueueState::HighPriorityDataOnly && highPriority ) )
+        {
+          m_queue.push_back(data);
+          lock.unlock();
+          the_condition_variable.notify_all();
+          return ReturnStatus::Ok;
+        }
+        if( m_queueState == QueueState::HighPriorityDataOnly )
+        {
+          assert (!highPriority);
+          return ReturnStatus::QueueOpenForHigPriorityDataOnly;
+        }
+        assert (m_queueState == QueueState::QueueBlocked);
+        return ReturnStatus::QueueBlocked;
     }
 
     bool empty() const
@@ -52,6 +86,6 @@ private:
     std::deque<Data> m_queue;
     mutable boost::mutex m_queueMutex;
     boost::condition_variable the_condition_variable;
+    QueueState m_queueState;
 };
-
 #endif

@@ -32,14 +32,19 @@ class RabbitClientImpl : public boost::noncopyable
    int start();
    int stop(bool immediate);
 
-   int sendMessage(const std::string& i_message, 
+   ReturnStatus sendMessage(const std::string& i_message, 
        const std::string& i_destination, 
        const std::string& i_senderID, 
        DeliveryType i_deliveryType);
 
-   int bind(const std::string& i_key, DeliveryType i_deliveryType);
-   int unbind(const std::string& i_key, DeliveryType i_deliveryType);
-   int sendRawMessage (RabbitMessageBase* i_message);
+   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType);
+   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType);
+   ReturnStatus sendMessage(BindMessage*   i_bindMessage);
+   ReturnStatus sendMessage(UnbindMessage* i_unbindMessage);
+   ReturnStatus sendMessage(PostMessage*   i_postBMessage);
+
+ private:
+   ReturnStatus doSendMessage(RabbitMessageBase* i_message, bool highPriority);
 
  private:
    const connectionDetails m_connectionDetails;
@@ -47,7 +52,7 @@ class RabbitClientImpl : public boost::noncopyable
    const std::string m_consumerID;
    CallbackType      m_onMessageCB;
    RabbitMQNotifiableIntf* m_handler;
-   BlockingQueue<RabbitMessageBase*> m_messageQueueToSend;
+   MessageQueue    m_messageQueueToSend;
    simplePublisher m_publisher;
    simpleConsumer m_consumer;
    boost::thread_group m_threads;
