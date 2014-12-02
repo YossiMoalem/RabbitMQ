@@ -57,10 +57,15 @@ void simplePublisher::operator()()
                 pMessage = nullptr;
             }
         } catch (AMQPException e) {
-            //m_pMessage->ueueToSend.push_front(message); ??
             m_messageQueueToSend.setQueueState(MessageQueue::QueueState::HighPriorityDataOnly);
-            RABBIT_DEBUG ("Publisher:: got exception " << e.getMessage());
+            MessageType messageType = pMessage->messageType();
+            if (messageType == MessageType::Bind||
+                    messageType == MessageType::Unbind)
+            {
 
+                m_messageQueueToSend.pushFront(pMessage, true);
+            }
+            RABBIT_DEBUG ("Publisher:: got exception " << e.getMessage());
         }
     }
 } 

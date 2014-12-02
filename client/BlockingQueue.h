@@ -40,13 +40,26 @@ public:
       the_condition_variable.notify_all();
     }
 
+    ReturnStatus pushFront(Data const& data, bool highPriority = false ) 
+    {
+      return doPush (data, highPriority, true);
+    }
     ReturnStatus push(Data const& data, bool highPriority = false ) 
+    {
+      return doPush (data, highPriority, false);
+    }
+    ReturnStatus doPush(Data const& data, bool highPriority, bool forceFirst ) 
     {
         boost::mutex::scoped_lock lock(m_queueMutex);
         if(m_queueState == QueueState::QueueOpen || 
             ( m_queueState == QueueState::HighPriorityDataOnly && highPriority ) )
         {
-          m_queue.push_back(data);
+          if (forceFirst)
+          {
+            m_queue.push_front(data);
+          } else {
+            m_queue.push_back(data);
+          }
           lock.unlock();
           the_condition_variable.notify_all();
           return ReturnStatus::Ok;

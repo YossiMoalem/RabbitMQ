@@ -38,7 +38,6 @@ void simpleConsumer::operator()()
 
         m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
         m_incomingMessages->Declare(m_consumerID); 
-        //TODO: really???
         BindMessage bindMessage(m_routingKey, m_consumerID, DeliveryType::Unicast);
         doBind(&bindMessage);
 
