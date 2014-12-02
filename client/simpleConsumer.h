@@ -12,6 +12,7 @@ class AMQPQueue;
 class AMQPExchange;
 class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
+class BindMessage;
 
 enum class ExchangeType;
 enum class RunStatus;
@@ -37,7 +38,9 @@ class simpleConsumer : boost::noncopyable
  private:
    int onMessageReceive(AMQPMessage* i_message);
    int rebind();
-   ReturnStatus doBind(const std::string& i_key, DeliveryType i_deliveryType);
+   ReturnStatus sendBindMessage(const std::string& i_key, DeliveryType i_deliveryType);
+   RabbitMessageBase* AMQPMessageToRabbitMessage (AMQPMessage* i_message);
+   void doBind (BindMessage* i_message);
 
  private:
    CallbackType                   m_onMessageCB;
