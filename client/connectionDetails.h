@@ -27,11 +27,14 @@ class connectionDetails
                     const std::string& i_password,
                     const std::string& i_host,
                     int port) ;
+
    const std::pair<std::string, int>  getFirstHost();
    const std::pair<std::string, int>  getNextHost();
    bool isLastHost () const;
+   void addHost(const std::string& i_host);
+   void addPort(int port);
 
-   static std::string createConnectionString( const connectionDetails& i_connectionDetails);
+   std::string createConnectionString( );
 
 private:
    connectionDetailsParam m_connectionParams;

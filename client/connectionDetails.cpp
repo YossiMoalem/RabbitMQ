@@ -2,7 +2,6 @@
 
 #include <assert.h>
 
-//TODO: add another ctor, that takes vecs.
 connectionDetailsParam::connectionDetailsParam(
         const std::string& i_userName,
         const std::string& i_password,
@@ -23,6 +22,16 @@ m_connectionParams(i_userName, i_password, i_host, port)
 {
   m_currentHost = m_connectionParams.m_hosts.begin();
   m_currentPort = m_connectionParams.m_ports.begin();
+}
+
+void connectionDetails::addHost(const std::string& i_host)
+{
+    m_connectionParams.m_hosts.push_back(i_host);
+}
+
+void connectionDetails::addPort(int port)
+{
+    m_connectionParams.m_ports.push_back(port);
 }
 
 const std::pair<std::string, int>  connectionDetails::getFirstHost()
@@ -55,16 +64,16 @@ bool connectionDetails::isLastHost () const
       next(m_currentPort) == m_connectionParams.m_ports.end();
 }
 
-std::string connectionDetails::createConnectionString( const connectionDetails& i_connectionDetails)
+std::string connectionDetails::createConnectionString() 
 {
     std::stringstream ss;
-    ss << i_connectionDetails.m_connectionParams.m_userName 
+    ss << m_connectionParams.m_userName 
         << ":" 
-        << i_connectionDetails.m_connectionParams.m_password 
+        << m_connectionParams.m_password 
         << "@" 
-        << *(i_connectionDetails.m_currentHost)
+        << *(m_currentHost)
         << ":" 
-        << *(i_connectionDetails.m_currentPort);
+        << *(m_currentPort);
     return ss.str();
 }
 

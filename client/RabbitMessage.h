@@ -3,8 +3,6 @@
 
 #include "Types.h"
 
-//enum class MessageType;
-//remove
 #include "internalTypes.h"
 /********************************************************************************\
  * RabbitMessageBase
