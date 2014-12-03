@@ -83,7 +83,7 @@ ReturnStatus RabbitClientImpl::doSendMessage(RabbitMessageBase* i_message, bool 
 {
     RABBIT_DEBUG("Client:: Going to push message: " << *i_message);
     MessageQueue::ReturnStatus status = m_messageQueueToSend.push(i_message, highPriority);
-    if (status == MessageQueue::ReturnStatus::QueueOpenForHigPriorityDataOnly)
+    if (status == MessageQueue::ReturnStatus::QueueOpenForAdminMessagesOnly)
     {
         RABBIT_DEBUG("Client:: Message Dropped because publisher is disconnected");
         return ReturnStatus::ClientDisconnected;

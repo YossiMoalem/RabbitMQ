@@ -57,7 +57,7 @@ void simplePublisher::operator()()
                 pMessage = nullptr;
             }
         } catch (AMQPException e) {
-            m_messageQueueToSend.setQueueState(MessageQueue::QueueState::HighPriorityDataOnly);
+            m_messageQueueToSend.setQueueState(MessageQueue::QueueState::AdminOnly);
             MessageType messageType = pMessage->messageType();
             if (messageType == MessageType::Bind||
                     messageType == MessageType::Unbind)
