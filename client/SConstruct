@@ -18,4 +18,4 @@ sources = Split ("""
 
 env.StaticLibrary( "RabbitClient", sources )
 
-env.Program( "RabbitTest", [ "tester.cpp"] )
+#env.Program( "RabbitTest", [ "tester.cpp"] )
