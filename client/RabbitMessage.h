@@ -13,7 +13,7 @@ class RabbitMessageBase
     friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
     RabbitMessageBase (
-            const std::string i_destination,
+            const std::string& i_destination,
             DeliveryType i_deliveryType) :
         m_destination(i_destination),
         m_deliveryType(i_deliveryType)
@@ -21,7 +21,9 @@ class RabbitMessageBase
     virtual ~RabbitMessageBase() {}
 
     RabbitMessageBase( const RabbitMessageBase& ) = delete;
+    RabbitMessageBase( const RabbitMessageBase&& ) = delete;
     RabbitMessageBase& operator= (const RabbitMessageBase& ) = delete;
+    RabbitMessageBase& operator= (const RabbitMessageBase&& ) = delete;
 
     static RabbitMessageBase* deserialize (const std::string& i_serializes);
     std::string serialize () const ;
@@ -45,9 +47,9 @@ class PostMessage : public RabbitMessageBase
 {
     friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
-    PostMessage( const std::string i_text,
-            const std::string i_destination,
-            const std::string i_senderID,
+    PostMessage( const std::string& i_text,
+            const std::string& i_destination,
+            const std::string& i_senderID,
             DeliveryType i_deliveryType) :
         RabbitMessageBase ( i_destination, i_deliveryType),
         m_sender(i_senderID),
@@ -89,8 +91,8 @@ class UnbindMessage : public RabbitMessageBase
     friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
 
-    UnbindMessage( const std::string i_key,
-            const std::string i_destination,
+    UnbindMessage( const std::string& i_key,
+            const std::string& i_destination,
             DeliveryType i_deliveryType) :
         RabbitMessageBase (i_destination, i_deliveryType),
         m_key(i_key)
@@ -114,8 +116,8 @@ class BindMessage : public RabbitMessageBase
 {
     friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
-    BindMessage( const std::string i_key,
-            const std::string i_destination,
+    BindMessage( const std::string& i_key,
+            const std::string& i_destination,
             DeliveryType i_deliveryType) :
         RabbitMessageBase (i_destination, i_deliveryType),
         m_key(i_key)

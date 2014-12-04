@@ -138,7 +138,7 @@ PostMessage* PostMessage::doDeserialize (const std::string& i_serialized)
     getline(i_deserializer, sender);
     getline(i_deserializer, destination);
     int lastTokenPos = i_deserializer.tellg();
-    text = (i_deserializer.str()).substr(lastTokenPos + 1);
+    text = (i_deserializer.str()).substr(lastTokenPos);
     return new PostMessage( text, destination, sender, (DeliveryType)deliveryType);
 }
 
