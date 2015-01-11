@@ -42,7 +42,7 @@ void AMQPQueue::Declare() {
 }
 
 void AMQPQueue::Declare(string name) {
-	this->parms=AMQP_AUTODELETE;
+	this->parms=AMQP_EXCLUSIVE; //TODO: use AMQP_EXCLUSIVE?
 	this->name=name;
 	sendDeclareCommand();
 }

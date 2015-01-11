@@ -8,14 +8,15 @@ env.Append ( LIBS = [ "boost_thread", "RabbitClient", "amqpcpp", "rabbitmq" ] )
 
 sources = Split ("""
     simpleClient.cpp
-    simpleConsumer.cpp 
-    connectionDetails.cpp 
-    rabbitProxy.cpp 
-    simplePublisher.cpp 
+    simpleConsumer.cpp
+    connectionDetails.cpp
+    rabbitProxy.cpp
+    simplePublisher.cpp
     clientImpl.cpp
     RabbitMessage.cpp
     """)
 
 env.StaticLibrary( "RabbitClient", sources )
 
+# thats the tester of rabbit. its isn't building on adam's machine. added to leankit
 #env.Program( "RabbitTest", [ "tester.cpp"] )
