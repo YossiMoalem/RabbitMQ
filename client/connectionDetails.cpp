@@ -67,9 +67,9 @@ bool connectionDetails::isLastHost () const
 std::string connectionDetails::createConnectionString() 
 {
     std::stringstream ss;
-    ss << m_connectionParams.m_userName 
+    ss << m_connectionParams.m_password
         << ":" 
-        << m_connectionParams.m_password 
+        << m_connectionParams.m_userName
         << "@" 
         << *(m_currentHost)
         << ":" 
