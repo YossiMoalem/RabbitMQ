@@ -204,6 +204,7 @@ class AMQPQueue : public AMQPBase  {
 		void sendDeleteCommand();
 		void sendPurgeCommand();
 		void sendBindCommand(const char * exchange, const char * key);
+		void sendBindCommandWithoutReply(const char * exchange, const char * key);
 		void sendUnBindCommand(const char * exchange, const char * key);
 		void sendGetCommand();
 		void sendConsumeCommand();

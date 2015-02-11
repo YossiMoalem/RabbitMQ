@@ -170,7 +170,9 @@ void AMQPQueue::sendPurgeCommand() {
 
 // Bind command /* 50, 20; 3276820 */
 void AMQPQueue::Bind(string name, string key) {
-	sendBindCommand(name.c_str(), key.c_str());
+    // TODO: which one to use?? Yossi.
+    // sendBindCommand(name.c_str(), key.c_str());
+    sendBindCommandWithoutReply(name.c_str(), key.c_str());
 }
 
 void AMQPQueue::sendBindCommand(const char * exchange, const char * key) {
@@ -191,6 +193,23 @@ void AMQPQueue::sendBindCommand(const char * exchange, const char * key) {
 	amqp_rpc_reply_t res = amqp_simple_rpc(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &method_ok, &s);
 
 	AMQPBase::checkReply(&res);
+}
+
+void AMQPQueue::sendBindCommandWithoutReply(const char * exchange, const char * key) {
+	amqp_bytes_t queueByte = amqp_cstring_bytes(name.c_str());
+	amqp_bytes_t exchangeByte = amqp_cstring_bytes(exchange);
+	amqp_bytes_t keyByte = amqp_cstring_bytes(key);
+
+    amqp_queue_bind_t s;
+		s.ticket = 0;
+		s.queue = queueByte;
+		s.exchange = exchangeByte;
+		s.routing_key = keyByte;
+		s.nowait = ( AMQP_NOWAIT & parms ) ? 1:0;
+		s.arguments.num_entries = 0;
+		s.arguments.entries = NULL;
+
+	amqp_send_method(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &s);
 }
 
 
