@@ -16,7 +16,7 @@ int main (int argc, char** argv) {
 
 		AMQPQueue * qu2 = amqp.createQueue("q2");
 		qu2->Declare();
-		qu2->Bind( "hub-exchange", "");
+		qu2->Bind( "hub-exchange", "", true);
 
 		string ss = "message 1 ";
 		/* test very long message

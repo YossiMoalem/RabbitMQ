@@ -167,7 +167,7 @@ class AMQPQueue : public AMQPBase  {
 		void Purge();
 		void Purge(string name);
 
-		void Bind(string exchangeName, string key);
+		void Bind(string exchangeName, string key, bool waitForResponse);
 
 		void unBind(string exchangeName, string key);
 
@@ -203,8 +203,7 @@ class AMQPQueue : public AMQPBase  {
 		void sendDeclareCommand();
 		void sendDeleteCommand();
 		void sendPurgeCommand();
-		void sendBindCommand(const char * exchange, const char * key);
-		void sendBindCommandWithoutReply(const char * exchange, const char * key);
+		void sendBindCommand(const char * exchange, const char * key, bool waitForResponse );
 		void sendUnBindCommand(const char * exchange, const char * key);
 		void sendGetCommand();
 		void sendConsumeCommand();

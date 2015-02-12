@@ -39,7 +39,7 @@ int main () {
         AMQPQueue * qu2 = amqp.createQueue("q2");
 
         qu2->Declare();
-        qu2->Bind( "hub-exchange", "");
+        qu2->Bind( "hub-exchange", "", true);
 
         qu2->setConsumerTag("tag_123");
         qu2->addEvent(AMQP_MESSAGE, onMessage );

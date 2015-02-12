@@ -169,13 +169,11 @@ void AMQPQueue::sendPurgeCommand() {
 }
 
 // Bind command /* 50, 20; 3276820 */
-void AMQPQueue::Bind(string name, string key) {
-    // TODO: which one to use?? Yossi.
-    // sendBindCommand(name.c_str(), key.c_str());
-    sendBindCommandWithoutReply(name.c_str(), key.c_str());
+void AMQPQueue::Bind(string name, string key, bool waitForResponse) {
+     sendBindCommand(name.c_str(), key.c_str(), waitForResponse);
 }
 
-void AMQPQueue::sendBindCommand(const char * exchange, const char * key) {
+void AMQPQueue::sendBindCommand(const char * exchange, const char * key, bool waitForResponse ) {
 	amqp_bytes_t queueByte = amqp_cstring_bytes(name.c_str());
 	amqp_bytes_t exchangeByte = amqp_cstring_bytes(exchange);
 	amqp_bytes_t keyByte = amqp_cstring_bytes(key);
@@ -185,33 +183,21 @@ void AMQPQueue::sendBindCommand(const char * exchange, const char * key) {
 		s.queue = queueByte;
 		s.exchange = exchangeByte;
 		s.routing_key = keyByte;
-		s.nowait = ( AMQP_NOWAIT & parms ) ? 1:0;
 		s.arguments.num_entries = 0;
 		s.arguments.entries = NULL;
 
-	amqp_method_number_t method_ok = AMQP_QUEUE_BIND_OK_METHOD;
-	amqp_rpc_reply_t res = amqp_simple_rpc(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &method_ok, &s);
+	if( waitForResponse )
+	{
+		s.nowait = 0;
+		amqp_method_number_t method_ok = AMQP_QUEUE_BIND_OK_METHOD;
+		amqp_rpc_reply_t res = amqp_simple_rpc(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &method_ok, &s);
 
-	AMQPBase::checkReply(&res);
+		AMQPBase::checkReply(&res);
+	} else {
+		s.nowait = 1;
+		amqp_send_method(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &s);
+	}
 }
-
-void AMQPQueue::sendBindCommandWithoutReply(const char * exchange, const char * key) {
-	amqp_bytes_t queueByte = amqp_cstring_bytes(name.c_str());
-	amqp_bytes_t exchangeByte = amqp_cstring_bytes(exchange);
-	amqp_bytes_t keyByte = amqp_cstring_bytes(key);
-
-    amqp_queue_bind_t s;
-		s.ticket = 0;
-		s.queue = queueByte;
-		s.exchange = exchangeByte;
-		s.routing_key = keyByte;
-		s.nowait = ( AMQP_NOWAIT & parms ) ? 1:0;
-		s.arguments.num_entries = 0;
-		s.arguments.entries = NULL;
-
-	amqp_send_method(*cnn, channelNum, AMQP_QUEUE_BIND_METHOD, &s);
-}
-
 
 // UnBind command /* 50, 50; 3276850 */
 void AMQPQueue::unBind(string name, string key) {

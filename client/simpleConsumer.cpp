@@ -65,7 +65,7 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
     int status = 0;
     if (pMessage != nullptr)
     {
-        RABBIT_DEBUG("Consuner:: Got message: " <<*pMessage );
+        RABBIT_DEBUG("Consumer:: Got message: " <<*pMessage );
         switch (pMessage->messageType())
         {
             case MessageType::Post:
@@ -113,7 +113,7 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
 
 void simpleConsumer::doBind(BindMessage* i_pMessage)
 {
-    m_incomingMessages->Bind( m_exchangeName, i_pMessage->bindKey());
+    m_incomingMessages->Bind( m_exchangeName, i_pMessage->bindKey(), false );
 }
 
 RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage (AMQPMessage* i_message)
@@ -123,6 +123,10 @@ RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage (AMQPMessage* i_me
     std::string serializedMessage;
     serializedMessage.assign(msg, messageLength);
     RabbitMessageBase* pMessage = RabbitMessageBase::deserialize(serializedMessage);
+    if( pMessage == nullptr )
+    {
+      RABBIT_DEBUG("Consumer::Failed to deserialize message %s into RabbitMessage" << *msg )
+    }
     return pMessage;
 }
 
