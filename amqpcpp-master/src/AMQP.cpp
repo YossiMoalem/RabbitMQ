@@ -163,7 +163,8 @@ void AMQP::sockConnect() {
 }
 
 void AMQP::login() {
-	amqp_rpc_reply_t res = amqp_login(cnn, vhost.c_str(), 0, FRAME_MAX, 0, AMQP_SASL_METHOD_PLAIN, user.c_str(), password.c_str());
+	unsigned int heartbeat_seconds_interval = 5;
+	amqp_rpc_reply_t res = amqp_login(cnn, vhost.c_str(), 0, FRAME_MAX, heartbeat_seconds_interval, AMQP_SASL_METHOD_PLAIN, user.c_str(), password.c_str());
 	if ( res.reply_type == AMQP_RESPONSE_NORMAL)
 		return;
 
