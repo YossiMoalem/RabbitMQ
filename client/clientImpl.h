@@ -2,7 +2,7 @@
 #define CLIENT_IMPL_H
 
 #include <boost/noncopyable.hpp>
-#include <boost/thread/thread.hpp>
+#include <thread>
 #include <string>
 
 #include "connectionDetails.h"
@@ -55,8 +55,8 @@ class RabbitClientImpl : public boost::noncopyable
    MessageQueue             m_messageQueueToSend;
    simplePublisher          m_publisher;
    simpleConsumer           m_consumer;
-   boost::thread            m_consumerThread;
-   boost::thread            m_publisherThread;
+   std::thread            m_consumerThread;
+   std::thread            m_publisherThread;
 };
 
 

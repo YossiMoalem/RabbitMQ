@@ -34,8 +34,8 @@ RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails,
 
 int RabbitClientImpl::start()
 {
-    m_publisherThread = boost::thread( boost::ref(m_publisher) );
-    m_consumerThread = boost::thread( boost::ref(m_consumer) );
+    m_publisherThread = std::thread( std::bind( &simplePublisher::operator(), &m_publisher ) ); // boost::ref(m_publisher) );
+    m_consumerThread = std::thread( std::bind( &simpleConsumer::operator(), &m_consumer ) );//boost::ref(m_consumer) );
     return 0;
 }
 
@@ -44,6 +44,7 @@ int RabbitClientImpl::stop(bool immediate)
     m_publisher.stop(immediate);
     m_consumer.stop(immediate);
     m_publisherThread.join();
+#if 0
     if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
     {
         //The consumer it probably stuck on consume(). Till I'll be able to interupt it
@@ -55,6 +56,7 @@ int RabbitClientImpl::stop(bool immediate)
             ::pthread_kill(m_consumerThread.native_handle(), 9);
         }
     }
+#endif
     return 0;
 }
 
