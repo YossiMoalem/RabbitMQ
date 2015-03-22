@@ -6,9 +6,6 @@
 #include "basicSocket.h"
 
 #define RABBIT_PORT 5672
-#define RABBIT_IP1 "184.73.205.221"
-#define RABBIT_IP2 "184.169.148.90"
-
 
 class MyConnectionHandler : public AMQP::ConnectionHandler
 {
