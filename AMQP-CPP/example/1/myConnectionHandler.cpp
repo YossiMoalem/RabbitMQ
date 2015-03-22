@@ -54,7 +54,11 @@ void MyConnectionHandler::onData(AMQP::Connection *connection, const char *data,
 
 void MyConnectionHandler::onError(AMQP::Connection *connection, const char *message)
 {
-    std::cout <<"Error: Error: "<< message <<std::endl;
+    //todo: this function is being called when we get a formal close connection from the broker
+    //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
+    //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
+    //when parsing the formal error message instead of calling reportError (process method in connectioncloseframe.h)
+    std::cout <<"Error: "<< message <<std::endl;
 }
 
 void MyConnectionHandler::onClosed(AMQP::Connection *connection) 
@@ -71,7 +75,7 @@ void MyConnectionHandler::login()
         std::cout << "connected" << std::endl;
         // create amqp connection, and a new channel 
         // Sends protocol header: "AMQP\0[majorVer][minorVer][rev]
-        _connection = new AMQP::Connection(this, AMQP::Login("yossi", "yossipassword"), std::string( "/" ) );
+        _connection = new AMQP::Connection(this, AMQP::Login("adam", "adampassword"), std::string( "/" ) );
 
         while( !_connected )
         {
@@ -141,6 +145,8 @@ void MyConnectionHandler::publish( const char* routingKey, const char* message )
 
 void MyConnectionHandler::handleResponse( )
 {
+    //todo: if we close connection from broker with consumer, size will be -1.
+    //todo: size_t has incorrect type
     const int buffsize = 1024;
     char buff[buffsize];
     size_t size = _socket.read( buff, buffsize );
