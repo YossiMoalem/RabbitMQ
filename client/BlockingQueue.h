@@ -2,8 +2,10 @@
 #define BLOCKING_QUEUE
 
 #include <deque>
-#include <boost/thread.hpp>
+#include <condition_variable>
+#include <mutex>
 #include <boost/noncopyable.hpp>
+#include <assert.h>
 
 template<typename Data>
 class BlockingQueue : public boost::noncopyable
@@ -48,8 +50,8 @@ class BlockingQueue : public boost::noncopyable
 
  private:
    std::deque<Data>             m_queue;
-   mutable boost::mutex         m_queueMutex;
-   boost::condition_variable    m_queueEmptyCondition;
+   mutable std::mutex           m_queueMutex;
+   std::condition_variable      m_queueEmptyCondition;
    QueueState                   m_queueState;
    RunStatus                    m_runStatus;
 };
@@ -57,7 +59,7 @@ class BlockingQueue : public boost::noncopyable
     template<typename Data>
 void BlockingQueue<Data>::pop(Data& o_data)
 {
-    boost::mutex::scoped_lock lock(m_queueMutex);
+    std::unique_lock< std::mutex > lock(m_queueMutex);
     while( m_queue.empty() && m_runStatus == RunStatus::Continue )
     {
         m_queueEmptyCondition.wait(lock);
@@ -82,7 +84,7 @@ void BlockingQueue<Data>::pop(Data& o_data)
     template<typename Data>
 bool BlockingQueue<Data>::try_pop(Data& o_data)
 {
-    boost::mutex::scoped_lock lock(m_queueMutex);
+    std::unique_lock< std::mutex > lock(m_queueMutex);
     if(m_queue.empty())
     {
         return false;
@@ -96,7 +98,7 @@ bool BlockingQueue<Data>::try_pop(Data& o_data)
     template<typename Data>
 void BlockingQueue<Data>::terminate (bool immediate)
 {
-    boost::mutex::scoped_lock lock(m_queueMutex);
+    std::unique_lock< std::mutex > lock(m_queueMutex);
     m_queueState = QueueState::QueueBlocked;
     m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
     m_queueEmptyCondition.notify_all();
@@ -105,7 +107,7 @@ void BlockingQueue<Data>::terminate (bool immediate)
 template<typename Data>
 bool BlockingQueue<Data>::empty() const
 {
-    boost::mutex::scoped_lock lock(m_queueMutex);
+    std::unique_lock< std::mutex > lock(m_queueMutex);
     return m_queue.empty();
 }
 
@@ -113,7 +115,7 @@ bool BlockingQueue<Data>::empty() const
 template<typename Data>
 auto BlockingQueue<Data>::doPush(Data const& i_data, bool adminMessage, bool forceFirst ) -> ReturnStatus
 {
-    boost::mutex::scoped_lock lock(m_queueMutex);
+    std::unique_lock< std::mutex > lock(m_queueMutex);
     if(m_queueState == QueueState::QueueOpen ||
             ( m_queueState == QueueState::AdminOnly && adminMessage) )
     {
