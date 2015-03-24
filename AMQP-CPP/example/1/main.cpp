@@ -1,8 +1,8 @@
 #include "myConnectionHandler.h"
 
 #define EXC "exchange_name"
-#define KEY1 "YossiKey"
-#define QUEUE "YossiQueue"
+#define KEY1 "AdamKey"
+#define QUEUE "AdamQueue"
 
 void runConsumer()
 {
@@ -13,6 +13,7 @@ void runConsumer()
     connectionHandler.bindQueueToExchange( KEY1 );
     while(1)
     {
+        sleep( 1 );
         connectionHandler.receiveMessage();
     }
 }

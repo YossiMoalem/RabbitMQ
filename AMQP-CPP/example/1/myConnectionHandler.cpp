@@ -54,7 +54,7 @@ void MyConnectionHandler::onData(AMQP::Connection *connection, const char *data,
 
 void MyConnectionHandler::onError(AMQP::Connection *connection, const char *message)
 {
-    //todo: this function is being called when we get a formal close connection from the broker
+    //todo: this function is being called when we get a formal close connection from the broker or when formally closing broker.
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
     //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
     //when parsing the formal error message instead of calling reportError (process method in connectioncloseframe.h)
