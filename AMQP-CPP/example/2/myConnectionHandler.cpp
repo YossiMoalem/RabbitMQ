@@ -1,13 +1,13 @@
 #include "myConnectionHandler.h"
+#include "AmqpConnectionDetails.h"
 #include <amqpcpp.h>
 
 #include <iostream> 
 #include <memory>
 
-MyConnectionHandler::MyConnectionHandler( const ConnectionDetails & connectionParams, CB onMsgReceivedCB ) :
+MyConnectionHandler::MyConnectionHandler( CB onMsgReceivedCB ) :
     _connection( nullptr ),
     _channel( nullptr ),
-    _connectionDetails( connectionParams ),
     _onMsgReceivedBC( onMsgReceivedCB )
 { }
 
@@ -56,17 +56,16 @@ void MyConnectionHandler::onClosed(AMQP::Connection *connection)
     std::cout <<"Info: Connection Closed"<< std::endl;
 }
 
-bool MyConnectionHandler::login()
+bool MyConnectionHandler::login( const AmqpConnectionDetails & connectionParams )
 {
-    ConnectionDetails::HostConnectionParams connectionParams = _connectionDetails.getFirstHost();
-    if( ! _socket.connect(connectionParams._host, connectionParams._port ) )
+    if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
     } else {
         std::cout << "connected" << std::endl;
         // create amqp connection, and a new channel 
         // Sends protocol header: "AMQP\0[majorVer][minorVer][rev]
-        _connection = new AMQP::Connection(this, AMQP::Login(connectionParams._userName, connectionParams._password ), std::string( "/" ) );
+        _connection = new AMQP::Connection(this, AMQP::Login( connectionParams._userName, connectionParams._password ), std::string( "/" ) );
 
         while( !_connected )
         {

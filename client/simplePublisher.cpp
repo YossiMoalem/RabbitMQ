@@ -1,5 +1,4 @@
 #include "simplePublisher.h"
-#include "ConnectionDetails.h"
 #include "simpleClient.h" //Remove, for ExchangeTypeStr
 
 simplePublisher::simplePublisher(const ConnectionDetails& i_connectionDetails, 
@@ -7,7 +6,8 @@ simplePublisher::simplePublisher(const ConnectionDetails& i_connectionDetails,
     ExchangeType       i_exchangeType,
     const std::string& i_consumerID,
     MessageQueue& i_messageQueueToSend):
-    _connH( i_connectionDetails, [this] (const AMQP::Message & i_message) { return 0; } ),
+  _connectionDetails( i_connectionDetails ),
+  _connH( [this] (const AMQP::Message & i_message) { return 0; } ),
   m_consumerID(i_consumerID),
   m_messageQueueToSend(i_messageQueueToSend),
   m_runStatus(RunStatus::Continue),
@@ -20,7 +20,7 @@ void simplePublisher::operator()()
     RABBIT_DEBUG ("Publisher:: Publisher started ");
     while (1)
     {
-        if ( _connH.login() == false )
+        if ( _connH.login( _connectionDetails.getFirstHost() ) == false )
         {
             RABBIT_DEBUG("Publisher:: Publisher failed to (re)connect. Exiting. ");
             return;

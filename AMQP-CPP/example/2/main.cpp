@@ -1,5 +1,5 @@
 #include "myConnectionHandler.h"
-#include "ConnectionDetails.h"
+#include "AmqpConnectionDetails.h"
 
 #define EXC "exchange_name"
 #define KEY1 "YossiKey"
@@ -14,11 +14,11 @@
 
 void runConsumer()
 {
-    ConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-    MyConnectionHandler connectionHandler( connectionDetails, [] ( const AMQP::Message & message ) {
+    AmqpConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+    MyConnectionHandler connectionHandler( [] ( const AMQP::Message & message ) {
             std::cout <<"Received: " << message.message() << std::endl ;
             return 0; } );
-    if( connectionHandler.login() )
+    if( connectionHandler.login( connectionDetails ) )
     {
         connectionHandler.declareExchange( EXC );
         connectionHandler.declareQueue( QUEUE );
@@ -32,9 +32,9 @@ void runConsumer()
 
 void runProducer()
 {
-    ConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
-    MyConnectionHandler connectionHandler( connectionDetails, nullptr );
-    connectionHandler.login();
+    AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
+    MyConnectionHandler connectionHandler( nullptr );
+    connectionHandler.login( connectionDetails );
     connectionHandler.declareExchange( EXC );
     while(1)
     {

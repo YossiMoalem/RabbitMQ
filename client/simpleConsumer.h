@@ -5,9 +5,10 @@
 #include <boost/functional/hash.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "internalTypes.h"
-
 #include <myConnectionHandler.h>
+
+#include "internalTypes.h"
+#include "ConnectionDetails.h"
 namespace AMQP {
 class Message;
 }
@@ -15,7 +16,6 @@ class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
 class BindMessage;
 class UnbindMessage;
-class ConnectionDetails;
 
 enum class ExchangeType;
 enum class RunStatus;
@@ -47,6 +47,7 @@ class simpleConsumer : boost::noncopyable
    void doUnbind (UnbindMessage* i_message);
 
  private:
+   ConnectionDetails            _connectionDetails;
    MyConnectionHandler          _connH;
    CallbackType                   m_onMessageCB;
    RabbitMQNotifiableIntf*        m_handler;

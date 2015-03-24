@@ -8,6 +8,7 @@ env.Append( LIBS = [  "RabbitClientL2", "amqpcpp" ] )
 env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
 
 sources = Split ("""
+    ConnectionDetails.cpp
     simpleClient.cpp
     simpleConsumer.cpp
     simplePublisher.cpp

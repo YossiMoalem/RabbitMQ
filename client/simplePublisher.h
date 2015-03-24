@@ -6,9 +6,9 @@
 #include "RabbitMessage.h"
 #include "BlockingQueue.h"
 #include <myConnectionHandler.h>
+#include "ConnectionDetails.h"
 
 enum class ExchangeType;
-class ConnectionDetails;
 
 class simplePublisher : boost::noncopyable
 {
@@ -24,6 +24,7 @@ class simplePublisher : boost::noncopyable
    virtual void stop(bool immediate);
 
  private:
+   ConnectionDetails            _connectionDetails;
    MyConnectionHandler          _connH;
    const std::string  m_consumerID;
    MessageQueue&      m_messageQueueToSend;

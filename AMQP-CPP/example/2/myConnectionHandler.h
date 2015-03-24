@@ -3,22 +3,21 @@
 
 #include <amqpcpp.h>
 
-#include "ConnectionDetails.h"
 #include "basicSocket.h"
 
 
-class ConnectionDetails;
+class AmqpConnectionDetails;
 
 typedef std::function<int( const AMQP::Message& )> CB;
 
 class MyConnectionHandler : public AMQP::ConnectionHandler
 {
  public:
-   MyConnectionHandler( const ConnectionDetails & connectionParams, CB onMsgReceivedCB );
+   MyConnectionHandler( CB onMsgReceivedCB );
    virtual ~MyConnectionHandler();
 
 
-   bool login();
+   bool login( const AmqpConnectionDetails & connectionParams );
 
    void declareQueue( const char * queueName );
 
@@ -53,7 +52,6 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    bool                 _channelReady = false;
    std::string          _queueName;
    std::string          _exchangeName;
-    ConnectionDetails _connectionDetails;
    CB                   _onMsgReceivedBC;
 
    std::string          _routingKey;

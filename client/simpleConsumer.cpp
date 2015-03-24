@@ -10,8 +10,9 @@ simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails,
         CallbackType        i_onMessageCB,
         RabbitMQNotifiableIntf* i_handler,
         RabbitClientImpl* i_pOwner ):
-    _connH( i_connectionDetails, [this] (const AMQP::Message & i_message) { return this->onMessageReceive ( &i_message ); } ),
-    m_onMessageCB(i_onMessageCB),
+    _connectionDetails( i_connectionDetails ),
+    _connH( [this] (const AMQP::Message & i_message) { return this->onMessageReceive ( &i_message ); } ),
+    m_onMessageCB( i_onMessageCB ),
     m_handler(i_handler),
     m_consumerID(i_consumerID),
     m_routingKey(i_consumerID),
@@ -26,7 +27,7 @@ void simpleConsumer::operator()()
     RABBIT_DEBUG ("Consumer:: Consumer started ");
     while (1)
     {
-        if ( _connH.login() == false )
+        if ( _connH.login( _connectionDetails.getFirstHost() ) == false )
         {
             RABBIT_DEBUG("Consumer:: Consumer failed to (re)connect. Exiting. ");
             return;
