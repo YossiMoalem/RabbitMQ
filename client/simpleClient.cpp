@@ -1,7 +1,7 @@
 #include "simpleClient.h"
 #include "clientImpl.h"
 
-simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
+simpleClient::simpleClient(const ConnectionDetails & i_connectionDetails, 
     const std::string& i_exchangeName, 
     const std::string& i_consumerID,
     ExchangeType       i_exchangeType,
@@ -13,7 +13,7 @@ simpleClient::simpleClient(const connectionDetails& i_connectionDetails,
         i_handler))
 {}
 
-simpleClient::simpleClient(const connectionDetails& i_connectionDetails, 
+simpleClient::simpleClient(const ConnectionDetails & i_connectionDetails, 
     const std::string& i_exchangeName, 
     const std::string& i_consumerID,
     ExchangeType       i_exchangeType,

@@ -1,10 +1,17 @@
 #include "simpleClient.h"
-#include <boost/thread.hpp>
 
 #include <sys/time.h>
+#include <iostream>
+#include <unistd.h>
+#include <thread>
 
 #define MY_NAME "USR1"
 #define OTHER_NAME "Kuku"
+#define RABBIT_IP1 "184.169.148.90"
+#define RABBIT_PORT 5672
+#define USER "yossi"
+#define PASSWORD "yossipassword"
+
 static const unsigned int timeToConnect = 2;
 static const unsigned int timeToBindUnbind = 3;
 static const unsigned int timeToFlushAllMessages = 4;
@@ -18,7 +25,7 @@ class BindTester
 
    int operator ()()
    {
-       connectionDetails cnd("hub", "hubpassword", "test.mb.hubs.liveu.tv", 5672);
+     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        simpleClient client (cnd, "EXC1", MY_NAME, ExchangeType::Direct, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
                std::cout <<"Free CB:: Received: "<<message 
                         <<" From : "<< o_sender << std::endl;
@@ -27,7 +34,7 @@ class BindTester
        client.start();
        sleep (timeToConnect);
        test(client);
-       client.stop(false);
+       //client.stop(false);
        return 0;
    }
 
@@ -61,6 +68,7 @@ class BindTester
        sleep (timeToBindUnbind);
        client.sendMulticast(std::string("mamamia"), OTHER_NAME );
        sleep (timeToFlushAllMessages);
+
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester:: + unbind from the Non relevant queue ");
        RABBIT_DEBUG ("Tester:: Going to send Unbind command");
@@ -85,7 +93,6 @@ class BindTester
        sleep (timeToBindUnbind);
        client.sendUnicast(std::string("Kalamari"), OTHER_NAME, MY_NAME);
        sleep (timeToFlushAllMessages);
-
        return 0;
    }
 };
@@ -107,7 +114,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
    { }
    int operator ()()
    {
-       connectionDetails cnd("hub", "hubpassword", "test.mb.hubs.liveu.tv", 5672);
+     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        simpleClient client (cnd, "EXC1", MY_NAME, ExchangeType::Direct, this);
        client.start();
        sleep(timeToConnect);
@@ -155,7 +162,7 @@ class RepeatedBindTester
 
    int operator ()()
    {
-       connectionDetails cnd("hub", "hubpassword", "test.mb.hubs.liveu.tv", 5672);
+     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        simpleClient client (cnd, "EXC1", MY_NAME, ExchangeType::Topic, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
@@ -178,7 +185,7 @@ class ContinousSendTester
    int operator ()()
    {
        std::string myID ("MyId");
-       connectionDetails cnd("hub", "hubpassword", "test.mb.hubs.liveu.tv", 5672);
+     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        simpleClient client (cnd, "EXC1", MY_NAME, ExchangeType::Topic, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
@@ -214,7 +221,7 @@ int main ()
   //MeasureTester tester;
   //RepeatedBindTester tester;
   //ContinousSendTester tester;
-  boost::thread testerThread(tester);
+  std::thread testerThread( std::bind( &BindTester::operator(), &tester ) );
   RABBIT_DEBUG ("Tester:: Test finished");
   testerThread.join();
 }

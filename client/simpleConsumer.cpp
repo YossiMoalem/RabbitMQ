@@ -1,23 +1,21 @@
 #include "simpleConsumer.h"
 #include "clientImpl.h"
 #include "simpleClient.h"
+#include "RabbitMessage.h"
 
-#include <AMQPcpp.h>
-
-simpleConsumer::simpleConsumer(const connectionDetails& i_connectionDetails, 
+simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails, 
         const std::string&  i_exchangeName, 
         ExchangeType        i_exchangeType,
         const std::string&  i_consumerID,
         CallbackType        i_onMessageCB,
         RabbitMQNotifiableIntf* i_handler,
         RabbitClientImpl* i_pOwner ):
+    _connH( i_connectionDetails, [this] (const AMQP::Message & i_message) { return this->onMessageReceive ( &i_message ); } ),
     m_onMessageCB(i_onMessageCB),
     m_handler(i_handler),
-    m_rabbitProxy(i_connectionDetails),
     m_consumerID(i_consumerID),
     m_routingKey(i_consumerID),
     m_runStatus(RunStatus::Continue),
-    m_exchange(NULL),
     m_exchangeName(i_exchangeName),
     m_exchageType(i_exchangeType),
     m_pOwner(i_pOwner)
@@ -28,33 +26,29 @@ void simpleConsumer::operator()()
     RABBIT_DEBUG ("Consumer:: Consumer started ");
     while (1)
     {
-        if (m_rabbitProxy.init() == false )
+        if ( _connH.login() == false )
         {
             RABBIT_DEBUG("Consumer:: Consumer failed to (re)connect. Exiting. ");
             return;
         }
-        m_exchange = m_rabbitProxy.m_connectionHolder->createExchange(m_exchangeName);
-        m_exchange->Declare(m_exchangeName, ExchangeTypeStr[ (int)m_exchageType ] );
-
-        m_incomingMessages = m_rabbitProxy.m_connectionHolder->createQueue(m_consumerID); 
-        m_incomingMessages->Declare(m_consumerID); 
+        _connH.declareExchange(m_exchangeName.c_str() /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
+        _connH.declareQueue( m_consumerID.c_str() /*m_consumerID */); 
         BindMessage bindMessage(m_routingKey, m_consumerID, DeliveryType::Unicast);
         doBind(&bindMessage);
 
-        m_incomingMessages->addEvent(AMQP_MESSAGE, [this] (AMQPMessage* i_message) { return this->onMessageReceive (i_message); } );
-        //          m_incomingMessages->addEvent(AMQP_CANCEL, m_handler->onCancel );
         rebind();
-        m_incomingMessages->Consume(AMQP_NOACK);
+        while(1)
+          _connH.receiveMessage( /*AMQP_NOACK */);
     }
 } 
 
 void simpleConsumer::stop(bool immediate)
 {
     m_runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
-    m_rabbitProxy.stop();
+    //m_rabbitProxy.stop();
 }
 
-int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
+int simpleConsumer::onMessageReceive(const AMQP::Message * i_message)
 {
     if (m_runStatus == RunStatus::StopImmediate)
     {
@@ -86,14 +80,16 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
             case MessageType::Bind:
                 {
                     BindMessage* pBindMessage = static_cast<BindMessage*>(pMessage);
-                    assert (i_message->getQueue() == m_incomingMessages);
+                    //assert (i_message->getQueue() == m_incomingMessages);
                     doBind(pBindMessage);
                 }
                 break;
             case MessageType::Unbind:
                 {
                     UnbindMessage* pUnbindMessage = static_cast<UnbindMessage*>(pMessage);
-                    i_message->getQueue()->unBind( m_exchangeName, pUnbindMessage->unbindKey());
+                    //TODO: Important
+                    //i_message->getQueue()->unBind( m_exchangeName, pUnbindMessage->unbindKey());
+                    doUnbind( pUnbindMessage );
                 }
                 break;
             default:
@@ -113,19 +109,23 @@ int simpleConsumer::onMessageReceive(AMQPMessage* i_message)
 
 void simpleConsumer::doBind(BindMessage* i_pMessage)
 {
-    m_incomingMessages->Bind( m_exchangeName, i_pMessage->bindKey(), false );
+    _connH.bindQueueToExchange( i_pMessage->bindKey().c_str() );
 }
 
-RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage (AMQPMessage* i_message)
+void simpleConsumer::doUnbind(UnbindMessage* i_pMessage)
 {
-    uint32_t messageLength = 0;
-    const char * msg = i_message->getMessage(&messageLength);
+    _connH.unbindQueueToExchange( i_pMessage->unbindKey().c_str() );
+}
+
+RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage ( const AMQP::Message* i_message)
+{
+    std::string msg = i_message->message();
     std::string serializedMessage;
-    serializedMessage.assign(msg, messageLength);
+    serializedMessage.assign( msg );
     RabbitMessageBase* pMessage = RabbitMessageBase::deserialize(serializedMessage);
     if( pMessage == nullptr )
     {
-      RABBIT_DEBUG("Consumer::Failed to deserialize message %s into RabbitMessage" << *msg )
+      RABBIT_DEBUG("Consumer::Failed to deserialize message %s into RabbitMessage" << msg.c_str() )
     }
     return pMessage;
 }

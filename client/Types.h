@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <functional>
+#include <sstream> 
 
 //This is here so that tester can use it...
 #define RABBIT_DEBUG(MSG) do{\

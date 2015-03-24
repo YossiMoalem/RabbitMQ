@@ -3,16 +3,19 @@
 
 #include <unordered_set>
 #include <boost/functional/hash.hpp>
+#include <boost/noncopyable.hpp>
 
-#include "rabbitProxy.h"
 #include "internalTypes.h"
 
-class AMQPMessage;
-class AMQPQueue;
-class AMQPExchange;
+#include <myConnectionHandler.h>
+namespace AMQP {
+class Message;
+}
 class RabbitClientImpl;
 class RabbitMQNotifiableIntf;
 class BindMessage;
+class UnbindMessage;
+class ConnectionDetails;
 
 enum class ExchangeType;
 enum class RunStatus;
@@ -21,7 +24,7 @@ enum class DeliveryType;
 class simpleConsumer : boost::noncopyable
 {
  public:
-   simpleConsumer( const connectionDetails& i_connectionDetails, 
+   simpleConsumer( const ConnectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
        ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
@@ -36,23 +39,22 @@ class simpleConsumer : boost::noncopyable
    ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType );
 
  private:
-   int onMessageReceive(AMQPMessage* i_message);
+   int onMessageReceive( const AMQP::Message * i_message);
    int rebind();
    ReturnStatus sendBindMessage(const std::string& i_key, DeliveryType i_deliveryType);
-   RabbitMessageBase* AMQPMessageToRabbitMessage (AMQPMessage* i_message);
+   RabbitMessageBase* AMQPMessageToRabbitMessage ( const AMQP::Message *  i_message);
    void doBind (BindMessage* i_message);
+   void doUnbind (UnbindMessage* i_message);
 
  private:
+   MyConnectionHandler          _connH;
    CallbackType                   m_onMessageCB;
    RabbitMQNotifiableIntf*        m_handler;
-   RabbitProxy                    m_rabbitProxy;
    const std::string              m_consumerID;
-   AMQPQueue*                     m_incomingMessages;
    const std::string              m_routingKey;
    RunStatus                  m_runStatus;
-   AMQPExchange*                  m_exchange ;
    const std::string              m_exchangeName;
-  ExchangeType                    m_exchageType;
+   ExchangeType                    m_exchageType;
    RabbitClientImpl*              m_pOwner;
    std::unordered_set<
        std::pair <std::string, int>, 

@@ -2,9 +2,7 @@
 #include <boost/ref.hpp>
 #include <signal.h>//for pthread kill
 
-#include <AMQPcpp.h>
-
-RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails, 
+RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         ExchangeType       i_exchangeType,
@@ -18,7 +16,7 @@ RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails,
     m_consumer(m_connectionDetails, m_exchangeName, i_exchangeType, m_consumerID, m_onMessageCB, m_handler, this)
 {}
 
-RabbitClientImpl::RabbitClientImpl(const connectionDetails& i_connectionDetails, 
+RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         ExchangeType       i_exchangeType,
@@ -44,6 +42,7 @@ int RabbitClientImpl::stop(bool immediate)
     m_publisher.stop(immediate);
     m_consumer.stop(immediate);
     m_publisherThread.join();
+    m_consumerThread.join();
 #if 0
     if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
     {

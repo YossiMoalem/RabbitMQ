@@ -5,20 +5,20 @@
 #include <string>
 
 #include "Types.h"
-#include "connectionDetails.h"
+#include "ConnectionDetails.h"
 
 class RabbitClientImpl;
 
 class simpleClient : public boost::noncopyable
 {
  public:
-   simpleClient(const connectionDetails& i_connectionDetails, 
+   simpleClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
            RabbitMQNotifiableIntf* i_handler);
 
-   simpleClient(const connectionDetails& i_connectionDetails, 
+   simpleClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,

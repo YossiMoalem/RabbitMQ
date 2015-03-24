@@ -4,17 +4,17 @@
 #include <string>
 
 #include "RabbitMessage.h"
-#include "connectionDetails.h"
 #include "rabbitProxy.h"
 #include "BlockingQueue.h"
+#include <myConnectionHandler.h>
 
-class AMQPExchange;
 enum class ExchangeType;
+class ConnectionDetails;
 
 class simplePublisher : boost::noncopyable
 {
  public:
-   simplePublisher( const connectionDetails& i_connectionDetails, 
+   simplePublisher( const ConnectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
        ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
@@ -25,11 +25,10 @@ class simplePublisher : boost::noncopyable
    virtual void stop(bool immediate);
 
  private:
-   RabbitProxy        m_rabbitProxy;
+   MyConnectionHandler          _connH;
    const std::string  m_consumerID;
    MessageQueue&      m_messageQueueToSend;
    RunStatus          m_runStatus;
-   AMQPExchange*      m_exchange ;
    const std::string  m_exchangeName;
    ExchangeType       m_exchageType;
 };

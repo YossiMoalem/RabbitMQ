@@ -5,25 +5,20 @@
 #include <thread>
 #include <string>
 
-#include "connectionDetails.h"
+#include "ConnectionDetails.h"
 #include "simpleConsumer.h"
 #include "simplePublisher.h"
-
-class AMQPMessage;
-class AMQPExchange;
-class AMQP;
-class AMQPQueue;
 
 class RabbitClientImpl : public boost::noncopyable
 {
  public:
-   RabbitClientImpl(const connectionDetails& i_connectionDetails, 
+   RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
            RabbitMQNotifiableIntf* i_handler) ; 
 
-   RabbitClientImpl(const connectionDetails& i_connectionDetails, 
+   RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
@@ -47,7 +42,7 @@ class RabbitClientImpl : public boost::noncopyable
    ReturnStatus doSendMessage(RabbitMessageBase* i_message, bool highPriority);
 
  private:
-   const connectionDetails  m_connectionDetails;
+   const ConnectionDetails  m_connectionDetails;
    const std::string        m_exchangeName;
    const std::string        m_consumerID;
    CallbackType             m_onMessageCB;

@@ -1,3 +1,6 @@
+#ifndef RABBIT_MESSAGE_H
+#define RABBIT_MESSAGE_H
+
 #include <iostream>
 #include <sstream>
 
@@ -137,3 +140,5 @@ class BindMessage : public RabbitMessageBase
  protected:
     std::string m_key;
 };
+
+#endif
