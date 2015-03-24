@@ -3,6 +3,8 @@
 #include "simpleClient.h"
 #include "RabbitMessage.h"
 
+#include <AmqpConnectionDetails.h>
+
 simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails, 
         const std::string&  i_exchangeName, 
         ExchangeType        i_exchangeType,

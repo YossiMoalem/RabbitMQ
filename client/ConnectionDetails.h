@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <AmqpConnectionDetails.h>
+class AmqpConnectionDetails;
 
 class ConnectionDetails
 {

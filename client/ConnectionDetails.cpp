@@ -1,6 +1,7 @@
 #include "ConnectionDetails.h"
 
 #include <assert.h>
+#include <AmqpConnectionDetails.h>
 
 ConnectionDetails::ConnectionDetailsData::ConnectionDetailsData( const std::string & userName,
             const std::string & password,
@@ -35,6 +36,8 @@ AmqpConnectionDetails ConnectionDetails::getFirstHost()
 
 AmqpConnectionDetails ConnectionDetails::getNextHost()
 {
+  assert (_currentHost != _connectionData._hosts.end());
+  assert (_currentPort != _connectionData._ports.end());
   ++_currentHost;
   if (_currentHost == _connectionData._hosts.end())
   {
