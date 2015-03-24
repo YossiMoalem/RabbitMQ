@@ -51,7 +51,7 @@ class simpleConsumer : boost::noncopyable
    MyConnectionHandler          _connH;
    CallbackType                   m_onMessageCB;
    RabbitMQNotifiableIntf*        m_handler;
-   const std::string              m_consumerID;
+   const std::string              m_queueName;
    const std::string              m_routingKey;
    RunStatus                  m_runStatus;
    const std::string              m_exchangeName;

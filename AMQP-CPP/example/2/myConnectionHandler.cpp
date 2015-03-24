@@ -117,18 +117,17 @@ void MyConnectionHandler::declareExchange( const char * exchangeName )
     handleResponse(); //AMQP::ExchangeDeclareOKFrame::ExchangeDeclareOKFrame
 }
 
-void MyConnectionHandler::bindQueueToExchange( const char* routingKey )
+void MyConnectionHandler::bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
 {
-    _routingKey = std::string( routingKey );
-    _channel->bindQueue( _exchangeName.c_str(), _queueName.c_str(), routingKey ).onSuccess([this]() {
+    _channel->bindQueue( exchangeName, queueName, routingKey ).onSuccess([this]() {
             std::cout << "*** queue "<< _queueName <<" bound to exchange " <<_exchangeName <<" on: " << _routingKey << std::endl;
             });
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
 }
 
-void MyConnectionHandler::unbindQueueToExchange( const char* routingKey )
+void MyConnectionHandler::unbindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
 {
-    _channel->unbindQueue( _exchangeName.c_str(), _queueName.c_str(), routingKey ).onSuccess([this]() {
+    _channel->unbindQueue( exchangeName, queueName, routingKey ).onSuccess([this]() {
             std::cout << "queue bound to exchange" << std::endl;
             });
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame

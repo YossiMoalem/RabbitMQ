@@ -22,7 +22,7 @@ void runConsumer()
     {
         connectionHandler.declareExchange( EXC );
         connectionHandler.declareQueue( QUEUE );
-        connectionHandler.bindQueueToExchange( KEY1 );
+        connectionHandler.bindQueue( EXC, QUEUE, KEY1 );
         while(1)
         {
             connectionHandler.receiveMessage();

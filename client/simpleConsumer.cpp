@@ -14,7 +14,7 @@ simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails,
     _connH( [this] (const AMQP::Message & i_message) { return this->onMessageReceive ( &i_message ); } ),
     m_onMessageCB( i_onMessageCB ),
     m_handler(i_handler),
-    m_consumerID(i_consumerID),
+    m_queueName(i_consumerID),
     m_routingKey(i_consumerID),
     m_runStatus(RunStatus::Continue),
     m_exchangeName(i_exchangeName),
@@ -33,8 +33,8 @@ void simpleConsumer::operator()()
             return;
         }
         _connH.declareExchange(m_exchangeName.c_str() /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
-        _connH.declareQueue( m_consumerID.c_str() /*m_consumerID */); 
-        BindMessage bindMessage(m_routingKey, m_consumerID, DeliveryType::Unicast);
+        _connH.declareQueue( m_queueName.c_str() ); 
+        BindMessage bindMessage(m_routingKey, m_queueName, DeliveryType::Unicast);
         doBind(&bindMessage);
 
         rebind();
@@ -110,12 +110,12 @@ int simpleConsumer::onMessageReceive(const AMQP::Message * i_message)
 
 void simpleConsumer::doBind(BindMessage* i_pMessage)
 {
-    _connH.bindQueueToExchange( i_pMessage->bindKey().c_str() );
+    _connH.bindQueue( m_exchangeName, m_queueName, i_pMessage->bindKey().c_str() );
 }
 
 void simpleConsumer::doUnbind(UnbindMessage* i_pMessage)
 {
-    _connH.unbindQueueToExchange( i_pMessage->unbindKey().c_str() );
+    _connH.unbindQueue( m_exchangeName, m_queueName, i_pMessage->unbindKey().c_str() );
 }
 
 RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage ( const AMQP::Message* i_message)
@@ -148,11 +148,11 @@ ReturnStatus simpleConsumer::bind(const std::string& i_key, DeliveryType i_deliv
 ReturnStatus simpleConsumer::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
   m_subscriptionsList.erase(std::pair<std::string, int> (i_key, (int)i_deliveryType) );
-  return m_pOwner->sendMessage( new UnbindMessage (i_key, m_consumerID, i_deliveryType));
+  return m_pOwner->sendMessage( new UnbindMessage (i_key, m_queueName, i_deliveryType));
 }
 
 
 ReturnStatus simpleConsumer::sendBindMessage(const std::string& i_key, DeliveryType i_deliveryType)
 {
-  return m_pOwner->sendMessage(new BindMessage(i_key, m_consumerID, i_deliveryType));
+  return m_pOwner->sendMessage(new BindMessage(i_key, m_queueName, i_deliveryType));
 }

@@ -23,9 +23,9 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
 
    void declareExchange( const char * exchangeName );
 
-   void bindQueueToExchange( const char * routingKey);
+   void bindQueue( const std::string & exchangeName, const std::string & queueNAme, const std::string & routingKey);
 
-   void unbindQueueToExchange( const char * routingKey);
+   void unbindQueue( const std::string & exchangeName, const std::string & queueNAme, const std::string & routingKey);
 
    void receiveMessage();
 
