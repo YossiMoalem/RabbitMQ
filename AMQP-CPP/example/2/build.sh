@@ -1,0 +1,2 @@
+rm myConnectionHandler.o
+scons
