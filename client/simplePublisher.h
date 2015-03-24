@@ -4,7 +4,6 @@
 #include <string>
 
 #include "RabbitMessage.h"
-#include "rabbitProxy.h"
 #include "BlockingQueue.h"
 #include <myConnectionHandler.h>
 
