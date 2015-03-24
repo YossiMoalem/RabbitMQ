@@ -14,5 +14,5 @@ ${RESULT}: ${OBJECTS}
 clean:
 	${RM} *.obj *~* ${OBJECTS} ${RESULT}
 
-${OBJECTS}:
+${OBJECTS}: 
 	${CPP} ${CPPFLAGS} -o $@ ${@:%.o=%.cpp}

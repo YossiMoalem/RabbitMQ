@@ -4,17 +4,11 @@
 #include <iostream> 
 #include <memory>
 
-#include "basicSocket.h"
-
-#define RABBIT_PORT 5672
-#define RABBIT_IP1 "184.73.205.221"
-#define RABBIT_IP2 "184.169.148.90"
-
-
-MyConnectionHandler::MyConnectionHandler( char type) : 
-    _socket(  ( type == 'c' ) ? RABBIT_IP1 : RABBIT_IP2, RABBIT_PORT ),
+MyConnectionHandler::MyConnectionHandler( const ConnectionDetails & connectionParams, CB onMsgReceivedCB ) :
     _connection( nullptr ),
-    _channel( nullptr )
+    _channel( nullptr ),
+    _connectionDetails( connectionParams ),
+    _onMsgReceivedBC( onMsgReceivedCB )
 { }
 
 MyConnectionHandler::~MyConnectionHandler()
@@ -62,16 +56,17 @@ void MyConnectionHandler::onClosed(AMQP::Connection *connection)
     std::cout <<"Info: Connection Closed"<< std::endl;
 }
 
-void MyConnectionHandler::login()
+bool MyConnectionHandler::login()
 {
-    if( ! _socket.connect() )
+    ConnectionDetails::HostConnectionParams connectionParams = _connectionDetails.getFirstHost();
+    if( ! _socket.connect(connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
     } else {
         std::cout << "connected" << std::endl;
         // create amqp connection, and a new channel 
         // Sends protocol header: "AMQP\0[majorVer][minorVer][rev]
-        _connection = new AMQP::Connection(this, AMQP::Login("yossi", "yossipassword"), std::string( "/" ) );
+        _connection = new AMQP::Connection(this, AMQP::Login(connectionParams._userName, connectionParams._password ), std::string( "/" ) );
 
         while( !_connected )
         {
@@ -84,6 +79,7 @@ void MyConnectionHandler::login()
             handleResponse( );
         }
     }
+    return _connected;
 }
 
 void MyConnectionHandler::declareQueue( const char * queueName )
@@ -99,8 +95,10 @@ void MyConnectionHandler::declareQueue( const char * queueName )
             _channel->consume( _queueName.c_str() ).onReceived([ this ](const AMQP::Message &message, 
                     uint64_t deliveryTag, 
                     bool redelivered) {
-                std::cout << "received: " << message.message() << std::endl;
+               // std::cout << "received: " << message.message() << std::endl;
                 _channel->ack( deliveryTag );
+                if( _onMsgReceivedBC )
+                    _onMsgReceivedBC( message );
                 });
             });
     handleResponse( ); //AMQP::QueueDeclareOKFrame::QueueDeclareOKFrame
@@ -122,7 +120,16 @@ void MyConnectionHandler::declareExchange( const char * exchangeName )
 
 void MyConnectionHandler::bindQueueToExchange( const char* routingKey )
 {
+    _routingKey = std::string( routingKey );
     _channel->bindQueue( _exchangeName.c_str(), _queueName.c_str(), routingKey ).onSuccess([this]() {
+            std::cout << "*** queue "<< _queueName <<" bound to exchange " <<_exchangeName <<" on: " << _routingKey << std::endl;
+            });
+    handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
+}
+
+void MyConnectionHandler::unbindQueueToExchange( const char* routingKey )
+{
+    _channel->unbindQueue( _exchangeName.c_str(), _queueName.c_str(), routingKey ).onSuccess([this]() {
             std::cout << "queue bound to exchange" << std::endl;
             });
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
@@ -135,7 +142,7 @@ void MyConnectionHandler::receiveMessage()
 
 void MyConnectionHandler::publish( const char* routingKey, const char* message )
 {
-    std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << _exchangeName << std::endl;
+    //std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << _exchangeName << std::endl;
     _channel->publish( _exchangeName.c_str(), routingKey, message );
 }
 

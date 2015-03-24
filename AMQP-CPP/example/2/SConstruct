@@ -1,0 +1,16 @@
+env = Environment( CXX = "g++-4.8" )
+
+env.Append( CPPPATH = [ "/usr/local/include", "include/", "../AMQP-CPP/example/2", "../../" ] )
+env.Append( CCFLAGS = [ "-Wall", "-pedantic", "-g", "-O0", "-std=c++11", "-gdwarf-2" ] )
+env.Append( LIBPATH = [ ".", "../.." ] )
+env.Append ( LIBS = [ "amqpcpp" ] )
+env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
+
+sources = Split ("""
+    myConnectionHandler.cpp
+    ConnectionDetails.cpp
+    """)
+
+appSourced = sources + [ "main.cpp" ]
+env.StaticLibrary( "RabbitClientL2", sources )
+env.Program( "tester", appSourced )

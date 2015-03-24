@@ -3,24 +3,30 @@
 
 #include <amqpcpp.h>
 
+#include "ConnectionDetails.h"
 #include "basicSocket.h"
 
-#define RABBIT_PORT 5672
+
+class ConnectionDetails;
+
+typedef std::function<int( const AMQP::Message& )> CB;
 
 class MyConnectionHandler : public AMQP::ConnectionHandler
 {
  public:
-   MyConnectionHandler( char type);
+   MyConnectionHandler( const ConnectionDetails & connectionParams, CB onMsgReceivedCB );
    virtual ~MyConnectionHandler();
 
 
-   void login();
+   bool login();
 
    void declareQueue( const char * queueName );
 
    void declareExchange( const char * exchangeName );
 
    void bindQueueToExchange( const char * routingKey);
+
+   void unbindQueueToExchange( const char * routingKey);
 
    void receiveMessage();
 
@@ -47,6 +53,9 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    bool                 _channelReady = false;
    std::string          _queueName;
    std::string          _exchangeName;
+    ConnectionDetails _connectionDetails;
+   CB                   _onMsgReceivedBC;
 
+   std::string          _routingKey;
 };
 #endif
