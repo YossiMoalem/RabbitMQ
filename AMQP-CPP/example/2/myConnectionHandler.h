@@ -22,7 +22,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
 
    bool login( const AmqpConnectionDetails & connectionParams );
 
-   void declareQueue( const char * queueName );
+   void declareQueue( const std::string & queueName, bool durable = false, bool exclusive = false, bool autoDelete = false );
 
    /**
     * ExchangeType: as defined at ./amqpcpp/exchangetype.h
@@ -56,7 +56,6 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    AMQP::Channel *      _channel;
    bool                 _connected = false;
    bool                 _channelReady = false;
-   std::string          _queueName;
    CB                   _onMsgReceivedBC;
 
    std::string          _routingKey;
