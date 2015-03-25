@@ -17,7 +17,6 @@ class RabbitMQNotifiableIntf;
 class BindMessage;
 class UnbindMessage;
 
-enum class ExchangeType;
 enum class RunStatus;
 enum class DeliveryType;
 
@@ -26,7 +25,6 @@ class simpleConsumer : boost::noncopyable
  public:
    simpleConsumer( const ConnectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
-       ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
        CallbackType       i_onMessageCB,
        RabbitMQNotifiableIntf* i_handler,
@@ -55,7 +53,6 @@ class simpleConsumer : boost::noncopyable
    const std::string              m_routingKey;
    RunStatus                  m_runStatus;
    const std::string              m_exchangeName;
-   ExchangeType                    m_exchageType;
    RabbitClientImpl*              m_pOwner;
    std::unordered_set<
        std::pair <std::string, int>, 

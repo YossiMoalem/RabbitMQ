@@ -8,14 +8,12 @@
 #include <myConnectionHandler.h>
 #include "ConnectionDetails.h"
 
-enum class ExchangeType;
 
 class simplePublisher : boost::noncopyable
 {
  public:
    simplePublisher( const ConnectionDetails& i_connectionDetails, 
        const std::string& i_exchangeName, 
-       ExchangeType       i_exchangeType,
        const std::string& i_consumerID,
        MessageQueue& m_messageQueueToSend
        );
@@ -30,7 +28,6 @@ class simplePublisher : boost::noncopyable
    MessageQueue&      m_messageQueueToSend;
    RunStatus          m_runStatus;
    const std::string  m_exchangeName;
-   ExchangeType       m_exchageType;
 };
 
 #endif

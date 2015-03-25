@@ -26,7 +26,7 @@ class BindTester
    int operator ()()
    {
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, ExchangeType::Direct, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
+       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
                std::cout <<"Free CB:: Received: "<<message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -115,7 +115,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
    int operator ()()
    {
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, ExchangeType::Direct, this);
+       RabbitClient client (cnd, "EXC1", MY_NAME, this);
        client.start();
        sleep(timeToConnect);
        RABBIT_DEBUG("Tester:: Tester Started");
@@ -163,7 +163,7 @@ class RepeatedBindTester
    int operator ()()
    {
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, ExchangeType::Topic, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -186,7 +186,7 @@ class ContinousSendTester
    {
        std::string myID ("MyId");
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, ExchangeType::Topic, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;

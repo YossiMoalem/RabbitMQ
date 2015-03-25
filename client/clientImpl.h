@@ -15,13 +15,11 @@ class RabbitClientImpl : public boost::noncopyable
    RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
-           ExchangeType       i_exchangeType,
            RabbitMQNotifiableIntf* i_handler) ; 
 
    RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
-           ExchangeType       i_exchangeType,
            CallbackType       i_onMessageCB );
 
    int start();

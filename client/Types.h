@@ -20,13 +20,6 @@ class RabbitMQNotifiableIntf
   virtual int onMessageReceive (std::string o_sender, std::string o_destination, DeliveryType o_deliveryType, std::string o_message) = 0;
 };
 
-enum class ExchangeType
-{
-    Direct,
-    Topic,
-    Fanout,
-    Last
-};
 enum class DeliveryType
 {
     Unicast,

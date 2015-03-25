@@ -7,7 +7,6 @@
 
 simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails, 
         const std::string&  i_exchangeName, 
-        ExchangeType        i_exchangeType,
         const std::string&  i_consumerID,
         CallbackType        i_onMessageCB,
         RabbitMQNotifiableIntf* i_handler,
@@ -20,7 +19,6 @@ simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails,
     m_routingKey(i_consumerID),
     m_runStatus(RunStatus::Continue),
     m_exchangeName(i_exchangeName),
-    m_exchageType(i_exchangeType),
     m_pOwner(i_pOwner)
 {}
     
@@ -34,7 +32,7 @@ void simpleConsumer::operator()()
             RABBIT_DEBUG("Consumer:: Consumer failed to (re)connect. Exiting. ");
             return;
         }
-        _connH.declareExchange(m_exchangeName.c_str() /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
+        _connH.declareExchange(m_exchangeName.c_str(), AMQP::topic  /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
         _connH.declareQueue( m_queueName.c_str() ); 
         BindMessage bindMessage(m_routingKey, m_queueName, DeliveryType::Unicast);
         doBind(&bindMessage);

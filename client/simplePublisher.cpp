@@ -4,7 +4,6 @@
 
 simplePublisher::simplePublisher(const ConnectionDetails& i_connectionDetails, 
     const std::string& i_exchangeName, 
-    ExchangeType       i_exchangeType,
     const std::string& i_consumerID,
     MessageQueue& i_messageQueueToSend):
   _connectionDetails( i_connectionDetails ),
@@ -12,8 +11,7 @@ simplePublisher::simplePublisher(const ConnectionDetails& i_connectionDetails,
   m_consumerID(i_consumerID),
   m_messageQueueToSend(i_messageQueueToSend),
   m_runStatus(RunStatus::Continue),
-  m_exchangeName(i_exchangeName),
-  m_exchageType(i_exchangeType)
+  m_exchangeName(i_exchangeName)
 {}
 
 void simplePublisher::operator()()
@@ -26,7 +24,7 @@ void simplePublisher::operator()()
             RABBIT_DEBUG("Publisher:: Publisher failed to (re)connect. Exiting. ");
             return;
         }
-        _connH.declareExchange(m_exchangeName /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
+        _connH.declareExchange(m_exchangeName, AMQP::topic /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
 
         //TODO: find a nice way to do this.
         //Actually, I have an idea. I'll implement it soon.
