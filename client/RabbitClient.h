@@ -9,16 +9,16 @@
 
 class RabbitClientImpl;
 
-class simpleClient : public boost::noncopyable
+class RabbitClient : public boost::noncopyable
 {
  public:
-   simpleClient(const ConnectionDetails & i_connectionDetails, 
+   RabbitClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
            RabbitMQNotifiableIntf* i_handler);
 
-   simpleClient(const ConnectionDetails & i_connectionDetails, 
+   RabbitClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            ExchangeType       i_exchangeType,
@@ -36,6 +36,8 @@ class simpleClient : public boost::noncopyable
    ReturnStatus bindToDestination    (const std::string& i_key);
    ReturnStatus unbindFromSelf       (const std::string& i_key);
    ReturnStatus unbindFromDestination(const std::string& i_key);
+
+   bool isConnected() { return false; }
 
  private:
    RabbitClientImpl* m_pRabbitClient;

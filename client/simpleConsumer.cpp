@@ -1,6 +1,6 @@
 #include "simpleConsumer.h"
 #include "clientImpl.h"
-#include "simpleClient.h"
+#include "RabbitClient.h"
 #include "RabbitMessage.h"
 
 #include <AmqpConnectionDetails.h>
