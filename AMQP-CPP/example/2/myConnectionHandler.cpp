@@ -5,6 +5,8 @@
 #include <iostream> 
 #include <memory>
 
+namespace AMQP {
+
 MyConnectionHandler::MyConnectionHandler( CB onMsgReceivedCB ) :
     _connection( nullptr ),
     _channel( nullptr ),
@@ -104,14 +106,17 @@ void MyConnectionHandler::declareQueue( const char * queueName )
     handleResponse( );//AMQP::BasicConsumeOKFrame::BasicConsumeOKFrame
 }
 
-void MyConnectionHandler::declareExchange( const char * exchangeName )
+void MyConnectionHandler::declareExchange( const std::string & exchangeName, ExchangeType type, bool durable )
 {
     if( !_channelReady )
     {
         std::cout <<"ERROR!!" <<std::endl;
     }
-    _exchangeName = std::string( exchangeName );
-    _channel->declareExchange( exchangeName, AMQP::topic).onSuccess([]() { 
+    int flags = 0;
+    if( durable )
+        flags |= durable;
+
+    _channel->declareExchange( exchangeName, type, flags ).onSuccess([]() { 
             std::cout << "exchange declared" << std::endl; 
             });
     handleResponse(); //AMQP::ExchangeDeclareOKFrame::ExchangeDeclareOKFrame
@@ -119,8 +124,8 @@ void MyConnectionHandler::declareExchange( const char * exchangeName )
 
 void MyConnectionHandler::bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
 {
-    _channel->bindQueue( exchangeName, queueName, routingKey ).onSuccess([this]() {
-            std::cout << "*** queue "<< _queueName <<" bound to exchange " <<_exchangeName <<" on: " << _routingKey << std::endl;
+    _channel->bindQueue( exchangeName, queueName, routingKey ).onSuccess([ this, exchangeName ]() {
+            std::cout << "*** queue "<< _queueName <<" bound to exchange " <<exchangeName <<" on: " << _routingKey << std::endl;
             });
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
 }
@@ -138,10 +143,10 @@ void MyConnectionHandler::receiveMessage()
     handleResponse();
 }
 
-void MyConnectionHandler::publish( const char* routingKey, const char* message )
+void MyConnectionHandler::publish( const std::string & exchangeName, const char* routingKey, const char* message )
 {
-    //std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << _exchangeName << std::endl;
-    _channel->publish( _exchangeName.c_str(), routingKey, message );
+    //std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
+    _channel->publish( exchangeName.c_str(), routingKey, message );
 }
 
 void MyConnectionHandler::handleResponse( )
@@ -155,3 +160,4 @@ void MyConnectionHandler::handleResponse( )
         std::cout <<"Ulala! got "<<size<<" bytes, parsed: "<<processed<<"only "<<std::endl;
     }
 }
+} //namespace AMQP

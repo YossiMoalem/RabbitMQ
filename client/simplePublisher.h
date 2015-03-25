@@ -25,7 +25,7 @@ class simplePublisher : boost::noncopyable
 
  private:
    ConnectionDetails            _connectionDetails;
-   MyConnectionHandler          _connH;
+   AMQP::MyConnectionHandler          _connH;
    const std::string  m_consumerID;
    MessageQueue&      m_messageQueueToSend;
    RunStatus          m_runStatus;

@@ -11,6 +11,7 @@
 #define USER "yossi"
 #define PASSWORD "yossipassword"
 
+using namespace AMQP;
 
 void runConsumer()
 {
@@ -20,7 +21,8 @@ void runConsumer()
             return 0; } );
     if( connectionHandler.login( connectionDetails ) )
     {
-        connectionHandler.declareExchange( EXC );
+        std::string exchangeName( EXC );
+        connectionHandler.declareExchange( exchangeName );
         connectionHandler.declareQueue( QUEUE );
         connectionHandler.bindQueue( EXC, QUEUE, KEY1 );
         while(1)
@@ -35,11 +37,12 @@ void runProducer()
     AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     MyConnectionHandler connectionHandler( nullptr );
     connectionHandler.login( connectionDetails );
-    connectionHandler.declareExchange( EXC );
+    std::string exchangeName( EXC );
+    connectionHandler.declareExchange( exchangeName );
     while(1)
     {
         sleep( 1 );
-        connectionHandler.publish(KEY1, "tananainai" );
+        connectionHandler.publish(exchangeName, KEY1, "tananainai" );
     }
 }
 

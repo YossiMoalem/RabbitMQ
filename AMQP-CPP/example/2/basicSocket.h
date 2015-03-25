@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <unistd.h>
 
+namespace AMQP{
+
 class basicSocket
 {
  public:
@@ -67,4 +69,5 @@ class basicSocket
    int                  _socketFd;
 };
 
+} //namespace AMQP
 #endif

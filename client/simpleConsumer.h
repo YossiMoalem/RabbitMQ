@@ -48,7 +48,7 @@ class simpleConsumer : boost::noncopyable
 
  private:
    ConnectionDetails            _connectionDetails;
-   MyConnectionHandler          _connH;
+   AMQP::MyConnectionHandler          _connH;
    CallbackType                   m_onMessageCB;
    RabbitMQNotifiableIntf*        m_handler;
    const std::string              m_queueName;

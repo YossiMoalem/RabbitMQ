@@ -1,6 +1,8 @@
 #ifndef AMQP_CONNECTION_DETAILS_H
 #define AMQP_CONNECTION_DETAILS_H
 
+namespace AMQP {
+
 struct AmqpConnectionDetails
 {
  public:
@@ -19,4 +21,5 @@ struct AmqpConnectionDetails
    std::string  _host;
    int          _port;
 };
+} //namespace AMQP
 #endif

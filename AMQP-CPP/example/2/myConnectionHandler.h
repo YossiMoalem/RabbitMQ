@@ -5,6 +5,9 @@
 
 #include "basicSocket.h"
 
+namespace AMQP {
+
+enum ExchangeType;
 
 class AmqpConnectionDetails;
 
@@ -21,7 +24,10 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
 
    void declareQueue( const char * queueName );
 
-   void declareExchange( const char * exchangeName );
+   /**
+    * ExchangeType: as defined at ./amqpcpp/exchangetype.h
+    **/
+   void declareExchange( const std::string & exchangeName, ExchangeType type = AMQP::fanout, bool durable = false );
 
    void bindQueue( const std::string & exchangeName, const std::string & queueNAme, const std::string & routingKey);
 
@@ -29,7 +35,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
 
    void receiveMessage();
 
-   void publish( const char* routingKey, const char* message );
+   void publish( const std::string & exchangeName, const char* routingKey, const char* message );
 
  protected:
    virtual void onConnected( AMQP::Connection *connection );
@@ -51,9 +57,9 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    bool                 _connected = false;
    bool                 _channelReady = false;
    std::string          _queueName;
-   std::string          _exchangeName;
    CB                   _onMsgReceivedBC;
 
    std::string          _routingKey;
 };
+} //namespace AMQP
 #endif

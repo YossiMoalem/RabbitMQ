@@ -26,7 +26,7 @@ void simplePublisher::operator()()
             RABBIT_DEBUG("Publisher:: Publisher failed to (re)connect. Exiting. ");
             return;
         }
-        _connH.declareExchange(m_exchangeName.c_str() /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
+        _connH.declareExchange(m_exchangeName /*, ExchangeTypeStr[ (int)m_exchageType ]a*/ );
 
         //TODO: find a nice way to do this.
         //Actually, I have an idea. I'll implement it soon.
@@ -53,7 +53,7 @@ void simplePublisher::operator()()
                 }
                 std::string routingKey= pMessage->getRoutingKey();
                 RABBIT_DEBUG("Publisher:: Going to publish message: " << *pMessage << "to key: " << routingKey );
-                _connH.publish( routingKey.c_str(),  pMessage->serialize().c_str());
+                _connH.publish( m_exchangeName, routingKey.c_str(),  pMessage->serialize().c_str());
                 delete pMessage;
                 pMessage = nullptr;
             }
