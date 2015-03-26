@@ -30,8 +30,8 @@ RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails
 
 int RabbitClientImpl::start()
 {
-    m_publisherThread = std::thread( std::bind( &simplePublisher::operator(), &m_publisher ) ); // boost::ref(m_publisher) );
-    m_consumerThread = std::thread( std::bind( &simpleConsumer::operator(), &m_consumer ) );//boost::ref(m_consumer) );
+    m_publisherThread = std::thread( std::bind( &simplePublisher::run, &m_publisher ) ); // boost::ref(m_publisher) );
+    m_consumerThread = std::thread( std::bind( &simpleConsumer::run, &m_consumer ) );//boost::ref(m_consumer) );
     return 0;
 }
 
@@ -104,4 +104,9 @@ ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_del
 ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
   return m_consumer.unbind( i_key, i_deliveryType );
+}
+
+bool RabbitClientImpl::connected() const
+{
+  return m_consumer.connected();
 }

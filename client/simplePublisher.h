@@ -18,7 +18,7 @@ class simplePublisher : boost::noncopyable
        MessageQueue& m_messageQueueToSend
        );
 
-   virtual void operator ()();
+   virtual void run();
    virtual void stop(bool immediate);
 
  private:

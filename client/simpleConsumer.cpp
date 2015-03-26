@@ -22,7 +22,7 @@ simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails,
     m_pOwner(i_pOwner)
 {}
     
-void simpleConsumer::operator()()
+void simpleConsumer::run()
 {
     RABBIT_DEBUG ("Consumer:: Consumer started ");
     while (1)
@@ -155,4 +155,9 @@ ReturnStatus simpleConsumer::unbind(const std::string& i_key, DeliveryType i_del
 ReturnStatus simpleConsumer::sendBindMessage(const std::string& i_key, DeliveryType i_deliveryType)
 {
   return m_pOwner->sendMessage(new BindMessage(i_key, m_queueName, i_deliveryType));
+}
+
+bool simpleConsumer::connected() const
+{
+  return _connH.connected();
 }

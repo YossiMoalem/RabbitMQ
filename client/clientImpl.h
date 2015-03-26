@@ -35,6 +35,7 @@ class RabbitClientImpl : public boost::noncopyable
    ReturnStatus sendMessage(BindMessage*   i_bindMessage);
    ReturnStatus sendMessage(UnbindMessage* i_unbindMessage);
    ReturnStatus sendMessage(PostMessage*   i_postBMessage);
+   bool         connected () const;
 
  private:
    ReturnStatus doSendMessage(RabbitMessageBase* i_message, bool highPriority);

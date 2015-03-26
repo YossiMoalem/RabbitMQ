@@ -2,6 +2,7 @@
 #define BASIC_SOCKET_H
 
 #include <string>
+#include <iostream>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -9,7 +10,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <unistd.h>
+#include <strings.h>
 
 namespace AMQP{
 

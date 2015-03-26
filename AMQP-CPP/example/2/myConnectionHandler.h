@@ -7,35 +7,36 @@
 
 namespace AMQP {
 
-enum ExchangeType;
-
 class AmqpConnectionDetails;
 
-typedef std::function<int( const AMQP::Message& )> CB;
 
 class MyConnectionHandler : public AMQP::ConnectionHandler
 {
  public:
-   MyConnectionHandler( CB onMsgReceivedCB );
-   virtual ~MyConnectionHandler();
+   typedef std::function<int( const AMQP::Message& )> OnMessageReveivedCB;
 
+   MyConnectionHandler( OnMessageReveivedCB onMsgReceivedCB );
+
+   virtual ~MyConnectionHandler();
 
    bool login( const AmqpConnectionDetails & connectionParams );
 
    void declareQueue( const std::string & queueName, bool durable = false, bool exclusive = false, bool autoDelete = false );
 
    /**
-    * ExchangeType: as defined at ./amqpcpp/exchangetype.h
+    * ExchangeType: as defined at amqpcpp/exchangetype.h
     **/
    void declareExchange( const std::string & exchangeName, ExchangeType type = AMQP::fanout, bool durable = false );
 
-   void bindQueue( const std::string & exchangeName, const std::string & queueNAme, const std::string & routingKey);
+   void bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey);
 
-   void unbindQueue( const std::string & exchangeName, const std::string & queueNAme, const std::string & routingKey);
+   void unbindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey);
 
    void receiveMessage();
 
-   void publish( const std::string & exchangeName, const char* routingKey, const char* message );
+   void publish( const std::string & exchangeName, const std::string & routingKey, const std::string & message );
+
+   bool connected() const;
 
  protected:
    virtual void onConnected( AMQP::Connection *connection );
@@ -55,10 +56,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    AMQP::Connection*    _connection;
    AMQP::Channel *      _channel;
    bool                 _connected = false;
-   bool                 _channelReady = false;
-   CB                   _onMsgReceivedBC;
-
-   std::string          _routingKey;
+   OnMessageReveivedCB  _onMsgReceivedBC;
 };
 } //namespace AMQP
 #endif

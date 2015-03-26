@@ -52,3 +52,7 @@ ReturnStatus RabbitClient::unbindFromDestination(const std::string& i_key)
     return m_pRabbitClient->unbind(i_key, DeliveryType::Multicast); 
 }
 
+bool RabbitClient::isConnected() const
+{
+  return m_pRabbitClient->connected();
+}

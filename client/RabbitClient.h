@@ -34,8 +34,7 @@ class RabbitClient : public boost::noncopyable
    ReturnStatus bindToDestination    (const std::string& i_key);
    ReturnStatus unbindFromSelf       (const std::string& i_key);
    ReturnStatus unbindFromDestination(const std::string& i_key);
-   //TODO: implement isConnected.
-   bool isConnected() { return false; }
+   bool isConnected() const; 
 
  private:
    RabbitClientImpl* m_pRabbitClient;

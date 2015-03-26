@@ -30,11 +30,12 @@ class simpleConsumer : boost::noncopyable
        RabbitMQNotifiableIntf* i_handler,
        RabbitClientImpl* i_pOwner );
 
-   virtual void operator ()();
+   virtual void run();
    virtual void stop(bool immediate);
 
    ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType );
    ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType );
+   bool connected() const;
 
  private:
    int onMessageReceive( const AMQP::Message * i_message);

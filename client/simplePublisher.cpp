@@ -14,7 +14,7 @@ simplePublisher::simplePublisher(const ConnectionDetails& i_connectionDetails,
   m_exchangeName(i_exchangeName)
 {}
 
-void simplePublisher::operator()()
+void simplePublisher::run()
 {
     RABBIT_DEBUG ("Publisher:: Publisher started ");
     while (1)
