@@ -46,13 +46,21 @@ class basicSocket
         return true;
     }
 
-    void send( const char* data, size_t size )
+    bool send( const char* data, size_t size )
     {
         //TODO: loop untill we send all the buffer
 //        std::cout <<"sending: ( " << size << " ):";
         //std::cout.write(data, size );
         //std::cout <<std::endl;
-        ::send( _socketFd, data, size, 0);
+        ssize_t result = ::send( _socketFd, data, size, MSG_NOSIGNAL);
+        if ( result < 0 )
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     ssize_t read( char buffer[], size_t bufferSize )
