@@ -20,7 +20,8 @@ simpleConsumer::simpleConsumer(const ConnectionDetails& i_connectionDetails,
     m_runStatus(RunStatus::Continue),
     m_exchangeName(i_exchangeName),
     m_pOwner(i_pOwner)
-{}
+{
+}
     
 void simpleConsumer::run()
 {
@@ -133,6 +134,7 @@ RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage ( const AMQP::Mess
 
 int simpleConsumer::rebind()
 {
+    std::lock_guard< std::mutex > lock ( _subscriptionListLock );
     for( auto key : m_subscriptionsList )
     {
         sendBindMessage(key.first, (DeliveryType)key.second);
@@ -141,12 +143,14 @@ int simpleConsumer::rebind()
 }
 ReturnStatus simpleConsumer::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
+    std::lock_guard< std::mutex > lock ( _subscriptionListLock );
   m_subscriptionsList.insert(std::pair<std::string, int>(i_key, (int)i_deliveryType) );
   return sendBindMessage(i_key, i_deliveryType);
 }
 
 ReturnStatus simpleConsumer::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
+    std::lock_guard< std::mutex > lock ( _subscriptionListLock );
   m_subscriptionsList.erase(std::pair<std::string, int> (i_key, (int)i_deliveryType) );
   return m_pOwner->sendMessage( new UnbindMessage (i_key, m_queueName, i_deliveryType));
 }

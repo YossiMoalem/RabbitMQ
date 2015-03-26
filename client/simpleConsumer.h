@@ -2,6 +2,7 @@
 #define SIMPLE_CONSUMER_H
 
 #include <unordered_set>
+#include <mutex>
 #include <boost/functional/hash.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -55,6 +56,7 @@ class simpleConsumer : boost::noncopyable
    RunStatus                  m_runStatus;
    const std::string              m_exchangeName;
    RabbitClientImpl*              m_pOwner;
+   std::mutex                     _subscriptionListLock;
    std::unordered_set<
        std::pair <std::string, int>, 
        boost::hash <std::pair< std::string, int> >  
