@@ -17,7 +17,8 @@ class basicSocket
  public:
    basicSocket( const std::string & IP, unsigned int port ) :
        _IP( IP ),
-       _port( port )
+       _port( port ),
+       _sb( 0 )
     {}
 
     bool connect()
@@ -64,10 +65,11 @@ class basicSocket
 
     ssize_t read( char buffer[], size_t bufferSize )
     {
-        smartBuffer sb( 1024 );
-//        bzero( buffer, bufferSize );
-        ssize_t size = ::read( _socketFd, sb.getBuffer(), sb.capacity() );
-        sb.shrink( 100 );
+        bzero( buffer, bufferSize );
+        ssize_t size = ::read( _socketFd, buffer, bufferSize);
+//        ssize_t size = ::read( _socketFd, _sb.getBuffer(), _sb.capacity() );
+        _sb.addToBuffer(size, buffer);
+//        _sb.print();
         std::cout <<"Got: " << size <<" Bytes: ";
         //std::cout.write( buff, size );
         std::cout <<std::endl;
@@ -78,6 +80,7 @@ class basicSocket
    const std::string    _IP;
    unsigned int         _port;
    int                  _socketFd;
+   smartBuffer          _sb;
 };
 
 #endif
