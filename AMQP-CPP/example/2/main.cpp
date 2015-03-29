@@ -22,9 +22,33 @@ void runConsumer()
     if( connectionHandler.login( connectionDetails ) )
     {
         std::string exchangeName( EXC );
-        connectionHandler.declareExchange( exchangeName );
-        connectionHandler.declareQueue( QUEUE );
-        connectionHandler.bindQueue( EXC, QUEUE, KEY1 );
+        MyConnectionHandler::OperationSucceeded declareExchangeResult = connectionHandler.declareExchange( exchangeName, AMQP::topic );
+        declareExchangeResult.wait();
+        if( declareExchangeResult.get() )
+        {
+            std::cout <<"Exchange Declared!" <<std::endl;
+        } else {
+            std::cout <<"Error declaring exchange" <<std::endl;
+            exit( 1 );
+        }
+        MyConnectionHandler::OperationSucceeded declareQueueResult = connectionHandler.declareQueue( QUEUE );
+        declareQueueResult.wait();
+        if( declareQueueResult.get() )
+        {
+            std::cout <<"Queue Declared!" <<std::endl;
+        } else {
+            std::cout <<"Error declaring queue" <<std::endl;
+            exit( 1 );
+        }
+        MyConnectionHandler::OperationSucceeded bindResult = connectionHandler.bindQueue( EXC, QUEUE, KEY1 );
+        bindResult.wait();
+        if( bindResult.get() )
+        {
+            std::cout <<"Queue Binded!" <<std::endl;
+        } else {
+            std::cout <<"Error binding queue" <<std::endl;
+            exit( 1 );
+        }
         while(1)
         {
             connectionHandler.receiveMessage();
@@ -38,7 +62,7 @@ void runProducer()
     MyConnectionHandler connectionHandler( nullptr );
     connectionHandler.login( connectionDetails );
     std::string exchangeName( EXC );
-    connectionHandler.declareExchange( exchangeName );
+    connectionHandler.declareExchange( exchangeName, AMQP::topic );
     while(1)
     {
         sleep( 1 );

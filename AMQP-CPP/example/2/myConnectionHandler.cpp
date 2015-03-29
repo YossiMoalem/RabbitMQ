@@ -71,8 +71,9 @@ bool MyConnectionHandler::login( const AmqpConnectionDetails & connectionParams 
     return _connected;
 }
 
-void MyConnectionHandler::declareQueue( const std::string & queueName, bool durable, bool exclusive, bool autoDelete )
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareQueue( const std::string & queueName, bool durable, bool exclusive, bool autoDelete )
 {
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
     {
         std::cout <<"ERROR!!" <<std::endl;
@@ -82,22 +83,32 @@ void MyConnectionHandler::declareQueue( const std::string & queueName, bool dura
     if( exclusive )     flags |= exclusive;
     if( autoDelete )    flags |= autoDelete; 
 
-    _channel->declareQueue( queueName, flags ).onSuccess([ this, queueName ]() { 
+    auto & queueHndl = _channel->declareQueue( queueName, flags );
+    queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
             std::cout << "queue declared" << std::endl; 
+            operationSucceeded->set_value( true );
             _channel->consume( queueName.c_str() ).onReceived([ this ](const AMQP::Message &message, 
                     uint64_t deliveryTag, 
-                    bool redelivered) {
-                _channel->ack( deliveryTag );
+                    bool redelivered ) {
                 if( _onMsgReceivedBC )
-                    _onMsgReceivedBC( message );
-                });
-            });
+                {
+                _onMsgReceivedBC( message );
+                }
+                _channel->ack( deliveryTag );
+                } ) ;
+            }); 
+    queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
+        operationSucceeded->set_value( false );
+        std::cout <<"queue decleration faled " <<std::endl;
+    } );
     handleResponse( ); //AMQP::QueueDeclareOKFrame::QueueDeclareOKFrame
     handleResponse( );//AMQP::BasicConsumeOKFrame::BasicConsumeOKFrame
+    return operationSucceeded->get_future();
 }
 
-void MyConnectionHandler::declareExchange( const std::string & exchangeName, ExchangeType type, bool durable )
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareExchange( const std::string & exchangeName, ExchangeType type, bool durable )
 {
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
     {
         std::cout <<"ERROR!!" <<std::endl;
@@ -106,26 +117,49 @@ void MyConnectionHandler::declareExchange( const std::string & exchangeName, Exc
     if( durable )
         flags |= durable;
 
-    _channel->declareExchange( exchangeName, type, flags ).onSuccess([]() { 
+    auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
+    exchangeHndl.onSuccess([ operationSucceeded ]() { 
             std::cout << "exchange declared" << std::endl; 
+            operationSucceeded->set_value( true );
             });
+    exchangeHndl.onError( [ operationSucceeded ] (const char* message ) {
+                operationSucceeded->set_value( false );
+                std::cout<<"Error Declaring Exchange" << std::endl;
+                } ) ;
     handleResponse(); //AMQP::ExchangeDeclareOKFrame::ExchangeDeclareOKFrame
+    return operationSucceeded->get_future();
 }
 
-void MyConnectionHandler::bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
 {
-    _channel->bindQueue( exchangeName, queueName, routingKey ).onSuccess([ this, exchangeName, queueName, routingKey ]() {
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
+    bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
             std::cout << "*** queue "<< queueName <<" bound to exchange " <<exchangeName <<" on: " << routingKey << std::endl;
+            operationSucceeded->set_value( true );
             });
+    bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+            operationSucceeded->set_value( false );
+            std::cout <<"failed binding" <<std::endl;
+            } ) ;
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
+    return operationSucceeded->get_future();
 }
 
-void MyConnectionHandler::unbindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::unbindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
 {
-    _channel->unbindQueue( exchangeName, queueName, routingKey ).onSuccess([this]() {
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    auto & unbindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
+    unbindHndl.onSuccess([ operationSucceeded ]() {
             std::cout << "queue bound to exchange" << std::endl;
+            operationSucceeded->set_value( true );
             });
+    unbindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+             operationSucceeded->set_value( false );
+             std::cout <<"failed binding" <<std::endl;
+             } ) ;
     handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
+    return operationSucceeded->get_future();
 }
 
 void MyConnectionHandler::receiveMessage()
