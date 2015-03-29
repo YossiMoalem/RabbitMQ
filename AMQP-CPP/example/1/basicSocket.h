@@ -10,15 +10,14 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <unistd.h>
-#include <smartBuffer.h>
+#include "SmartBuffer.h"
 
 class basicSocket
 {
  public:
    basicSocket( const std::string & IP, unsigned int port ) :
        _IP( IP ),
-       _port( port ),
-       _sb( 0 )
+       _port( port )
     {}
 
     bool connect()
@@ -62,25 +61,22 @@ class basicSocket
         }
 
     }
-
-    ssize_t read( char buffer[], size_t bufferSize )
+    void read( SmartBuffer & sbuffer)
     {
-        bzero( buffer, bufferSize );
-        ssize_t size = ::read( _socketFd, buffer, bufferSize);
-//        ssize_t size = ::read( _socketFd, _sb.getBuffer(), _sb.capacity() );
-        _sb.addToBuffer(size, buffer);
-//        _sb.print();
-        std::cout <<"Got: " << size <<" Bytes: ";
+        const int buffSize = 2048;
+        char buff[buffSize];
+        bzero( buff, buffSize );
+        ssize_t size = ::read( _socketFd, buff, buffSize);
+        sbuffer.addToBuffer(size, buff);
+  //      std::cout <<"Got: " << size <<" Bytes: ";
         //std::cout.write( buff, size );
-        std::cout <<std::endl;
-        return size;
+        //std::cout <<std::endl;
     }
 
  private:
    const std::string    _IP;
    unsigned int         _port;
    int                  _socketFd;
-   smartBuffer          _sb;
 };
 
 #endif

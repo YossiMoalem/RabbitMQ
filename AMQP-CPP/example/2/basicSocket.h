@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <strings.h>
+#include "SmartBuffer.h"
 
 namespace AMQP{
 
@@ -64,14 +65,16 @@ class basicSocket
         }
     }
 
-    ssize_t read( char buffer[], size_t bufferSize )
+    void read( SmartBuffer & sbuffer)
     {
-        bzero( buffer, bufferSize );
-        ssize_t size = ::read( _socketFd, buffer, bufferSize);
+        const int buffSize = 2048;
+        char buff[buffSize];
+        bzero( buff, buffSize );
+        ssize_t size = ::read( _socketFd, buff, buffSize);
+        sbuffer.addToBuffer(size, buff);
   //      std::cout <<"Got: " << size <<" Bytes: ";
         //std::cout.write( buff, size );
         //std::cout <<std::endl;
-        return size;
     }
 
  private:

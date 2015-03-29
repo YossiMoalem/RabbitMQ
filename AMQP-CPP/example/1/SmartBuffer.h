@@ -1,11 +1,14 @@
+#ifndef SMART_BUFFER_H
+#define SMART_BUFFER_H
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <string>
 
-class smartBuffer
+class SmartBuffer
 {
  public:
-    smartBuffer( unsigned int length )
+    SmartBuffer( unsigned int length=0 )
     {
         _buffer = std::vector<char>(length);
     }
@@ -27,7 +30,7 @@ class smartBuffer
 
     char* shrink(unsigned int elementsToRemove)
     {
-        //TODO: make sure not to shrink more elements than what we already have
+        elementsToRemove = std::min( elementsToRemove,(unsigned int)_buffer.size() );
         _buffer.erase ( _buffer.begin(), _buffer.begin()+elementsToRemove );
         return getBuffer();
     }
@@ -50,6 +53,11 @@ class smartBuffer
         return _buffer.data()+_buffer.size();
     }
 
+    void clear()
+    {
+        _buffer.clear();
+    }
+
  private:
     std::vector<char>    _buffer;
 
@@ -59,3 +67,5 @@ class smartBuffer
 //        return getBuffer();
 //    }
 };
+
+#endif

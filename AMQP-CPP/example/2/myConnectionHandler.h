@@ -5,6 +5,7 @@
 
 #include <amqpcpp.h>
 #include "basicSocket.h"
+#include "SmartBuffer.h"
 
 namespace AMQP {
 
@@ -60,6 +61,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    AMQP::Channel *      _channel;
    bool                 _connected = false;
    OnMessageReveivedCB  _onMsgReceivedBC;
+   SmartBuffer          _sb;
 };
 } //namespace AMQP
 #endif

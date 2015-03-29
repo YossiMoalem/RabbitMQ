@@ -4,6 +4,7 @@
 #include <amqpcpp.h>
 
 #include "basicSocket.h"
+#include "SmartBuffer.h"
 
 #define RABBIT_PORT 5672
 
@@ -47,6 +48,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    bool                 _channelReady = false;
    std::string          _queueName;
    std::string          _exchangeName;
+   SmartBuffer          _sb;
 
 };
 #endif

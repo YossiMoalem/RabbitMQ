@@ -25,6 +25,7 @@ void MyConnectionHandler::onConnected( AMQP::Connection *connection )
 
     if( _channel )
         delete _channel;
+    _sb.clear();
     _channel = new AMQP::Channel(_connection);
     handleResponse( ); 
 
@@ -175,14 +176,15 @@ void MyConnectionHandler::publish( const std::string & exchangeName, const std::
 
 void MyConnectionHandler::handleResponse( )
 {
-    const int buffsize = 1024;
-    char buff[buffsize];
-    size_t size = _socket.read( buff, buffsize );
-    size_t processed = _connection->parse( buff, size ); // TODO: check how much we processes and keep the rest!:
-    if( size - processed != 0 )
+    _socket.read( _sb );
+    std::cout << "going to ask to process " << _sb.size() <<std::endl;
+    size_t processed = _connection->parse( _sb.data(), _sb.size() );
+    if( _sb.size() - processed != 0 )
     {
-        std::cout <<"Ulala! got "<<size<<" bytes, parsed: "<<processed<<"only "<<std::endl;
+        std::cout <<"Ulala! got "<<_sb.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
     }
+    _sb.shrink( processed );
+    std::cout <<"after shrinking size is " << _sb.size() <<std::endl;
 }
 
 bool MyConnectionHandler::connected() const
