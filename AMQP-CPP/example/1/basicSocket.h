@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <unistd.h>
+#include <smartBuffer.h>
 
 class basicSocket
 {
@@ -63,8 +64,10 @@ class basicSocket
 
     ssize_t read( char buffer[], size_t bufferSize )
     {
-        bzero( buffer, bufferSize );
-        ssize_t size = ::read( _socketFd, buffer, bufferSize);
+        smartBuffer sb( 1024 );
+//        bzero( buffer, bufferSize );
+        ssize_t size = ::read( _socketFd, sb.getBuffer(), sb.capacity() );
+        sb.shrink( 100 );
         std::cout <<"Got: " << size <<" Bytes: ";
         //std::cout.write( buff, size );
         std::cout <<std::endl;
