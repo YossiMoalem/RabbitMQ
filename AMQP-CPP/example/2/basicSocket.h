@@ -30,6 +30,13 @@ class basicSocket
             return false;
         }
 
+        struct timeval tv;
+
+        tv.tv_sec = 1 ; 
+        tv.tv_usec = 0;
+
+        setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+
         sockaddr_in serv_addr = { 0 };
         bzero((char *) &serv_addr, sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
@@ -65,16 +72,28 @@ class basicSocket
         }
     }
 
-    void read( SmartBuffer & sbuffer)
+    bool read( SmartBuffer & sbuffer)
     {
         const int buffSize = 2048;
         char buff[buffSize];
         bzero( buff, buffSize );
         ssize_t size = ::read( _socketFd, buff, buffSize);
+
+        if( size < 0 )
+        {
+            if( errno != 11 /* EWOULDBLOCK, EAGAIN */)
+              std::cout <<"ERROR RECEIVING!: errrno = " <<errno <<std::endl;
+            return false;
+        }
+        if( size == 0 )
+        {
+          return false;
+        }
         sbuffer.addToBuffer(size, buff);
-  //      std::cout <<"Got: " << size <<" Bytes: ";
+        return true;
+//        std::cout <<"+++Got: " << size <<" Bytes: ";
         //std::cout.write( buff, size );
-        //std::cout <<std::endl;
+//        std::cout <<std::endl;
     }
 
  private:

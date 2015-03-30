@@ -1,5 +1,6 @@
 #include "myConnectionHandler.h"
 #include "AmqpConnectionDetails.h"
+#include "RabbitMessage.h"
 
 #include <iostream> 
 
@@ -25,9 +26,7 @@ void MyConnectionHandler::onConnected( AMQP::Connection *connection )
 
     if( _channel )
         delete _channel;
-    _sb.clear();
     _channel = new AMQP::Channel(_connection);
-    handleResponse( ); 
 
     _channel->onError([](const char *message) {
             std::cout << "channel error " << message << std::endl;
@@ -102,8 +101,6 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareQueue( const
         operationSucceeded->set_value( false );
         std::cout <<"queue decleration faled " <<std::endl;
     } );
-    handleResponse( ); //AMQP::QueueDeclareOKFrame::QueueDeclareOKFrame
-    handleResponse( );//AMQP::BasicConsumeOKFrame::BasicConsumeOKFrame
     return operationSucceeded->get_future();
 }
 
@@ -127,13 +124,24 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareExchange( co
                 operationSucceeded->set_value( false );
                 std::cout<<"Error Declaring Exchange" << std::endl;
                 } ) ;
-    handleResponse(); //AMQP::ExchangeDeclareOKFrame::ExchangeDeclareOKFrame
     return operationSucceeded->get_future();
 }
 
-MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey)
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    BindMessage * bindMessage = new BindMessage( exchangeName, queueName, routingKey, operationSucceeded );
+    _jobQueue.push( bindMessage );
+    return operationSucceeded->get_future();
+}
+
+void MyConnectionHandler::doBindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey, 
+        OperationSucceededSetter operationSucceeded )
+{
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
     bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
             std::cout << "*** queue "<< queueName <<" bound to exchange " <<exchangeName <<" on: " << routingKey << std::endl;
@@ -143,48 +151,111 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const st
             operationSucceeded->set_value( false );
             std::cout <<"failed binding" <<std::endl;
             } ) ;
-    handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
+}
+
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::unBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+{
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, queueName, routingKey, operationSucceeded );
+    _jobQueue.push( unBindMessage );
     return operationSucceeded->get_future();
 }
 
-MyConnectionHandler::OperationSucceeded MyConnectionHandler::unbindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+void MyConnectionHandler::doUnBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey, OperationSucceededSetter operationSucceeded )
 {
-    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
-    auto & unbindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
-    unbindHndl.onSuccess([ operationSucceeded ]() {
+    auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
+    unBindHndl.onSuccess([ operationSucceeded ]() {
             std::cout << "queue bound to exchange" << std::endl;
             operationSucceeded->set_value( true );
             });
-    unbindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+    unBindHndl.onError( [ operationSucceeded ] ( const char* message ) {
              operationSucceeded->set_value( false );
              std::cout <<"failed binding" <<std::endl;
              } ) ;
-    handleResponse( ); //AMQP::QueueBindOKFrame::QueueBindOKFrame
+}
+
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::publish( const std::string & exchangeName, 
+        const std::string & routingKey, 
+        const std::string & message )
+{
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    PostMessage * msg = new PostMessage( exchangeName, routingKey, message, operationSucceeded );
+
+    _jobQueue.push( msg );
     return operationSucceeded->get_future();
 }
-
-void MyConnectionHandler::receiveMessage()
-{
-    handleResponse();
-}
-
-void MyConnectionHandler::publish( const std::string & exchangeName, const std::string & routingKey, const std::string & message )
+void MyConnectionHandler::doPublish( const std::string & exchangeName, 
+        const std::string & routingKey, 
+        const std::string & message, 
+        OperationSucceededSetter operationSucceeded )
 {
     //std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
     _channel->publish( exchangeName, routingKey, message );
+    operationSucceeded->set_value( true );
 }
 
+int MyConnectionHandler::startEventLoop()
+{
+    if (!_connected )
+        return 1;
+
+    while( true )
+    {
+        handleResponse();
+        handleQueue();
+    }
+    return 0;
+}
+
+void MyConnectionHandler::handleQueue( )
+{
+    RabbitMessageBase * msg = nullptr;
+    if( _jobQueue.try_pop( msg ) )
+    {
+        switch( msg->messageType() )
+        {
+            case MessageType::Post:
+                {
+                    PostMessage * postMessage = static_cast< PostMessage* >( msg );
+                    doPublish( postMessage->exchangeName(), 
+                            postMessage->routingKey(), 
+                            postMessage->message(), 
+                            postMessage->resultSetter() );
+                    delete msg;
+                }
+                break;
+            case MessageType::Bind:
+                {
+                    BindMessage * bindMessage = static_cast< BindMessage* >( msg );
+                    doBindQueue(bindMessage->exchangeName(), 
+                            bindMessage->queueName(), 
+                            bindMessage->routingKey(), 
+                            bindMessage->resultSetter() ); 
+                }
+                break;
+            case MessageType::UnBind:
+                {
+                    UnBindMessage * unBindMessage = static_cast< UnBindMessage* >( msg );
+                    doUnBindQueue(unBindMessage->exchangeName(), 
+                            unBindMessage->queueName(), 
+                            unBindMessage->routingKey(), 
+                            unBindMessage->resultSetter() ); 
+                }
+                break;
+        }
+    }
+}
 void MyConnectionHandler::handleResponse( )
 {
-    _socket.read( _sb );
-    std::cout << "going to ask to process " << _sb.size() <<std::endl;
-    size_t processed = _connection->parse( _sb.data(), _sb.size() );
-    if( _sb.size() - processed != 0 )
+    if( _socket.read( _sb ) )
     {
-        std::cout <<"Ulala! got "<<_sb.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
+        size_t processed = _connection->parse( _sb.data(), _sb.size() );
+        if( _sb.size() - processed != 0 )
+        {
+            std::cout <<"Ulala! got "<<_sb.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
+        }
+        _sb.shrink( processed );
     }
-    _sb.shrink( processed );
-    std::cout <<"after shrinking size is " << _sb.size() <<std::endl;
 }
 
 bool MyConnectionHandler::connected() const

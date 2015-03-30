@@ -39,8 +39,7 @@ void simpleConsumer::run()
         doBind(&bindMessage);
 
         rebind();
-        while(1)
-          _connH.receiveMessage( /*AMQP_NOACK */);
+        _connH.startEventLoop( /*AMQP_NOACK */);
     }
 } 
 

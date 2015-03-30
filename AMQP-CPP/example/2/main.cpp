@@ -1,6 +1,8 @@
 #include "myConnectionHandler.h"
 #include "AmqpConnectionDetails.h"
 
+#include <thread>
+
 #define EXC "exchange_name"
 #define KEY1 "YossiKey"
 #define QUEUE "YossiQueue"
@@ -17,10 +19,11 @@ void runConsumer()
 {
     AmqpConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
     MyConnectionHandler connectionHandler( [] ( const AMQP::Message & message ) {
-            std::cout <<"Received: " << message.message() << std::endl ;
+            std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
     if( connectionHandler.login( connectionDetails ) )
     {
+        std::thread eventLoop = std::thread( std::bind( &MyConnectionHandler::startEventLoop, &connectionHandler) );
         std::string exchangeName( EXC );
         MyConnectionHandler::OperationSucceeded declareExchangeResult = connectionHandler.declareExchange( exchangeName, AMQP::topic );
         declareExchangeResult.wait();
@@ -49,10 +52,7 @@ void runConsumer()
             std::cout <<"Error binding queue" <<std::endl;
             exit( 1 );
         }
-        while(1)
-        {
-            connectionHandler.receiveMessage();
-        }
+        eventLoop.join();
     }
 }
 
@@ -61,6 +61,7 @@ void runProducer()
     AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     MyConnectionHandler connectionHandler( nullptr );
     connectionHandler.login( connectionDetails );
+        std::thread eventLoop = std::thread( std::bind( &MyConnectionHandler::startEventLoop, &connectionHandler) );
     std::string exchangeName( EXC );
     connectionHandler.declareExchange( exchangeName, AMQP::topic );
     while(1)
