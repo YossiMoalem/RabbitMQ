@@ -1,9 +1,6 @@
 #ifndef AMQP_CONNECTION_H
 #define AMQP_CONNECTION_H
 //
-// TODO: in macros case - once is enogh
-#define UNICAST_PREFIX "ALL:"
-#define MULTICAST_SUFFIX ":ALL"
 
 #include <myConnectionHandler.h>
 #include "Types.h"
@@ -16,12 +13,16 @@ class AMQPConnection
    AMQPConnection( const ConnectionDetails & connectionDetails,
            const std::string & exchangeName ,
            const std::string & queueName,
-          AMQP::MyConnectionHandler::OnMessageReveivedCB i_onMessageReceiveCB ) :
-       _connectionHandler( [ i_onMessageReceiveCB ] ( const AMQP::Message & message ) { return i_onMessageReceiveCB( message ); } ),
+           const std::string & routingKey,
+           AMQP::MyConnectionHandler::OnMessageReveivedCB i_onMessageReceiveCB ) :
+       _connectionHandler( [ i_onMessageReceiveCB ] 
+               ( const AMQP::Message & message ) 
+               { return i_onMessageReceiveCB( message ); } ),
        _connectionDetails( connectionDetails ),
        _stop( false ),
        _exchangeName( exchangeName ),
-       _queueName( queueName )
+       _queueName( queueName ),
+       _routingKey( routingKey )
        {}
 
    ReturnStatus start()
@@ -39,9 +40,7 @@ class AMQPConnection
        _connectionHandler.declareQueue( _queueName );
        //TODO: WAIT! check retvals!
 
-       //TODO: routing key creation should be in one place!
-       std::string routingKey = UNICAST_PREFIX + _queueName;
-       _connectionHandler.bindQueue( _exchangeName, _queueName, routingKey );
+       _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
        //TODO: WAIT! check retvals!
 
        return ReturnStatus::Ok;
@@ -86,12 +85,12 @@ class AMQPConnection
 
  private:
    AMQP::MyConnectionHandler    _connectionHandler;
-   ConnectionDetails      _connectionDetails;
+   ConnectionDetails            _connectionDetails;
    bool                         _stop;
-   std::thread              _eventLoopThread;
-   std::string              _exchangeName;
-   //Queue Name is also routing key for (self). Think of something....
-   std::string              _queueName;
+   std::thread                  _eventLoopThread;
+   std::string                  _exchangeName;
+   std::string                  _queueName;
+   std::string                  _routingKey;
 };
 
 #endif

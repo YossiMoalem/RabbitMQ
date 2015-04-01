@@ -9,7 +9,8 @@ RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         CallbackType        i_onMessageCB ) :
-    _AMQPConnection( i_connectionDetails, i_exchangeName, i_consumerID, [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
+    _AMQPConnection( i_connectionDetails, i_exchangeName, i_consumerID, UNICAST_PREFIX + i_consumerID, 
+    [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
     _exchangeName(i_exchangeName),
     _queueName(i_consumerID),
     _onMessageReceivedCB( i_onMessageCB )
