@@ -1,7 +1,6 @@
 #ifndef CONNECTION_DETAILS_H
 #define CONNECTION_DETAILS_H
 
-#include <utility> //for pair
 #include <string>
 #include <vector>
 

@@ -4,8 +4,12 @@
 #include <boost/noncopyable.hpp>
 #include <string>
 
-#include "ConnectionDetails.h"
 #include "AMQPConnection.h"
+
+class ConnectionDetails;
+namespace AMQP{
+    class Message; 
+}
 
 class RabbitClientImpl : public boost::noncopyable
 {
@@ -16,6 +20,7 @@ class RabbitClientImpl : public boost::noncopyable
            CallbackType       i_onMessageCB );
 
    ReturnStatus start();
+
    ReturnStatus stop( bool immediate );
 
    ReturnStatus sendMessage(const std::string& i_message, 
@@ -23,11 +28,13 @@ class RabbitClientImpl : public boost::noncopyable
        const std::string& i_senderID, 
        DeliveryType i_deliveryType) const;
 
-   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType);
-   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType);
+   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType) const;
+
+   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType) const;
+
    bool         connected () const;
 
-   int onMessageReceived( const AMQP::Message & message );
+   int onMessageReceived( const AMQP::Message & message ) const;
 
    static std::string serializePostMessage( const std::string & sender,
            const std::string & destination,
@@ -40,8 +47,12 @@ class RabbitClientImpl : public boost::noncopyable
            DeliveryType & deliveryType,
            std::string & message);
 
+   private:
+   std::string createRoutingKey( const std::string & sender, 
+                    const std::string & destination,
+                    DeliveryType deliveryType ) const;
+
  private:
-   AMQP::MyConnectionHandler::OnMessageReveivedCB lalaCB;
    AMQPConnection           _AMQPConnection;
    const std::string        _exchangeName;
    const std::string        _queueName;

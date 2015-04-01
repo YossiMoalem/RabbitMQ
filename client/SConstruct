@@ -11,6 +11,7 @@ sources = Split ("""
     ConnectionDetails.cpp
     RabbitClient.cpp
     clientImpl.cpp
+    AMQPConnection.cpp
     """)
 
 appSources = sources + [ "tester.cpp" ]

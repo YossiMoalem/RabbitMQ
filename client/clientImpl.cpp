@@ -1,6 +1,4 @@
 #include "clientImpl.h"
-#include <boost/ref.hpp>
-#include <signal.h>
 
 #define UNICAST_PREFIX "ALL:"
 #define MULTICAST_SUFFIX ":ALL"
@@ -9,8 +7,11 @@ RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         CallbackType        i_onMessageCB ) :
-    _AMQPConnection( i_connectionDetails, i_exchangeName, i_consumerID, UNICAST_PREFIX + i_consumerID, 
-    [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
+    _AMQPConnection( i_connectionDetails, 
+            i_exchangeName, 
+            i_consumerID, 
+            createRoutingKey( i_consumerID, i_consumerID, DeliveryType::Unicast ),
+            [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
     _exchangeName(i_exchangeName),
     _queueName(i_consumerID),
     _onMessageReceivedCB( i_onMessageCB )
@@ -43,27 +44,17 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message,
     return ReturnStatus::Ok;
 }
 
-ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType) const
 { 
- //Add to subscription list!!
-    std::string routingKey;
-    if (i_deliveryType == DeliveryType::Unicast)
-        routingKey = UNICAST_PREFIX + i_key;
-    else
-        routingKey = i_key+ MULTICAST_SUFFIX;
-
-  return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
+    //Add to subscription list!!
+    std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
+    return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
 }
 
-ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType) const
 { 
     //Remove from subscroption list!
-    std::string routingKey;
-    if (i_deliveryType == DeliveryType::Unicast)
-        routingKey = UNICAST_PREFIX + i_key;
-    else
-        routingKey = i_key+ MULTICAST_SUFFIX;
-
+    std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
   return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
 }
 
@@ -72,7 +63,7 @@ bool RabbitClientImpl::connected() const
   return _AMQPConnection.connected();
 }
 
- int RabbitClientImpl::onMessageReceived( const AMQP::Message & message ) 
+ int RabbitClientImpl::onMessageReceived( const AMQP::Message & message ) const
 {
     std::string  sender;
     std::string  destination;
@@ -81,6 +72,7 @@ bool RabbitClientImpl::connected() const
     deserializePostMessage( message.message(), sender,destination,deliveryType, text );
     return  _onMessageReceivedCB( sender, destination, deliveryType, text );
 }
+
 std::string RabbitClientImpl::serializePostMessage( const std::string & sender,
         const std::string & destination,
         DeliveryType deliveryType,
@@ -108,4 +100,17 @@ void RabbitClientImpl::deserializePostMessage( const std::string serializedMessa
     int messageStart = is.tellg();
     message = (is.str()).substr( messageStart );
     deliveryType = static_cast<DeliveryType>( deliveryTypeAsInt );
+}
+
+std::string RabbitClientImpl::createRoutingKey( const std::string & sender, 
+                    const std::string & destination,
+                    DeliveryType deliveryType )const
+{
+    std::string routingKey;
+    if( deliveryType == DeliveryType::Unicast )
+        routingKey = UNICAST_PREFIX + destination;
+    else
+        routingKey = sender + MULTICAST_SUFFIX;
+    return routingKey;
+
 }
