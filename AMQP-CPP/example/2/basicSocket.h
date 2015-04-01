@@ -1,9 +1,9 @@
 #ifndef BASIC_SOCKET_H
 #define BASIC_SOCKET_H
 
+#include <sys/fcntl.h>
 #include <string>
 #include <iostream>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -31,11 +31,12 @@ class basicSocket
         }
 
         struct timeval tv;
-
         tv.tv_sec = 1 ; 
         tv.tv_usec = 0;
 
         setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+// TODO: fix the error in the next line because we want the socket to be non blocking!
+//        fcntl(_socketFd, F_SETFL, O_NONBLOCK);  // set to non-blocking
 
         sockaddr_in serv_addr = { 0 };
         bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -55,21 +56,20 @@ class basicSocket
         return true;
     }
 
-    bool send( const char* data, size_t size )
+    bool send( SmartBuffer & sbuffer)
     {
-        //TODO: loop untill we send all the buffer
-//        std::cout <<"sending: ( " << size << " ):";
-        //std::cout.write(data, size );
-        //std::cout <<std::endl;
-        ssize_t result = ::send( _socketFd, data, size, MSG_NOSIGNAL);
-        if ( result < 0 )
+        ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
+        if (bytesSent < 0)
         {
             return false;
         }
         else
         {
-            return true;
+            sbuffer.shrink( bytesSent );
+            if ( !sbuffer.empty() )
+                return false;
         }
+        return true;
     }
 
     bool read( SmartBuffer & sbuffer)
@@ -77,23 +77,19 @@ class basicSocket
         const int buffSize = 2048;
         char buff[buffSize];
         bzero( buff, buffSize );
-        ssize_t size = ::read( _socketFd, buff, buffSize);
-
-        if( size < 0 )
+        ssize_t bytesRead = ::read( _socketFd, buff, buffSize);
+        if( bytesRead < 0 )
         {
-            if( errno != 11 /* EWOULDBLOCK, EAGAIN */)
-              std::cout <<"ERROR RECEIVING!: errrno = " <<errno <<std::endl;
+            if( errno != 11 /* not EWOULDBLOCK, EAGAIN */)
+              std::cout <<"ERROR RECEIVING!: errno = " <<errno <<std::endl;
             return false;
         }
-        if( size == 0 )
+        if( bytesRead == 0 )
         {
           return false;
         }
-        sbuffer.addToBuffer(size, buff);
+        sbuffer.append(buff, bytesRead);
         return true;
-//        std::cout <<"+++Got: " << size <<" Bytes: ";
-        //std::cout.write( buff, size );
-//        std::cout <<std::endl;
     }
 
  private:

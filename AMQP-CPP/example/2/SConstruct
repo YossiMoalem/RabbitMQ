@@ -8,6 +8,7 @@ env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
 
 sources = Split ("""
     myConnectionHandler.cpp
+    SmartBuffer.cpp
     """)
 
 appSourced = sources + [ "main.cpp" ]

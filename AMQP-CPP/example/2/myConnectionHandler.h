@@ -95,7 +95,8 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    AMQP::Channel *                  _channel;
    bool                             _connected = false;
    OnMessageReveivedCB              _onMsgReceivedBC;
-   SmartBuffer                      _sb;
+   SmartBuffer                      _incomingMessages;
+   SmartBuffer                      _outgoingMessages;
    mutable BlockingQueue<RabbitMessageBase * >  _jobQueue;
 };
 } //namespace AMQP

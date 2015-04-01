@@ -40,7 +40,8 @@ void MyConnectionHandler::onConnected( AMQP::Connection *connection )
 
 void MyConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
-    _socket.send( data, size );
+    _outgoingMessages.append( data, size );
+    _socket.send( _outgoingMessages );
 }
 
 void MyConnectionHandler::onError(AMQP::Connection *connection, const char *message)
@@ -214,6 +215,8 @@ int MyConnectionHandler::startEventLoop()
     while( true )
     {
         handleResponse();
+        if ( !_outgoingMessages.empty() )
+            _socket.send( _outgoingMessages );
         handleQueue();
     }
     return 0;
@@ -259,14 +262,14 @@ void MyConnectionHandler::handleQueue( )
 }
 void MyConnectionHandler::handleResponse( )
 {
-    if( _socket.read( _sb ) )
+    if( _socket.read( _incomingMessages ) )
     {
-        size_t processed = _connection->parse( _sb.data(), _sb.size() );
-        if( _sb.size() - processed != 0 )
+        size_t processed = _connection->parse( _incomingMessages.data(), _incomingMessages.size() );
+        if( _incomingMessages.size() - processed != 0 )
         {
-            std::cout <<"Ulala! got "<<_sb.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
+            std::cout <<"Ulala! got "<<_incomingMessages.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
         }
-        _sb.shrink( processed );
+        _incomingMessages.shrink( processed );
     }
 }
 
