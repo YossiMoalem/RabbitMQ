@@ -2,11 +2,14 @@
 #include <boost/ref.hpp>
 #include <signal.h>//for pthread kill
 
+#define UNICAST_PREFIX "ALL:"
+#define MULTICAST_SUFFIX ":ALL"
+/*
 RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         RabbitMQNotifiableIntf* i_handler) :
-    m_connectionDetails(i_connectionDetails),
+    _AMQPConnection(i_connectionDetails),
     m_exchangeName(i_exchangeName),
     m_consumerID(i_consumerID),
     m_onMessageCB(nullptr),
@@ -14,47 +17,30 @@ RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails
     m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
     m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
 {}
+*/
 
 RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
         const std::string& i_exchangeName, 
         const std::string& i_consumerID,
         CallbackType        i_onMessageCB ) :
-    m_connectionDetails(i_connectionDetails),
-    m_exchangeName(i_exchangeName),
-    m_consumerID(i_consumerID),
+    _AMQPConnection(i_connectionDetails, i_exchangeName, i_consumerID, i_onMessageCB ),
+    _exchangeName(i_exchangeName),
+    _queueName(i_consumerID)/*,
     m_onMessageCB(i_onMessageCB),
     m_handler(nullptr),
     m_publisher(m_connectionDetails, m_exchangeName, m_consumerID, m_messageQueueToSend),
     m_consumer(m_connectionDetails, m_exchangeName, m_consumerID, m_onMessageCB, m_handler, this)
+    */
 {}
 
-int RabbitClientImpl::start()
+ReturnStatus RabbitClientImpl::start()
 {
-    m_publisherThread = std::thread( std::bind( &simplePublisher::run, &m_publisher ) ); // boost::ref(m_publisher) );
-    m_consumerThread = std::thread( std::bind( &simpleConsumer::run, &m_consumer ) );//boost::ref(m_consumer) );
-    return 0;
+    return _AMQPConnection.start();
 }
 
-int RabbitClientImpl::stop(bool immediate)
+ReturnStatus RabbitClientImpl::stop( bool immediate )
 {
-    m_publisher.stop(immediate);
-    m_consumer.stop(immediate);
-    m_publisherThread.join();
-    m_consumerThread.join();
-#if 0
-    if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
-    {
-        //The consumer it probably stuck on consume(). Till I'll be able to interupt it
-        //I can only forcefully kill it...
-        //TODO: Maybe send "terminate" message??
-        ::pthread_cancel(m_consumerThread.native_handle());
-        if (!m_consumerThread.timed_join(boost::posix_time::milliseconds(2000)))
-        {
-            ::pthread_kill(m_consumerThread.native_handle(), 9);
-        }
-    }
-#endif
-    return 0;
+    return _AMQPConnection.stop( immediate );
 }
 
 ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message, 
@@ -62,9 +48,17 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message,
         const std::string& i_senderID, 
         DeliveryType i_deliveryType)
 {
-    PostMessage* newMessage = new PostMessage(i_message, i_destination, i_senderID, i_deliveryType );
-    return sendMessage(newMessage);
+    std::string routingKey;
+    if( i_deliveryType == DeliveryType::Unicast )
+        routingKey = UNICAST_PREFIX + i_destination;
+    else
+        routingKey = i_senderID + MULTICAST_SUFFIX;
+    _AMQPConnection.publish( _exchangeName, routingKey, i_message );
+    //PostMessage* newMessage = new PostMessage(i_message, i_destination, i_senderID, i_deliveryType );
+    //return sendMessage(newMessage);
+    return ReturnStatus::Ok;
 }
+/*
 ReturnStatus RabbitClientImpl::sendMessage(BindMessage*   i_bindMessage)
 {
     return doSendMessage(i_bindMessage, true);
@@ -95,18 +89,33 @@ ReturnStatus RabbitClientImpl::doSendMessage(RabbitMessageBase* i_message, bool 
     assert (status == MessageQueue::ReturnStatus::Ok);
     return ReturnStatus::Ok;
 }
+*/
 
 ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  return m_consumer.bind( i_key, i_deliveryType );
+ //Add to subscription list!!
+    std::string routingKey;
+    if (i_deliveryType == DeliveryType::Unicast)
+        routingKey = UNICAST_PREFIX + i_key;
+    else
+        routingKey = i_key+ MULTICAST_SUFFIX;
+
+  return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
 }
 
 ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-  return m_consumer.unbind( i_key, i_deliveryType );
+    //Remove from subscroption list!
+    std::string routingKey;
+    if (i_deliveryType == DeliveryType::Unicast)
+        routingKey = UNICAST_PREFIX + i_key;
+    else
+        routingKey = i_key+ MULTICAST_SUFFIX;
+
+  return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
 }
 
 bool RabbitClientImpl::connected() const
 {
-  return m_consumer.connected();
+  return _AMQPConnection.connected();
 }

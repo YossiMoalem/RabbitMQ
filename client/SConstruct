@@ -10,10 +10,7 @@ env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
 sources = Split ("""
     ConnectionDetails.cpp
     RabbitClient.cpp
-    simpleConsumer.cpp
-    simplePublisher.cpp
     clientImpl.cpp
-    RabbitMessage.cpp
     """)
 
 appSources = sources + [ "tester.cpp" ]

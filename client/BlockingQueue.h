@@ -1,5 +1,5 @@
-#ifndef BLOCKING_QUEUE
-#define BLOCKING_QUEUE
+#ifndef BLOCKING_QUEUE_
+#define BLOCKING_QUEUE_
 
 #include <deque>
 #include <condition_variable>

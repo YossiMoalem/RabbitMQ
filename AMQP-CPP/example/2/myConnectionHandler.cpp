@@ -71,7 +71,10 @@ bool MyConnectionHandler::login( const AmqpConnectionDetails & connectionParams 
     return _connected;
 }
 
-MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareQueue( const std::string & queueName, bool durable, bool exclusive, bool autoDelete )
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareQueue( const std::string & queueName, 
+        bool durable, 
+        bool exclusive, 
+        bool autoDelete ) const
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -104,7 +107,9 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareQueue( const
     return operationSucceeded->get_future();
 }
 
-MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareExchange( const std::string & exchangeName, ExchangeType type, bool durable )
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareExchange( const std::string & exchangeName,
+        ExchangeType type, 
+        bool durable ) const
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -129,7 +134,7 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::declareExchange( co
 
 MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
-        const std::string & routingKey)
+        const std::string & routingKey) const
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     BindMessage * bindMessage = new BindMessage( exchangeName, queueName, routingKey, operationSucceeded );
@@ -140,8 +145,9 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::bindQueue( const st
 void MyConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        OperationSucceededSetter operationSucceeded )
+        OperationSucceededSetter operationSucceeded ) const
 {
+    std::cout <<"L2:Going to bind: "<<exchangeName <<" : " << queueName << " to : " << routingKey <<std::endl;
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
     bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
             std::cout << "*** queue "<< queueName <<" bound to exchange " <<exchangeName <<" on: " << routingKey << std::endl;
@@ -153,7 +159,9 @@ void MyConnectionHandler::doBindQueue( const std::string & exchangeName,
             } ) ;
 }
 
-MyConnectionHandler::OperationSucceeded MyConnectionHandler::unBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey)
+MyConnectionHandler::OperationSucceeded MyConnectionHandler::unBindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey) const
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, queueName, routingKey, operationSucceeded );
@@ -161,7 +169,10 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::unBindQueue( const 
     return operationSucceeded->get_future();
 }
 
-void MyConnectionHandler::doUnBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey, OperationSucceededSetter operationSucceeded )
+void MyConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey, 
+        OperationSucceededSetter operationSucceeded ) const
 {
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
@@ -176,7 +187,7 @@ void MyConnectionHandler::doUnBindQueue( const std::string & exchangeName, const
 
 MyConnectionHandler::OperationSucceeded MyConnectionHandler::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
-        const std::string & message )
+        const std::string & message ) const
 {
     OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     PostMessage * msg = new PostMessage( exchangeName, routingKey, message, operationSucceeded );
@@ -184,12 +195,13 @@ MyConnectionHandler::OperationSucceeded MyConnectionHandler::publish( const std:
     _jobQueue.push( msg );
     return operationSucceeded->get_future();
 }
+
 void MyConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
-        OperationSucceededSetter operationSucceeded )
+        OperationSucceededSetter operationSucceeded ) const
 {
-    //std::cout <<"publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
+    std::cout <<"L2:publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
 }

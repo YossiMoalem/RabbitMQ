@@ -115,7 +115,7 @@ void simpleConsumer::doBind(BindMessage* i_pMessage)
 
 void simpleConsumer::doUnbind(UnbindMessage* i_pMessage)
 {
-    _connH.unbindQueue( m_exchangeName, m_queueName, i_pMessage->unbindKey().c_str() );
+    _connH.unBindQueue( m_exchangeName, m_queueName, i_pMessage->unbindKey().c_str() );
 }
 
 RabbitMessageBase* simpleConsumer::AMQPMessageToRabbitMessage ( const AMQP::Message* i_message)

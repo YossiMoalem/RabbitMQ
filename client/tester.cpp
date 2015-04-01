@@ -34,7 +34,7 @@ class BindTester
        client.start();
        sleep (timeToConnect);
        test(client);
-       //client.stop(false);
+       client.stop(false);
        return 0;
    }
 
@@ -101,6 +101,7 @@ class BindTester
 /*****************************************************************************\
  *  Measure Tester 
 \*****************************************************************************/
+#if 0
 class MeasureTester : public RabbitMQNotifiableIntf
 {
  public:
@@ -152,7 +153,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
    unsigned int numOfReceived;
    unsigned int numOfMessagesToSend;
 };
-
+#endif
 /*****************************************************************************\
  *  Repeated bind Tester 
 \*****************************************************************************/
@@ -222,6 +223,6 @@ int main ()
   //RepeatedBindTester tester;
   //ContinousSendTester tester;
   std::thread testerThread( std::bind( &BindTester::operator(), &tester ) );
-  RABBIT_DEBUG ("Tester:: Test finished");
   testerThread.join();
+  RABBIT_DEBUG ("Tester:: Test finished");
 }

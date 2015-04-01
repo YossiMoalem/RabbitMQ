@@ -12,18 +12,19 @@ class RabbitClientImpl;
 class RabbitClient : public boost::noncopyable
 {
  public:
+   /*
    RabbitClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            RabbitMQNotifiableIntf* i_handler);
-
+*/
    RabbitClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
            CallbackType       i_onMessageCB );
 
-   int start();
-   int stop(bool immediate);
+   ReturnStatus start();
+   ReturnStatus stop(bool immediate);
 
    ReturnStatus sendUnicast      (	const std::string& i_message,
 							const std::string& i_destination,

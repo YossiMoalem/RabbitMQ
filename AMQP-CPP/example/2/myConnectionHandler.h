@@ -7,6 +7,7 @@
 #include "basicSocket.h"
 #include "SmartBuffer.h"
 #include "BlockingQueue.h"
+#include "AmqpConnectionDetails.h"
 
 
 namespace AMQP {
@@ -33,27 +34,48 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
 
    int startEventLoop();
 
-   OperationSucceeded declareQueue( const std::string & queueName, bool durable = false, bool exclusive = false, bool autoDelete = false );
+   OperationSucceeded declareQueue( const std::string & queueName, 
+           bool durable = false, 
+           bool exclusive = false, 
+           bool autoDelete = false ) const;
 
    /**
     * ExchangeType: as defined at amqpcpp/exchangetype.h
     **/
-   OperationSucceeded declareExchange( const std::string & exchangeName, ExchangeType type = AMQP::fanout, bool durable = false );
+   OperationSucceeded declareExchange( const std::string & exchangeName, 
+           ExchangeType type = AMQP::fanout, 
+           bool durable = false ) const ;
 
-   OperationSucceeded bindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey);
+   OperationSucceeded bindQueue( const std::string & exchangeName, 
+           const std::string & queueName, 
+           const std::string & routingKey) const;
 
-   OperationSucceeded unBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey);
+   OperationSucceeded unBindQueue( const std::string & exchangeName,
+           const std::string & queueName, 
+           const std::string & routingKey) const;
 
-   OperationSucceeded publish( const std::string & exchangeName, const std::string & routingKey, const std::string & message );
+   OperationSucceeded publish( const std::string & exchangeName, 
+           const std::string & routingKey, 
+           const std::string & message ) const;
 
    bool connected() const;
 
  protected:
-   void doPublish( const std::string & exchangeName, const std::string & routingKey, const std::string & message, OperationSucceededSetter operationSucceeded );
+   void doPublish( const std::string & exchangeName, 
+           const std::string & routingKey, 
+           const std::string & message, 
+           OperationSucceededSetter operationSucceeded ) const;
 
-   void doBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey,  OperationSucceededSetter operationSucceeded );
+   void doBindQueue( const std::string & exchangeName, 
+           const std::string & queueName, 
+           const std::string & routingKey,  
+           OperationSucceededSetter operationSucceeded ) const;
 
-   void doUnBindQueue( const std::string & exchangeName, const std::string & queueName, const std::string & routingKey, OperationSucceededSetter operationSucceeded );
+   void doUnBindQueue( const std::string & exchangeName, 
+           const std::string & queueName, 
+           const std::string & routingKey, 
+           OperationSucceededSetter operationSucceeded ) const;
+
    virtual void onConnected( AMQP::Connection *connection );
 
    virtual void onData(AMQP::Connection *connection, const char *data, size_t size);
@@ -74,7 +96,7 @@ class MyConnectionHandler : public AMQP::ConnectionHandler
    bool                             _connected = false;
    OnMessageReveivedCB              _onMsgReceivedBC;
    SmartBuffer                      _sb;
-   BlockingQueue<RabbitMessageBase * >  _jobQueue;
+   mutable BlockingQueue<RabbitMessageBase * >  _jobQueue;
 };
 } //namespace AMQP
 #endif

@@ -8,6 +8,8 @@
 #include <assert.h>
 
 
+namespace AMQP
+{
 enum class RunStatus
 {
     Continue = 0,
@@ -151,4 +153,5 @@ auto BlockingQueue<DataType>::doPush(DataType const& i_data, bool adminMessage, 
     return ReturnStatus::QueueBlocked;
 }
 
+} //namespace AMQP
 #endif
