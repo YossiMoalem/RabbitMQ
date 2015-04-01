@@ -16,11 +16,10 @@ class AMQPConnection
    AMQPConnection( const ConnectionDetails & connectionDetails,
            const std::string & exchangeName ,
            const std::string & queueName,
-           CallbackType onMessageReceiveCB ) :
-       _connectionHandler( [ this ] ( const AMQP::Message & message ) { return onMessageReceived( message ); } ),
+          AMQP::MyConnectionHandler::OnMessageReveivedCB i_onMessageReceiveCB ) :
+       _connectionHandler( [ i_onMessageReceiveCB ] ( const AMQP::Message & message ) { return i_onMessageReceiveCB( message ); } ),
        _connectionDetails( connectionDetails ),
        _stop( false ),
-       _onMessageReceivedCB( onMessageReceiveCB ),
        _exchangeName( exchangeName ),
        _queueName( queueName )
        {}
@@ -85,16 +84,10 @@ class AMQPConnection
        return true;
    }
 
-   int onMessageReceived( const AMQP::Message & message )
-   {
-       return _onMessageReceivedCB( "sender", "destination", DeliveryType::Unicast, message.message() );
-   }
-
  private:
    AMQP::MyConnectionHandler    _connectionHandler;
    ConnectionDetails      _connectionDetails;
    bool                         _stop;
-   CallbackType                 _onMessageReceivedCB;
    std::thread              _eventLoopThread;
    std::string              _exchangeName;
    //Queue Name is also routing key for (self). Think of something....

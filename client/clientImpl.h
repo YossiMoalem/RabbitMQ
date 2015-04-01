@@ -10,13 +10,6 @@
 class RabbitClientImpl : public boost::noncopyable
 {
  public:
-   /*
-   RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
-           const std::string& i_exchangeName, 
-           const std::string& i_consumerID,
-           RabbitMQNotifiableIntf* i_handler) ; 
-
-*/
    RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,
@@ -28,36 +21,31 @@ class RabbitClientImpl : public boost::noncopyable
    ReturnStatus sendMessage(const std::string& i_message, 
        const std::string& i_destination, 
        const std::string& i_senderID, 
-       DeliveryType i_deliveryType);
+       DeliveryType i_deliveryType) const;
 
    ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType);
    ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType);
-   /*
-   ReturnStatus sendMessage(BindMessage*   i_bindMessage);
-   ReturnStatus sendMessage(UnbindMessage* i_unbindMessage);
-   ReturnStatus sendMessage(PostMessage*   i_postBMessage);
-   */
    bool         connected () const;
 
- private:
- /*
-   ReturnStatus doSendMessage(RabbitMessageBase* i_message, bool highPriority);
-   */
+   int onMessageReceived( const AMQP::Message & message );
+
+   static std::string serializePostMessage( const std::string & sender,
+           const std::string & destination,
+           DeliveryType deliveryType,
+           const std::string & message);
+
+   static void deserializePostMessage( const std::string serializedMessage, 
+           std::string & sender,
+           std::string & destination,
+           DeliveryType & deliveryType,
+           std::string & message);
 
  private:
+   AMQP::MyConnectionHandler::OnMessageReveivedCB lalaCB;
    AMQPConnection           _AMQPConnection;
    const std::string        _exchangeName;
    const std::string        _queueName;
-   /*
-   const ConnectionDetails  m_connectionDetails;
-   CallbackType             m_onMessageCB;
-   RabbitMQNotifiableIntf*  m_handler;
-   MessageQueue             m_messageQueueToSend;
-   simplePublisher          m_publisher;
-   simpleConsumer           m_consumer;
-   std::thread              m_consumerThread;
-   std::thread              m_publisherThread;
-   */
+   CallbackType             _onMessageReceivedCB;
 };
 
 

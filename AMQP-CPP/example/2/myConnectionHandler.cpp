@@ -202,7 +202,7 @@ void MyConnectionHandler::doPublish( const std::string & exchangeName,
         const std::string & message, 
         OperationSucceededSetter operationSucceeded ) const
 {
-    std::cout <<"L2:publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
+    //std::cout <<"L2:publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
 }
