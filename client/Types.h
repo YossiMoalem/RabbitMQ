@@ -11,16 +11,6 @@
     std::cerr << ss.str();\
 }while(0);
 
-
-//enum class DeliveryType;
-/*
-class RabbitMQNotifiableIntf 
-{
- public:
-  virtual int onMessageReceive (std::string o_sender, std::string o_destination, DeliveryType o_deliveryType, std::string o_message) = 0;
-};
-*/
-
 enum class DeliveryType
 {
     Unicast,
