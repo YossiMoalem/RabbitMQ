@@ -12,12 +12,6 @@ class RabbitClientImpl;
 class RabbitClient : public boost::noncopyable
 {
  public:
-   /*
-   RabbitClient(const ConnectionDetails & i_connectionDetails, 
-           const std::string& i_exchangeName, 
-           const std::string& i_consumerID,
-           RabbitMQNotifiableIntf* i_handler);
-*/
    RabbitClient(const ConnectionDetails & i_connectionDetails, 
            const std::string& i_exchangeName, 
            const std::string& i_consumerID,

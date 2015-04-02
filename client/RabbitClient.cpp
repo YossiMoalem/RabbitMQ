@@ -1,17 +1,5 @@
 #include "RabbitClient.h"
-#include "clientImpl.h"
-
-/*
-RabbitClient::RabbitClient(const ConnectionDetails & i_connectionDetails, 
-    const std::string& i_exchangeName, 
-    const std::string& i_consumerID,
-    RabbitMQNotifiableIntf* i_handler) :
-  m_pRabbitClient( new RabbitClientImpl (i_connectionDetails,
-        i_exchangeName,
-        i_consumerID,
-        i_handler))
-{}
-*/
+#include "RabbitClientImpl.h"
 
 RabbitClient::RabbitClient(const ConnectionDetails & i_connectionDetails, 
     const std::string& i_exchangeName, 

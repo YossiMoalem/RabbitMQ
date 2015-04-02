@@ -1,7 +1,4 @@
-#include "clientImpl.h"
-
-#define UNICAST_PREFIX "ALL:"
-#define MULTICAST_SUFFIX ":ALL"
+#include "RabbitClientImpl.h"
 
 RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
         const std::string& i_exchangeName, 
@@ -32,11 +29,7 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message,
         const std::string& i_senderID, 
         DeliveryType i_deliveryType) const
 {
-    std::string routingKey;
-    if( i_deliveryType == DeliveryType::Unicast )
-        routingKey = UNICAST_PREFIX + i_destination;
-    else
-        routingKey = i_senderID + MULTICAST_SUFFIX;
+    std::string routingKey = createRoutingKey( i_senderID, i_destination, i_deliveryType);
     std::string serializedMessage = serializePostMessage( i_senderID, i_destination,i_deliveryType, i_message );
     _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
     //PostMessage* newMessage = new PostMessage(i_message, i_destination, i_senderID, i_deliveryType );
@@ -106,6 +99,9 @@ std::string RabbitClientImpl::createRoutingKey( const std::string & sender,
                     const std::string & destination,
                     DeliveryType deliveryType )const
 {
+    static const char* const UNICAST_PREFIX = "ALL:";
+    static const char* const MULTICAST_SUFFIX =":ALL";
+
     std::string routingKey;
     if( deliveryType == DeliveryType::Unicast )
         routingKey = UNICAST_PREFIX + destination;
