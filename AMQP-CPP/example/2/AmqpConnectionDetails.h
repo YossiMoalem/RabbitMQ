@@ -1,6 +1,8 @@
 #ifndef AMQP_CONNECTION_DETAILS_H
 #define AMQP_CONNECTION_DETAILS_H
 
+#include <string>
+
 namespace AMQP {
 
 struct AmqpConnectionDetails

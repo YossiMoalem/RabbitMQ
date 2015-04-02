@@ -15,11 +15,9 @@
 
 namespace AMQP{
 
-class basicSocket
+class AmqpSocket
 {
  public:
-   basicSocket( )
-    {}
 
     bool connect(const std::string & IP, unsigned int port )
     {
