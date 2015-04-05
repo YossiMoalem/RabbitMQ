@@ -1,7 +1,7 @@
 #ifndef AMQP_CONNECTION_H
 #define AMQP_CONNECTION_H
 
-#include <myConnectionHandler.h>
+#include "AMQPClient.h"
 #include "Types.h"
 #include "ConnectionDetails.h"
 
@@ -12,7 +12,7 @@ class AMQPConnection
            const std::string & exchangeName ,
            const std::string & queueName,
            const std::string & routingKey,
-           AMQP::MyConnectionHandler::OnMessageReveivedCB i_onMessageReceiveCB );
+           AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB );
 
    ReturnStatus start();
 
@@ -33,7 +33,7 @@ class AMQPConnection
    bool connected() const;
 
  private:
-   AMQP::MyConnectionHandler    _connectionHandler;
+   AMQP::AMQPClient             _connectionHandler;
    ConnectionDetails            _connectionDetails;
    bool                         _stop;
    std::thread                  _eventLoopThread;

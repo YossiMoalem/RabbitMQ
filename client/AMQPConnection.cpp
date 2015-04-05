@@ -1,12 +1,15 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
+
+#include <AmqpConnectionDetails.h>
+
 #include <thread>
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
         const std::string & exchangeName ,
         const std::string & queueName,
         const std::string & routingKey,
-        AMQP::MyConnectionHandler::OnMessageReveivedCB i_onMessageReceiveCB ) :
+        AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB ) :
     _connectionHandler( [ i_onMessageReceiveCB ] 
             ( const AMQP::Message & message ) 
             { return i_onMessageReceiveCB( message ); } ),
@@ -27,7 +30,7 @@ ReturnStatus AMQPConnection::start()
     _stop = false;
     AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getFirstHost();
     _connectionHandler.login( connectionDetails );
-    _eventLoopThread = std::thread( std::bind( &AMQP::MyConnectionHandler::startEventLoop, &_connectionHandler ) );
+    _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
     _connectionHandler.declareExchange( _exchangeName, AMQP::topic );
     _connectionHandler.declareQueue( _queueName );
     //TODO: WAIT! check retvals!
