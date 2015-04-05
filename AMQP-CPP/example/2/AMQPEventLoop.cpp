@@ -18,14 +18,31 @@ int AMQPEventLoop::start()
 //    if (!_connected )
 //        return 1;
 
+    fd_set readFd;
+    int queueEventFd = _jobQueue->getFD();
+    int brokerReadFD =  _connectionHandlers->getReadFD();
+    int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
+
     while( true )
     {
-        _connectionHandlers->handleInput();
+        FD_ZERO( & readFd );
+        FD_SET ( queueEventFd, & readFd );
+        FD_SET ( brokerReadFD, & readFd );
+
+        select( maxReadFd, & readFd, NULL, NULL, NULL );
+        if( FD_ISSET( brokerReadFD, & readFd ) )
+        {
+            _connectionHandlers->handleInput();
+        }
+        if( FD_ISSET( queueEventFd, & readFd ) )
+        {
+            handleQueue();
+        }
+
         if ( _connectionHandlers->pendingSend() )
         {
             _connectionHandlers->handleOutput();
         }
-        handleQueue();
     }
     return 0;
 }

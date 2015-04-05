@@ -90,6 +90,11 @@ class AmqpSocket
         return true;
     }
 
+    int readFD() const 
+    {
+        return _socketFd;
+    }
+
  private:
    int                  _socketFd;
 };

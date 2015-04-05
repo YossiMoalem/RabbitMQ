@@ -53,15 +53,12 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         OperationSucceededSetter operationSucceeded ) const
 {
-    std::cout <<"L2:Going to bind: "<<exchangeName <<" : " << queueName << " to : " << routingKey <<std::endl;
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
     bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
-            std::cout << "*** queue "<< queueName <<" bound to exchange " <<exchangeName <<" on: " << routingKey << std::endl;
             operationSucceeded->set_value( true );
             });
     bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
             operationSucceeded->set_value( false );
-            std::cout <<"failed binding" <<std::endl;
             } ) ;
 }
 
@@ -72,7 +69,6 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
 {
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
-            std::cout << "queue bound to exchange" << std::endl;
             operationSucceeded->set_value( true );
             });
     unBindHndl.onError( [ operationSucceeded ] ( const char* message ) {
@@ -83,8 +79,6 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
 
 void AMQPConnectionHandler::onConnected( AMQP::Connection *connection )
 {
-    std::cout << "AMQP login success" << std::endl;
-
     if( _channel )
         delete _channel;
     _channel = new AMQP::Channel(_connection);
@@ -94,7 +88,6 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection *connection )
             });
 
     _channel->onReady([ this ]() {
-            std::cout << "channel ready" << std::endl;
             _connected = true;
             });
 }
@@ -121,7 +114,6 @@ bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParam
     {
         std::cout <<"Error creating socket" <<std::endl;
     } else {
-        std::cout << "connected" << std::endl;
         Login login( connectionParams._userName, connectionParams._password );
         _connection = new AMQP::Connection(this, login, std::string( "/" ) );
 
@@ -149,7 +141,6 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
 
     auto & queueHndl = _channel->declareQueue( queueName, flags );
     queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
-            std::cout << "queue declared" << std::endl; 
             operationSucceeded->set_value( true );
             _channel->consume( queueName.c_str() ).onReceived([ this ](const AMQP::Message &message, 
                     uint64_t deliveryTag, 
@@ -183,7 +174,6 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
 
     auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
     exchangeHndl.onSuccess([ operationSucceeded ]() { 
-            std::cout << "exchange declared" << std::endl; 
             operationSucceeded->set_value( true );
             });
     exchangeHndl.onError( [ operationSucceeded ] (const char* message ) {
@@ -191,6 +181,11 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
                 std::cout<<"Error Declaring Exchange" << std::endl;
                 } ) ;
     return operationSucceeded->get_future();
+}
+
+int AMQPConnectionHandler::getReadFD() const
+{
+    return _socket.readFD();
 }
 
 } //namespace AMQP

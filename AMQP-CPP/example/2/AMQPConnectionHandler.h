@@ -45,13 +45,13 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
 // protected:
 
-   virtual void onConnected( AMQP::Connection *connection );
+   virtual void onConnected( AMQP::Connection *connection ) override ;
 
-   virtual void onData(AMQP::Connection *connection, const char *data, size_t size);
+   virtual void onData(AMQP::Connection *connection, const char *data, size_t size) override;
 
-   virtual void onError(AMQP::Connection *connection, const char *message);
+   virtual void onError(AMQP::Connection *connection, const char *message) override;
 
-   virtual void onClosed(AMQP::Connection *connection);
+   virtual void onClosed(AMQP::Connection *connection) override;
 
    std::future< bool > declareExchange( const std::string & exchangeName, 
            ExchangeType type = AMQP::fanout, 
@@ -62,17 +62,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
            bool exclusive = false, 
            bool autoDelete = false ) const;
 
-   std::future< bool > bindQueue( const std::string & exchangeName, 
-           const std::string & queueName, 
-           const std::string & routingKey) const;
-
-   std::future< bool > unBindQueue( const std::string & exchangeName,
-           const std::string & queueName, 
-           const std::string & routingKey) const;
-
-   std::future< bool > publish( const std::string & exchangeName, 
-           const std::string & routingKey, 
-           const std::string & message ) const;
+   int getReadFD() const;
 
  private:
    AmqpSocket                       _socket;

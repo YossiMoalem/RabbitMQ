@@ -6,6 +6,11 @@
 #include <mutex>
 #include <boost/noncopyable.hpp>
 #include <assert.h>
+#include <sys/eventfd.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>             /* Definition of uint64_t */
 
 
 namespace AMQP
@@ -36,7 +41,8 @@ class BlockingQueue : public boost::noncopyable
 
    BlockingQueue () : 
        _queueState( QueueState::QueueOpen ),
-       _runStatus( RunStatus::Continue )
+       _runStatus( RunStatus::Continue ),
+       _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
     {}
 
    ReturnStatus pushFront( DataType const& i_data, bool adminMessage = false )
@@ -55,6 +61,11 @@ class BlockingQueue : public boost::noncopyable
        _queueState = i_newState; 
    }
 
+   int & getFD()
+   {
+        return _eventFD;
+   }
+
    bool empty() const;
    void terminate( bool immediate );
    bool try_pop( DataType & o_data );
@@ -69,6 +80,7 @@ class BlockingQueue : public boost::noncopyable
    std::condition_variable      _queueEmptyCondition;
    QueueState                   _queueState;
    RunStatus                    _runStatus;
+   int                          _eventFD;
 };
 
     template<typename DataType>
@@ -86,6 +98,8 @@ void BlockingQueue<DataType>::pop(DataType& o_data)
         {
             delete (_queue.front());
             _queue.pop_front();
+            ssize_t i;
+            read( _eventFD, &i, sizeof( uint64_t ) );
         }
         o_data = nullptr;
     } else if ( _queue.empty() ) {
@@ -94,6 +108,8 @@ void BlockingQueue<DataType>::pop(DataType& o_data)
     } else {
         o_data=_queue.front();
         _queue.pop_front();
+        ssize_t i;
+        read( _eventFD, &i, sizeof( uint64_t ) );
     }
 }
     template<typename DataType>
@@ -105,6 +121,8 @@ bool BlockingQueue<DataType>::try_pop(DataType& o_data)
         return false;
     }
 
+    ssize_t i;
+    read( _eventFD, &i, sizeof( uint64_t ) );
     o_data=_queue.front();
     _queue.pop_front();
     return true;
@@ -140,6 +158,8 @@ auto BlockingQueue<DataType>::doPush(DataType const& i_data, bool adminMessage, 
         } else {
             _queue.push_back(i_data);
         }
+        uint64_t i = 1;
+        write( _eventFD, &i, sizeof( uint64_t ) );
         lock.unlock();
         _queueEmptyCondition.notify_all();
         return ReturnStatus::Ok;
