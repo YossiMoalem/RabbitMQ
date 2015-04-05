@@ -11,14 +11,13 @@
 namespace AMQP {
 class AmqpConnectionDetails;
 
-class AMQPConnection : private AMQP::ConnectionHandler, boost::noncopyable 
+class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
  public:
    typedef std::shared_ptr< std::promise< bool > > OperationSucceededSetter;
-   typedef std::function<int( const AMQP::Message& )> OnMessageReveivedCB;
 
-   AMQPConnection( OnMessageReveivedCB onMsgReceivedCB );
-   virtual ~AMQPConnection ();
+   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
+   virtual ~AMQPConnectionHandler ();
 
    void doPublish( const std::string & exchangeName, 
            const std::string & routingKey, 
@@ -35,7 +34,10 @@ class AMQPConnection : private AMQP::ConnectionHandler, boost::noncopyable
            const std::string & routingKey, 
            OperationSucceededSetter operationSucceeded ) const;
 
-   void handleInput( );
+   bool handleInput( );
+   bool handleOutput( );
+   bool pendingSend();
+
    /**
     * Blocking untill connection is either established or failes
     **/
@@ -77,7 +79,7 @@ class AMQPConnection : private AMQP::ConnectionHandler, boost::noncopyable
    AMQP::Connection*                _connection;
    AMQP::Channel *                  _channel;
    bool                             _connected = false;
-   OnMessageReveivedCB  _onMsgReceivedBC;
+   std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
 };

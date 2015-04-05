@@ -2,6 +2,7 @@
 #include "AmqpConnectionDetails.h"
 
 #include <thread>
+#include <unistd.h>
 
 #define EXC "exchange_name"
 #define KEY1 "YossiKey"

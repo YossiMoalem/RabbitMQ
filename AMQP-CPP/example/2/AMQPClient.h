@@ -2,8 +2,6 @@
 #define AMQP_CLIENT_H
 
 #include "BlockingQueue.h"
-#include "AMQPConnection.h"
-
 #include <amqpcpp.h>
 
 #include <boost/noncopyable.hpp>
@@ -13,12 +11,14 @@ namespace AMQP {
 
 class RabbitMessageBase;
 class AmqpConnectionDetails;
+class AMQPEventLoop;
 
 class AMQPClient : private boost::noncopyable
 {
  public:
+   typedef std::function<int( const AMQP::Message& )> OnMessageReveivedCB;
 
-   AMQPClient( AMQPConnection::OnMessageReveivedCB onMsgReceivedCB );
+   AMQPClient( OnMessageReveivedCB onMsgReceivedCB );
 
    ~AMQPClient();
 
@@ -55,11 +55,9 @@ class AMQPClient : private boost::noncopyable
 
    bool connected() const;
 
-   private:
-   void handleQueue( );
 
  private:
-   AMQPConnection *     _AMQPConnection;
+   AMQPEventLoop *                              _eventLoop;
    mutable BlockingQueue<RabbitMessageBase * >  _jobQueue;
 
 };

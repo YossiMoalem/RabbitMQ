@@ -1,12 +1,13 @@
-#include "AMQPConnection.h"
+#include "AMQPConnectionHandler.h"
 #include "AmqpConnectionDetails.h"
 
 namespace AMQP {
-AMQPConnection::AMQPConnection( OnMessageReveivedCB onMsgReceivedCB ) :
+
+AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
     _onMsgReceivedBC( onMsgReceivedCB )
 {}
 
-AMQPConnection::~AMQPConnection()
+AMQPConnectionHandler::~AMQPConnectionHandler()
 {
     if( _connection )
         delete _connection;
@@ -14,17 +15,40 @@ AMQPConnection::~AMQPConnection()
         delete _channel;
 }
 
-void AMQPConnection::doPublish( const std::string & exchangeName, 
+bool AMQPConnectionHandler::handleInput( )
+{
+    if( _socket.read( _incomingMessages ) )
+    {
+        size_t processed = _connection->parse( _incomingMessages.data(), _incomingMessages.size() );
+        _incomingMessages.shrink( processed );
+    }
+    return true;
+}
+
+bool AMQPConnectionHandler::handleOutput()
+{
+    if( ! _outgoingMessages.empty() )
+    {
+        return _socket.send( _outgoingMessages );
+    }
+    return false;
+}
+
+bool AMQPConnectionHandler::pendingSend()
+{
+    return ! _outgoingMessages.empty();
+}
+
+void AMQPConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
         OperationSucceededSetter operationSucceeded ) const
 {
-    //std::cout <<"L2:publishing: "<<message <<" to: " << routingKey << " via: " << exchangeName << std::endl;
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
 }
 
-void AMQPConnection::doBindQueue( const std::string & exchangeName, 
+void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
         OperationSucceededSetter operationSucceeded ) const
@@ -41,7 +65,7 @@ void AMQPConnection::doBindQueue( const std::string & exchangeName,
             } ) ;
 }
 
-void AMQPConnection::doUnBindQueue( const std::string & exchangeName, 
+void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
         OperationSucceededSetter operationSucceeded ) const
@@ -57,19 +81,7 @@ void AMQPConnection::doUnBindQueue( const std::string & exchangeName,
              } ) ;
 }
 
-void AMQPConnection::handleInput( )
-{
-    if( _socket.read( _incomingMessages ) )
-    {
-        size_t processed = _connection->parse( _incomingMessages.data(), _incomingMessages.size() );
-        if( _incomingMessages.size() - processed != 0 )
-        {
-            std::cout <<"Ulala! got "<<_incomingMessages.size()<<" bytes, parsed: "<<processed<<"only "<<std::endl;
-        }
-        _incomingMessages.shrink( processed );
-    }
-}
-void AMQPConnection::onConnected( AMQP::Connection *connection )
+void AMQPConnectionHandler::onConnected( AMQP::Connection *connection )
 {
     std::cout << "AMQP login success" << std::endl;
 
@@ -87,23 +99,23 @@ void AMQPConnection::onConnected( AMQP::Connection *connection )
             });
 }
 
-void AMQPConnection::onData(AMQP::Connection *connection, const char *data, size_t size)
+void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
     _outgoingMessages.append( data, size );
     _socket.send( _outgoingMessages );
 }
 
-void AMQPConnection::onError(AMQP::Connection *connection, const char *message)
+void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *message)
 {
     std::cout <<"Error: Error: "<< message <<std::endl;
 }
 
-void AMQPConnection::onClosed(AMQP::Connection *connection) 
+void AMQPConnectionHandler::onClosed(AMQP::Connection *connection) 
 {
     std::cout <<"Info: Connection Closed"<< std::endl;
 }
 
-bool AMQPConnection::login( const AmqpConnectionDetails & connectionParams )
+bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParams )
 {
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
@@ -120,12 +132,12 @@ bool AMQPConnection::login( const AmqpConnectionDetails & connectionParams )
     }
     return _connected;
 }
-std::future< bool > AMQPConnection::declareQueue( const std::string & queueName, 
+std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
         bool durable, 
         bool exclusive, 
         bool autoDelete ) const
 {
-   OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
     {
         std::cout <<"ERROR!!" <<std::endl;
@@ -150,13 +162,13 @@ std::future< bool > AMQPConnection::declareQueue( const std::string & queueName,
                 } ) ;
             }); 
     queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
-        operationSucceeded->set_value( false );
-        std::cout <<"queue decleration faled " <<std::endl;
-    } );
+            operationSucceeded->set_value( false );
+            std::cout <<"queue decleration faled " <<std::endl;
+            } );
     return operationSucceeded->get_future();
 }
 
-std::future< bool > AMQPConnection::declareExchange( const std::string & exchangeName,
+std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
         bool durable ) const
 {

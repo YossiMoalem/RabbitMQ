@@ -8,8 +8,9 @@ env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
 
 sources = Split ("""
     AMQPClient.cpp
-    AMQPConnection.cpp
+    AMQPConnectionHandler.cpp
     SmartBuffer.cpp
+    AMQPEventLoop.cpp
     """)
 
 appSourced = sources + [ "main.cpp" ]
