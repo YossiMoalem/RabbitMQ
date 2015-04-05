@@ -42,7 +42,7 @@ bool AMQPConnectionHandler::pendingSend()
 void AMQPConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
-        OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
@@ -51,7 +51,7 @@ void AMQPConnectionHandler::doPublish( const std::string & exchangeName,
 void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
     bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
@@ -65,7 +65,7 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
 void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
@@ -129,7 +129,7 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
         bool exclusive, 
         bool autoDelete ) const
 {
-    OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
     {
         std::cout <<"ERROR!!" <<std::endl;
@@ -163,7 +163,7 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
         ExchangeType type, 
         bool durable ) const
 {
-   OperationSucceededSetter operationSucceeded( new std::promise< bool > );
+    RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
     {
         std::cout <<"ERROR!!" <<std::endl;

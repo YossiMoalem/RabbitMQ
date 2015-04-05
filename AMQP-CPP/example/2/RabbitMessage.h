@@ -3,10 +3,8 @@
 
 #include <iostream>
 #include <sstream>
-
-//For OperationSucceededSetter.
-//should be removed!
-#include "AMQPConnectionHandler.h"
+#include <memory>
+#include <future>
 
 namespace AMQP {
 enum class MessageType
@@ -24,25 +22,31 @@ class RabbitMessageBase
 {
     friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
-    RabbitMessageBase( AMQPConnectionHandler::OperationSucceededSetter returnValueSetter ):
-        _returnValueSetter( returnValueSetter )
+   typedef std::shared_ptr< std::promise< bool > > OperationSucceededSetter;
+
+    RabbitMessageBase( ):
+        _returnValueSetter( new std::promise< bool > )
     {}
     
     virtual ~RabbitMessageBase () {}
 
-    RabbitMessageBase () {}
     RabbitMessageBase( const RabbitMessageBase& ) = delete;
     RabbitMessageBase& operator= (const RabbitMessageBase& ) = delete;
 
-    AMQPConnectionHandler::OperationSucceededSetter resultSetter()
+    OperationSucceededSetter resultSetter()
     {
         return _returnValueSetter;
+    }
+
+    std::future< bool > deferedResult()
+    {
+        return _returnValueSetter->get_future();
     }
 
     virtual MessageType messageType() const = 0;
 
  protected:
-    AMQPConnectionHandler::OperationSucceededSetter _returnValueSetter;
+    OperationSucceededSetter _returnValueSetter;
 
 };
 
@@ -55,9 +59,7 @@ class PostMessage : public RabbitMessageBase
  public:
     PostMessage( const std::string & exchangeName, 
             const std::string & routingKey, 
-            const std::string & message,
-             AMQPConnectionHandler::OperationSucceededSetter operationSucceeded ) :
-        RabbitMessageBase( operationSucceeded ),
+            const std::string & message) :
         _exchangeName( exchangeName ),
         _routingKey( routingKey ),
         _message( message )
@@ -99,9 +101,7 @@ class BindMessage : public RabbitMessageBase
  public:
     BindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey,
-            AMQPConnectionHandler::OperationSucceededSetter operationSucceeded ) :
-        RabbitMessageBase( operationSucceeded ),
+            const std::string routingKey ) :
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )
@@ -143,9 +143,7 @@ class UnBindMessage : public RabbitMessageBase
 
     UnBindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey,
-            AMQPConnectionHandler::OperationSucceededSetter operationSucceeded ) :
-        RabbitMessageBase( operationSucceeded ),
+            const std::string routingKey ) :
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )

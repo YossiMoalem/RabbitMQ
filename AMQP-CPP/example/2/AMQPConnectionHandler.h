@@ -7,6 +7,7 @@
 
 #include <amqpcpp.h>
 #include "AmqpSocket.h"
+#include "RabbitMessage.h"
 
 namespace AMQP {
 class AmqpConnectionDetails;
@@ -14,7 +15,6 @@ class AmqpConnectionDetails;
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
  public:
-   typedef std::shared_ptr< std::promise< bool > > OperationSucceededSetter;
 
    AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
    virtual ~AMQPConnectionHandler ();
@@ -22,17 +22,17 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    void doPublish( const std::string & exchangeName, 
            const std::string & routingKey, 
            const std::string & message, 
-           OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
 
    void doBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey,  
-           OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
 
    void doUnBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey, 
-           OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
 
    bool handleInput( );
    bool handleOutput( );

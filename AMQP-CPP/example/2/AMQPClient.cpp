@@ -1,7 +1,6 @@
 #include "AMQPClient.h"
 #include "AmqpConnectionDetails.h"
 #include "AMQPConnectionHandler.h"
-#include "RabbitMessage.h"
 #include "AMQPEventLoop.h"
 
 namespace AMQP {
@@ -24,39 +23,33 @@ std::future< bool > AMQPClient::publish( const std::string & exchangeName,
         const std::string & routingKey, 
         const std::string & message ) const
 {
-    AMQPConnectionHandler::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     PostMessage * msg = new PostMessage( exchangeName, 
             routingKey, 
-            message, 
-            operationSucceeded );
+            message );
     _jobQueue.push( msg );
-    return operationSucceeded->get_future();
+    return msg->deferedResult();
 }
 
 std::future< bool > AMQPClient::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
-    AMQPConnectionHandler::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     BindMessage * bindMessage = new BindMessage( exchangeName, 
             queueName, 
-            routingKey, 
-            operationSucceeded );
+            routingKey );
     _jobQueue.push( bindMessage );
-    return operationSucceeded->get_future();
+    return bindMessage->deferedResult();
 }
 
 std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
-    AMQPConnectionHandler::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, 
             queueName, 
-            routingKey, 
-            operationSucceeded );
+            routingKey );
     _jobQueue.push( unBindMessage );
-    return operationSucceeded->get_future();
+    return unBindMessage->deferedResult();
 }
 
 
