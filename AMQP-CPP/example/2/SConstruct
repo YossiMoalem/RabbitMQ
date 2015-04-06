@@ -11,6 +11,7 @@ sources = Split ("""
     AMQPConnectionHandler.cpp
     SmartBuffer.cpp
     AMQPEventLoop.cpp
+    RabbitOperation.cpp
     """)
 
 appSourced = sources + [ "main.cpp" ]

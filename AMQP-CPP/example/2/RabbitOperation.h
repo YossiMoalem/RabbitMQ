@@ -1,20 +1,12 @@
 #ifndef RABBIT_MESSAGE_H
 #define RABBIT_MESSAGE_H
 
-#include <iostream>
-#include <sstream>
 #include <memory>
 #include <future>
 
 namespace AMQP {
-enum class MessageType
-{
-    Post,
-    Bind,
-    UnBind,
-    Stop
-};
 
+class AMQPEventLoop;
 
 /********************************************************************************\
  * RabbitMessageBase
@@ -43,7 +35,7 @@ class RabbitMessageBase
         return _returnValueSetter->get_future();
     }
 
-    virtual MessageType messageType() const = 0;
+    virtual void handle( AMQPEventLoop * eventLoop ) = 0;
 
  protected:
     OperationSucceededSetter _returnValueSetter;
@@ -64,11 +56,6 @@ class PostMessage : public RabbitMessageBase
         _message( message )
     {}
 
-    MessageType messageType() const
-    {
-        return MessageType::Post;
-    }
-
     const std::string & message() const
     {
         return _message;
@@ -84,6 +71,7 @@ class PostMessage : public RabbitMessageBase
         return _exchangeName;
     }
 
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
 
  protected:
     std::string _exchangeName;
@@ -105,11 +93,6 @@ class BindMessage : public RabbitMessageBase
         _routingKey( routingKey )
     { }
 
-    MessageType messageType() const
-    {
-        return MessageType::Bind;
-    }
-
     const std::string & routingKey() const
     {
         return _routingKey;
@@ -124,6 +107,8 @@ class BindMessage : public RabbitMessageBase
     {
         return _queueName;
     }
+
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
 
  protected:
     std::string _exchangeName;
@@ -137,7 +122,6 @@ class BindMessage : public RabbitMessageBase
 class UnBindMessage : public RabbitMessageBase
 {
  public:
-
     UnBindMessage( const std::string & exchangeName, 
             const std::string & queueName,
             const std::string routingKey ) :
@@ -145,11 +129,6 @@ class UnBindMessage : public RabbitMessageBase
         _queueName( queueName ),
         _routingKey( routingKey )
     { }
-
-    MessageType messageType() const
-    {
-        return MessageType::UnBind;
-    }
 
     const std::string & routingKey() const
     {
@@ -165,6 +144,8 @@ class UnBindMessage : public RabbitMessageBase
     {
         return _queueName;
     }
+
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
 
  protected:
     std::string _exchangeName;
@@ -192,10 +173,7 @@ class StopMessage : public RabbitMessageBase
         _immediate = true;
     }
 
-    MessageType messageType() const
-    {
-        return MessageType::Stop;
-    }
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
 
  protected:
     bool _immediate;

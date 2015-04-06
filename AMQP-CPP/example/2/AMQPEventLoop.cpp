@@ -1,6 +1,6 @@
 #include "AMQPEventLoop.h"
 #include "BlockingQueue.h"
-#include "RabbitMessage.h"
+#include "RabbitOperation.h"
 #include "AMQPConnectionHandler.h"
 
 #include <amqpcpp.h>
@@ -15,8 +15,8 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
-//    if (!_connected )
-//        return 1;
+    //    if (!_connected )
+    //        return 1;
 
     fd_set readFd;
     int queueEventFd = _jobQueue->getFD();
@@ -53,60 +53,58 @@ int AMQPEventLoop::start()
     return 0;
 }
 
-//TODO: Some sort of nicer double dispatch.
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
     if( _jobQueue->try_pop( msg ) )
     {
-        switch( msg->messageType() )
-        {
-            case MessageType::Post:
-                {
-                    PostMessage * postMessage = static_cast< PostMessage* >( msg );
-                    _connectionHandlers->doPublish( postMessage->exchangeName(), 
-                            postMessage->routingKey(), 
-                            postMessage->message(), 
-                            postMessage->resultSetter() );
-                    delete msg;
-                }
-                break;
-            case MessageType::Bind:
-                {
-                    BindMessage * bindMessage = static_cast< BindMessage* >( msg );
-                    _connectionHandlers->doBindQueue(bindMessage->exchangeName(), 
-                            bindMessage->queueName(), 
-                            bindMessage->routingKey(), 
-                            bindMessage->resultSetter() ); 
-                }
-
-
-                break;
-            case MessageType::UnBind:
-                {
-                    UnBindMessage * unBindMessage = static_cast< UnBindMessage* >( msg );
-                    _connectionHandlers->doUnBindQueue(unBindMessage->exchangeName(), 
-                            unBindMessage->queueName(), 
-                            unBindMessage->routingKey(), 
-                            unBindMessage->resultSetter() ); 
-                }
-                break;
-            case MessageType::Stop:
-                {
-                    StopMessage * stopMessage = static_cast< StopMessage * >( msg );
-                    if( stopMessage->terminateNow() )
-                    {
-                        _stop = true;
-                        _jobQueue.flush();
-                    } else {
-                        _jobQueue->stop();
-                        stopMessage->setTerminateNow();
-                        _jobQueue->push( stopMessage );
-                    }
-                }
-                break;
-        }
+        msg->handle( this );
     }
+}
+
+void AMQPEventLoop::stop( bool terminateNow )
+{
+    _jobQueue->close();
+    if( terminateNow )
+    {
+        _stop = true;
+    } else {
+        StopMessage * stopMessage = new StopMessage( true );
+        _jobQueue->push( stopMessage );
+    }
+}
+
+void AMQPEventLoop::publish( const std::string & exchangeName, 
+        const std::string & routingKey, 
+        const std::string & message, 
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+{
+    _connectionHandlers->doPublish(exchangeName,
+            routingKey,
+            message,
+            operationSucceeded);
+}
+
+void AMQPEventLoop::bindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey,  
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+{
+    _connectionHandlers->doBindQueue(exchangeName,
+            queueName,
+            routingKey,
+            operationSucceeded);
+}
+
+void AMQPEventLoop::unBindQueue( const std::string & exchangeName, 
+        const std::string & queueName, 
+        const std::string & routingKey, 
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+{
+    _connectionHandlers->doUnBindQueue( exchangeName,
+            queueName,
+            routingKey,
+            operationSucceeded );
 }
 
 }//namespace AMQP

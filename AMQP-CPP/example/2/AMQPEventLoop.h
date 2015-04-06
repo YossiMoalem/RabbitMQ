@@ -2,6 +2,7 @@
 #define AMQP_EVENT_LOOP
 
 #include <functional>
+#include "RabbitOperation.h"
 
 namespace AMQP {
 
@@ -24,9 +25,25 @@ class AMQPEventLoop
    //this needs to be removed!!!!!
    AMQPConnectionHandler* connectionHandler() { return _connectionHandlers; } 
 
+   void publish( const std::string & exchangeName, 
+           const std::string & routingKey, 
+           const std::string & message, 
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+
+   void bindQueue( const std::string & exchangeName, 
+           const std::string & queueName, 
+           const std::string & routingKey,  
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+
+   void unBindQueue( const std::string & exchangeName, 
+           const std::string & queueName, 
+           const std::string & routingKey, 
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+
+   void stop( bool immediate );
+
  private:
    void handleQueue( );
-
  private:
    bool                                  _stop = false;
    AMQPConnectionHandler *               _connectionHandlers;

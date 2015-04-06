@@ -13,6 +13,16 @@
 #include <stdint.h>             /* Definition of uint64_t */
 
 
+namespace{
+template< typename T >
+    void dispose( T t ) {}
+template< typename T >
+    void dispose( T * t )
+    {
+        delete t;
+    }
+}//namespace
+
 namespace AMQP
 {
 template< typename DataType >
@@ -24,6 +34,11 @@ class BlockingQueue : public boost::noncopyable
        _queueOpen( true ),
        _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
     {}
+
+   ~BlockingQueue()
+   {
+       this->flush();
+   }
 
    bool pushFront( DataType const& i_data )
    { 
@@ -70,7 +85,7 @@ void BlockingQueue< DataType >::pop( DataType & data )
         _queueEmptyCondition.wait(lock);
     }
 
-    if( ! _ququq.empty )
+    if( ! _queue.empty )
     {
         ssize_t i;
         read( _eventFD, & i, sizeof( uint64_t ) );
@@ -103,7 +118,7 @@ void BlockingQueue<DataType>::flush()
     _queueOpen = false;
     while( ! _queue.empty() )
     {
-        DataType * d = _queue.front();
+        DataType d = _queue.front();
         _queue.pop_front();
         dispose( d );
     }
@@ -140,15 +155,6 @@ bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst )
     return false;
 }
 
-namespace{
-template< typename T >
-    void dispose( T t ) {}
-template< typename T >
-    void dispose( T * t )
-    {
-        delete t;
-    }
-}//namespace
 
 } //namespace AMQP
 #endif
