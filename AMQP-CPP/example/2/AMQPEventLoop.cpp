@@ -23,7 +23,7 @@ int AMQPEventLoop::start()
     int brokerReadFD =  _connectionHandlers->getReadFD();
     int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
 
-    while( true )
+    while( ! _stop )
     {
         FD_ZERO( & readFd );
         FD_SET ( queueEventFd, & readFd );
@@ -39,6 +39,11 @@ int AMQPEventLoop::start()
             handleQueue();
         }
 
+        // if we have messages to send, do not try to immediatly send it:
+        // 1. register teh write socket with the select.
+        // 2. when it is called - send
+        // 2.1 after sending, if not everything sent - back to 1. 
+        // 2.2 otherwise - do not register write
         if ( _connectionHandlers->pendingSend() )
         {
             _connectionHandlers->handleOutput();
@@ -47,7 +52,7 @@ int AMQPEventLoop::start()
     return 0;
 }
 
-
+//TODO: Some sort of nicer double dispatch.
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
@@ -64,6 +69,7 @@ void AMQPEventLoop::handleQueue( )
                             postMessage->resultSetter() );
                     delete msg;
                 }
+
                 break;
             case MessageType::Bind:
                 {
@@ -73,6 +79,8 @@ void AMQPEventLoop::handleQueue( )
                             bindMessage->routingKey(), 
                             bindMessage->resultSetter() ); 
                 }
+
+
                 break;
             case MessageType::UnBind:
                 {
@@ -83,9 +91,21 @@ void AMQPEventLoop::handleQueue( )
                             unBindMessage->resultSetter() ); 
                 }
                 break;
+            case MessageType::Stop:
+                {
+                    StopMessage * stopMessage = static_cast< StopMessage * >( msg );
+                    if( stopMessage->terminateNow() )
+                    {
+                        _stop = true;
+                    } else {
+                        //TODO: mark the queue as blocked!
+                        stopMessage->setTerminateNow();
+                        _jobQueue->push( stopMessage );
+                    }
+                }
+                break;
         }
     }
 }
-
 
 }//namespace AMQP

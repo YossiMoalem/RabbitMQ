@@ -44,7 +44,7 @@ ReturnStatus AMQPConnection::start()
 ReturnStatus AMQPConnection::stop( bool immediate )
 {
     _stop = true;
-    //2. push stop message to teh connection handler( immediate ) ? top : end 
+    _connectionHandler.stop( immediate );
     _eventLoopThread.join();
     return ReturnStatus::Ok;
 }

@@ -11,7 +11,8 @@ enum class MessageType
 {
     Post,
     Bind,
-    UnBind
+    UnBind,
+    Stop
 };
 
 
@@ -20,7 +21,6 @@ enum class MessageType
  ********************************************************************************/
 class RabbitMessageBase
 {
-    friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
    typedef std::shared_ptr< std::promise< bool > > OperationSucceededSetter;
 
@@ -55,7 +55,6 @@ class RabbitMessageBase
  ********************************************************************************/
 class PostMessage : public RabbitMessageBase
 {
-    friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
     PostMessage( const std::string & exchangeName, 
             const std::string & routingKey, 
@@ -97,7 +96,6 @@ class PostMessage : public RabbitMessageBase
  ********************************************************************************/
 class BindMessage : public RabbitMessageBase
 {
-    friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
     BindMessage( const std::string & exchangeName, 
             const std::string & queueName,
@@ -122,7 +120,7 @@ class BindMessage : public RabbitMessageBase
         return _exchangeName;
     }
 
-    const std::string & queueName()
+    const std::string & queueName() const
     {
         return _queueName;
     }
@@ -138,7 +136,6 @@ class BindMessage : public RabbitMessageBase
  ********************************************************************************/
 class UnBindMessage : public RabbitMessageBase
 {
-    friend std::ostream& operator<< (std::ostream& ostream, const RabbitMessageBase& inst );
  public:
 
     UnBindMessage( const std::string & exchangeName, 
@@ -164,7 +161,7 @@ class UnBindMessage : public RabbitMessageBase
         return _exchangeName;
     }
 
-    const std::string & queueName()
+    const std::string & queueName() const
     {
         return _queueName;
     }
@@ -173,6 +170,35 @@ class UnBindMessage : public RabbitMessageBase
     std::string _exchangeName;
     std::string _queueName;
     std::string _routingKey;
+};
+
+/********************************************************************************\
+ * StopMessage
+ ********************************************************************************/
+class StopMessage : public RabbitMessageBase
+{
+ public:
+    StopMessage( bool immediate ) :
+        _immediate( immediate )
+    { }
+
+    bool terminateNow()
+    {
+        return _immediate;
+    }
+
+    void setTerminateNow()
+    {
+        _immediate = true;
+    }
+
+    MessageType messageType() const
+    {
+        return MessageType::Stop;
+    }
+
+ protected:
+    bool _immediate;
 };
 
 } //namespace AMQP

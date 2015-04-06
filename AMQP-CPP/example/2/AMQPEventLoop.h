@@ -8,6 +8,7 @@ namespace AMQP {
 template < typename T >
     class BlockingQueue;
 class RabbitMessageBase;
+
 class AMQPConnectionHandler;
 class Message;
 
@@ -27,6 +28,7 @@ class AMQPEventLoop
    void handleQueue( );
 
  private:
+   bool                                  _stop = false;
    AMQPConnectionHandler *               _connectionHandlers;
    BlockingQueue<RabbitMessageBase * > * _jobQueue;
 };

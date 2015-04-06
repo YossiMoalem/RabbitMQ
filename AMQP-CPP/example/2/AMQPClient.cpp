@@ -52,9 +52,16 @@ std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName,
     return unBindMessage->deferedResult();
 }
 
+std::future< bool > AMQPClient::stop( bool immediate )
+{
+    StopMessage * stopMessage = new StopMessage( immediate );
+    _jobQueue.pushFront( stopMessage, true );
+    return stopMessage->deferedResult();
+}
 
 bool AMQPClient::login( const AmqpConnectionDetails & connectionParams )
 {
+    //TODO: move to event loop thread
     return _eventLoop->connectionHandler()->login( connectionParams );
 }
 
@@ -62,6 +69,7 @@ std::future< bool > AMQPClient::declareExchange( const std::string & exchangeNam
            ExchangeType type , 
            bool durable ) const 
 {
+    //TODO: move to event loop thread
     return _eventLoop->connectionHandler()->declareExchange( exchangeName, type, durable );
 }
 
@@ -70,6 +78,7 @@ std::future< bool > AMQPClient::declareQueue( const std::string & queueName,
            bool exclusive, 
            bool autoDelete) const
 {
+    //TODO: move to event loop thread
     return _eventLoop->connectionHandler()->declareQueue( queueName, durable, exclusive, autoDelete );
 }
 } //namespace AMQP

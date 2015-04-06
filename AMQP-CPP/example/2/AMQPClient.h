@@ -29,6 +29,8 @@ class AMQPClient : private boost::noncopyable
 
    int startEventLoop();
 
+   std::future< bool > stop( bool immediate );
+
    std::future< bool > declareQueue( const std::string & queueName, 
            bool durable = false, 
            bool exclusive = false, 
