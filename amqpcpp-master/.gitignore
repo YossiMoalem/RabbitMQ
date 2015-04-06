@@ -1,8 +1,0 @@
-*.o
-*.out
-example_consume
-example_get
-example_publish
-libamqpcpp.a
-examples/reconnect_to_cluster_nodes/consumer/consumer
-*.d
