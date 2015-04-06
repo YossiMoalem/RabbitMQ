@@ -15,125 +15,99 @@
 
 namespace AMQP
 {
-enum class RunStatus
-{
-    Continue = 0,
-        StopGracefull = 1,
-        StopImmediate = 2 
-};
 template< typename DataType >
 class BlockingQueue : public boost::noncopyable
 {
  public:
-   enum class ReturnStatus
-   {
-       Ok,
-       QueueOpenForAdminMessagesOnly,
-       QueueBlocked
-   };
-
-   enum class QueueState
-   {
-       QueueOpen,
-       AdminOnly,
-       QueueBlocked
-   };
 
    BlockingQueue () : 
-       _queueState( QueueState::QueueOpen ),
-       _runStatus( RunStatus::Continue ),
+       _queueOpen( true ),
        _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
     {}
 
-   ReturnStatus pushFront( DataType const& i_data, bool adminMessage = false )
+   bool pushFront( DataType const& i_data )
    { 
-       return doPush ( i_data, adminMessage, true ); 
+       return doPush ( i_data, true ); 
    }
 
-   ReturnStatus push( DataType const& i_data, bool adminMessage = false )
+   bool push( DataType const& i_data )
    { 
-       return doPush ( i_data, adminMessage, false ); 
+       return doPush ( i_data, false ); 
    }
 
-   //Not Nice..
-   void setQueueState( QueueState i_newState )
-   { 
-       _queueState = i_newState; 
-   }
-
-   int & getFD()
+   int getFD() const
    {
         return _eventFD;
    }
 
+   void close()
+   {
+       _queueOpen = false;
+   }
+
    bool empty() const;
-   void terminate( bool immediate );
-   bool try_pop( DataType & o_data );
-   void pop( DataType & o_data );
+   void flush( );
+   bool try_pop( DataType & data );
+   void pop( DataType & data );
 
  private:
-   ReturnStatus doPush( DataType const& i_data, bool adminMessage, bool forceFirst ) ;
+   bool doPush( DataType const& i_data, bool forceFirst ) ;
 
  private:
    std::deque<DataType>         _queue;
    mutable std::mutex           _queueMutex;
    std::condition_variable      _queueEmptyCondition;
-   QueueState                   _queueState;
-   RunStatus                    _runStatus;
+   bool                         _queueOpen;
    int                          _eventFD;
 };
 
     template<typename DataType>
-void BlockingQueue<DataType>::pop(DataType& o_data)
+void BlockingQueue< DataType >::pop( DataType & data )
 {
     std::unique_lock< std::mutex > lock(_queueMutex);
-    while( _queue.empty() && _runStatus == RunStatus::Continue )
+    while( _queue.empty() && _queueOpen )
     {
         _queueEmptyCondition.wait(lock);
     }
 
-    if (_runStatus == RunStatus::StopImmediate)
+    if( ! _ququq.empty )
     {
-        while (!_queue.empty())
-        {
-            delete (_queue.front());
-            _queue.pop_front();
-            ssize_t i;
-            read( _eventFD, &i, sizeof( uint64_t ) );
-        }
-        o_data = nullptr;
-    } else if ( _queue.empty() ) {
-        assert (_runStatus == RunStatus::StopGracefull);
-        o_data = nullptr;
-    } else {
-        o_data=_queue.front();
-        _queue.pop_front();
         ssize_t i;
-        read( _eventFD, &i, sizeof( uint64_t ) );
+        read( _eventFD, & i, sizeof( uint64_t ) );
+        data = _queue.front();
+        _queue.pop_front();
     }
 }
+
     template<typename DataType>
-bool BlockingQueue<DataType>::try_pop(DataType& o_data)
+bool BlockingQueue< DataType >::try_pop( DataType & data )
 {
     std::unique_lock< std::mutex > lock(_queueMutex);
-    if(_queue.empty())
+    if( _queue.empty() )
     {
         return false;
     }
 
     ssize_t i;
     read( _eventFD, &i, sizeof( uint64_t ) );
-    o_data=_queue.front();
+    data=_queue.front();
     _queue.pop_front();
     return true;
 }
 
-    template<typename DataType>
-void BlockingQueue<DataType>::terminate (bool immediate)
+    template<typename DataType >
+void BlockingQueue<DataType>::flush()
 {
     std::unique_lock< std::mutex > lock(_queueMutex);
-    _queueState = QueueState::QueueBlocked;
-    _runStatus = (immediate) ? RunStatus::StopImmediate : RunStatus::StopGracefull;
+    //make sure...
+    _queueOpen = false;
+    while( ! _queue.empty() )
+    {
+        DataType * d = _queue.front();
+        _queue.pop_front();
+        dispose( d );
+    }
+    //If there is any client still waiting.
     _queueEmptyCondition.notify_all();
 }
 
@@ -144,13 +118,11 @@ bool BlockingQueue<DataType>::empty() const
     return _queue.empty();
 }
 
-
 template<typename DataType>
-auto BlockingQueue<DataType>::doPush(DataType const& i_data, bool adminMessage, bool forceFirst ) -> ReturnStatus
+bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst ) 
 {
     std::unique_lock< std::mutex > lock(_queueMutex);
-    if(_queueState == QueueState::QueueOpen ||
-            ( _queueState == QueueState::AdminOnly && adminMessage) )
+    if( _queueOpen )
     {
         if (forceFirst)
         {
@@ -162,16 +134,21 @@ auto BlockingQueue<DataType>::doPush(DataType const& i_data, bool adminMessage, 
         write( _eventFD, &i, sizeof( uint64_t ) );
         lock.unlock();
         _queueEmptyCondition.notify_all();
-        return ReturnStatus::Ok;
+        return true;
     }
-    if( _queueState == QueueState::AdminOnly )
-    {
-        assert (!adminMessage);
-        return ReturnStatus::QueueOpenForAdminMessagesOnly;
-    }
-    assert (_queueState == QueueState::QueueBlocked);
-    return ReturnStatus::QueueBlocked;
+    assert ( ! _queueOpen );
+    return false;
 }
+
+namespace{
+template< typename T >
+    void dispose( T t ) {}
+template< typename T >
+    void dispose( T * t )
+    {
+        delete t;
+    }
+}//namespace
 
 } //namespace AMQP
 #endif

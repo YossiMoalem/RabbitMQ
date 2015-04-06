@@ -39,6 +39,7 @@ int AMQPEventLoop::start()
             handleQueue();
         }
 
+        //TODO:
         // if we have messages to send, do not try to immediatly send it:
         // 1. register teh write socket with the select.
         // 2. when it is called - send
@@ -69,7 +70,6 @@ void AMQPEventLoop::handleQueue( )
                             postMessage->resultSetter() );
                     delete msg;
                 }
-
                 break;
             case MessageType::Bind:
                 {
@@ -97,8 +97,9 @@ void AMQPEventLoop::handleQueue( )
                     if( stopMessage->terminateNow() )
                     {
                         _stop = true;
+                        _jobQueue.flush();
                     } else {
-                        //TODO: mark the queue as blocked!
+                        _jobQueue->stop();
                         stopMessage->setTerminateNow();
                         _jobQueue->push( stopMessage );
                     }

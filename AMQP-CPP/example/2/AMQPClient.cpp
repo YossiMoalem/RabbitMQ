@@ -55,7 +55,7 @@ std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName,
 std::future< bool > AMQPClient::stop( bool immediate )
 {
     StopMessage * stopMessage = new StopMessage( immediate );
-    _jobQueue.pushFront( stopMessage, true );
+    _jobQueue.pushFront( stopMessage );
     return stopMessage->deferedResult();
 }
 
