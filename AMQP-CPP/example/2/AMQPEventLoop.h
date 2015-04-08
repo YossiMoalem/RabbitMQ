@@ -2,6 +2,8 @@
 #define AMQP_EVENT_LOOP
 
 #include <functional>
+#include <memory>
+
 #include "RabbitOperation.h"
 
 namespace AMQP {
@@ -23,7 +25,7 @@ class AMQPEventLoop
    //TODO: this is temporary WA untill I'll move all actions to work via the eventloop.
    //till then, client sends commands to the broker, so it needs the connection handler.
    //this needs to be removed!!!!!
-   AMQPConnectionHandler* connectionHandler() { return _connectionHandlers; } 
+   AMQPConnectionHandler* connectionHandler() { return _connectionHandlers.get(); } 
 
    void publish( const std::string & exchangeName, 
            const std::string & routingKey, 
@@ -45,9 +47,9 @@ class AMQPEventLoop
  private:
    void handleQueue( );
  private:
-   bool                                  _stop = false;
-   AMQPConnectionHandler *               _connectionHandlers;
-   BlockingQueue<RabbitMessageBase * > * _jobQueue;
+   bool                                     _stop = false;
+   std::unique_ptr< AMQPConnectionHandler > _connectionHandlers;
+   BlockingQueue<RabbitMessageBase * > *    _jobQueue;
 };
 
 } //namespace AMQP

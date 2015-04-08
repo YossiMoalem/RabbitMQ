@@ -19,14 +19,14 @@ using namespace AMQP;
 void runConsumer()
 {
     AmqpConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-    AMQPClient connectionHandler( [] ( const AMQP::Message & message ) {
+    AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
-    if( connectionHandler.login( connectionDetails ) )
+    if( amqpClient.login( connectionDetails ) )
     {
-        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &connectionHandler) );
+        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
         std::string exchangeName( EXC );
-        std::future< bool > declareExchangeResult = connectionHandler.declareExchange( exchangeName, AMQP::topic );
+        std::future< bool > declareExchangeResult = amqpClient.declareExchange( exchangeName, AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
@@ -36,7 +36,7 @@ void runConsumer()
             exit( 1 );
         }
 
-        std::future< bool > declareQueueResult = connectionHandler.declareQueue( QUEUE );
+        std::future< bool > declareQueueResult = amqpClient.declareQueue( QUEUE );
         declareQueueResult.wait();
         if( declareQueueResult.get() )
         {
@@ -45,7 +45,7 @@ void runConsumer()
             std::cout <<"Error declaring queue" <<std::endl;
             exit( 1 );
         }
-        std::future< bool > bindResult = connectionHandler.bindQueue( EXC, QUEUE, KEY1 );
+        std::future< bool > bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
         bindResult.wait();
         if( bindResult.get() )
         {
@@ -54,6 +54,8 @@ void runConsumer()
             std::cout <<"Error binding queue" <<std::endl;
             exit( 1 );
         }
+        sleep( 5 );
+        amqpClient.stop( false );
         eventLoop.join();
     }
 }
@@ -61,16 +63,21 @@ void runConsumer()
 void runProducer()
 {
     AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
-    AMQPClient connectionHandler( nullptr );
-    connectionHandler.login( connectionDetails );
-        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &connectionHandler) );
+    AMQPClient amqpClient( nullptr );
+    amqpClient.login( connectionDetails );
+        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
     std::string exchangeName( EXC );
-    connectionHandler.declareExchange( exchangeName, AMQP::topic );
-    while(1)
+    amqpClient.declareExchange( exchangeName, AMQP::topic );
+    std::string message = std::string( "tananainai" );
+    for( int i = 0; i < 100; ++i)
     {
-        sleep( 1 );
-        connectionHandler.publish(exchangeName, KEY1, "tananainai" );
+        sleep(1);
+        amqpClient.publish(exchangeName, KEY1, message );
     }
+    std::cout <<"Calling stop" <<std::endl;
+    amqpClient.stop(false);
+    std::cout <<"stoped" <<std::endl;
+    eventLoop.join();
 }
 
 #define showUsage \

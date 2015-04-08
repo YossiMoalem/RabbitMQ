@@ -9,7 +9,7 @@ namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB,
         BlockingQueue<RabbitMessageBase * >  * jobQueue ) :
-    _connectionHandlers( new AMQPConnectionHandler( onMsgReceivedCB ) ),
+    _connectionHandlers( new AMQPConnectionHandler ( onMsgReceivedCB ) ),
     _jobQueue( jobQueue )
 { }
 
@@ -29,25 +29,30 @@ int AMQPEventLoop::start()
         FD_SET ( queueEventFd, & readFd );
         FD_SET ( brokerReadFD, & readFd );
 
-        select( maxReadFd, & readFd, NULL, NULL, NULL );
-        if( FD_ISSET( brokerReadFD, & readFd ) )
+        int res = select( maxReadFd, & readFd, NULL, NULL, NULL );
+        if( res > 0 )
         {
-            _connectionHandlers->handleInput();
-        }
-        if( FD_ISSET( queueEventFd, & readFd ) )
-        {
-            handleQueue();
-        }
+            if( FD_ISSET( brokerReadFD, & readFd ) )
+            {
+                _connectionHandlers->handleInput();
+            }
+            if( FD_ISSET( queueEventFd, & readFd ) )
+            {
+                handleQueue();
+            }
 
-        //TODO:
-        // if we have messages to send, do not try to immediatly send it:
-        // 1. register teh write socket with the select.
-        // 2. when it is called - send
-        // 2.1 after sending, if not everything sent - back to 1. 
-        // 2.2 otherwise - do not register write
-        if ( _connectionHandlers->pendingSend() )
-        {
-            _connectionHandlers->handleOutput();
+            //TODO:
+            // if we have messages to send, do not try to immediatly send it:
+            // 1. register teh write socket with the select.
+            // 2. when it is called - send
+            // 2.1 after sending, if not everything sent - back to 1. 
+            // 2.2 otherwise - do not register write
+            if ( _connectionHandlers->pendingSend() )
+            {
+                _connectionHandlers->handleOutput();
+            }
+        } else {
+            std::cout <<"select returned : " <<res <<" Errno = " <<errno <<std::endl;
         }
     }
     return 0;
@@ -60,6 +65,7 @@ void AMQPEventLoop::handleQueue( )
     {
         msg->handle( this );
     }
+    delete msg;
 }
 
 void AMQPEventLoop::stop( bool terminateNow )

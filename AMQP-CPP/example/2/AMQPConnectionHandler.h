@@ -67,7 +67,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
  private:
    AmqpSocket                       _socket;
    AMQP::Connection*                _connection;
-   AMQP::Channel *                  _channel;
+   AMQP::Channel *                  _channel = nullptr;
    bool                             _connected = false;
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
