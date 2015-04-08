@@ -125,9 +125,9 @@ bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParam
     return _connected;
 }
 std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
-        bool durable, 
-        bool exclusive, 
-        bool autoDelete ) const
+        bool _durable,
+        bool _exclusive,
+        bool _autoDelete ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -135,9 +135,9 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
         std::cout <<"ERROR!!" <<std::endl;
     }
     int flags = 0;
-    if( durable )       flags |= AMQP::durable;
-    if( exclusive )     flags |= exclusive;
-    if( autoDelete )    flags |= autoDelete; 
+    if( _durable )       flags |= AMQP::durable;
+    if( _exclusive )     flags |= AMQP::exclusive;
+    if( _autoDelete )    flags |= AMQP::autodelete;
 
     auto & queueHndl = _channel->declareQueue( queueName, flags );
     queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
@@ -154,14 +154,14 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
             }); 
     queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
             operationSucceeded->set_value( false );
-            std::cout <<"queue decleration faled " <<std::endl;
+            std::cout <<"queue declaration failed " <<std::endl;
             } );
     return operationSucceeded->get_future();
 }
 
 std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
-        bool durable ) const
+        bool _durable ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -169,8 +169,8 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
         std::cout <<"ERROR!!" <<std::endl;
     }
     int flags = 0;
-    if( durable )
-        flags |= durable;
+    if( _durable )
+        flags |= AMQP::durable;
 
     auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
     exchangeHndl.onSuccess([ operationSucceeded ]() { 
