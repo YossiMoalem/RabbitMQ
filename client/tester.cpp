@@ -51,6 +51,9 @@ class BindTester
        client.sendUnicast(std::string("lalalila4"), MY_NAME, MY_NAME );
        client.sendUnicast(std::string("lalalila5"), MY_NAME, MY_NAME );
        client.sendUnicast(std::string("lalalila6"), MY_NAME, MY_NAME );
+       sleep (timeToFlushAllMessages);
+
+       RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester:: Going to send 6 kukuruku messages to NON relevant queue. Should NOT be recieved");
        client.sendUnicast(std::string("kukuriku 1"), OTHER_NAME, MY_NAME );
        client.sendUnicast(std::string("kukuriku 2"), OTHER_NAME, MY_NAME );
@@ -101,8 +104,7 @@ class BindTester
 /*****************************************************************************\
  *  Measure Tester 
 \*****************************************************************************/
-#if 0
-class MeasureTester : public RabbitMQNotifiableIntf
+class MeasureTester 
 {
  public:
    MeasureTester ():
@@ -112,27 +114,32 @@ class MeasureTester : public RabbitMQNotifiableIntf
        lastSendTime ( ),
        numOfReceived ( 0 ),
        numOfMessagesToSend ( 1000000 )
-   { }
+    { }
    int operator ()()
    {
-     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, this);
-       client.start();
-       sleep(timeToConnect);
-       RABBIT_DEBUG("Tester:: Tester Started");
-       RABBIT_DEBUG("Going to send " << numOfMessagesToSend << " Messages");
-       gettimeofday(&firstSendTime, nullptr);
-       for (unsigned int leftToSend = numOfMessagesToSend; leftToSend > 0; --leftToSend)
-           client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
-       gettimeofday(&lastSendTime, nullptr);
-       sleep(timeToFlushAllMessages);
-       RABBIT_DEBUG("-----------------------------------------");
-       RABBIT_DEBUG("Messages Received  : " << numOfReceived);
-       RABBIT_DEBUG("Sending Time                           (ms) : " << SUB_TV(lastSendTime, firstSendTime )) ;
-       RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastReceiveTime, firstReceiveTime ) );
-       RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastReceiveTime, firstSendTime)) ;
+       ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+       RabbitClient client (cnd, "EXC1", MY_NAME, [ this ] ( std::string o_sender, 
+                   std::string destination, 
+                   DeliveryType deliveryType , 
+                   std::string message )->int {
+               return onMessageReceive( o_sender, destination, deliveryType, message );
+               } ) ;
+               client.start();
+               sleep(timeToConnect);
+               RABBIT_DEBUG("Tester:: Tester Started");
+               RABBIT_DEBUG("Going to send " << numOfMessagesToSend << " Messages");
+               gettimeofday(&firstSendTime, nullptr);
+               for (unsigned int leftToSend = numOfMessagesToSend; leftToSend > 0; --leftToSend)
+               client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
+               gettimeofday(&lastSendTime, nullptr);
+               sleep(timeToFlushAllMessages);
+               RABBIT_DEBUG("-----------------------------------------");
+               RABBIT_DEBUG("Messages Received  : " << numOfReceived);
+               RABBIT_DEBUG("Sending Time                           (ms) : " << SUB_TV(lastSendTime, firstSendTime )) ;
+               RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastReceiveTime, firstReceiveTime ) );
+               RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastReceiveTime, firstSendTime)) ;
 
-       return 0;
+               return 0;
    }
 
    int onMessageReceive (std::string, std::string, DeliveryType, std::string)
@@ -153,7 +160,7 @@ class MeasureTester : public RabbitMQNotifiableIntf
    unsigned int numOfReceived;
    unsigned int numOfMessagesToSend;
 };
-#endif
+
 /*****************************************************************************\
  *  Repeated bind Tester 
 \*****************************************************************************/
@@ -179,6 +186,9 @@ class RepeatedBindTester
 
 };
 
+/*****************************************************************************\
+ *  Continous send Tester 
+\*****************************************************************************/
 class ContinousSendTester
 {
  public:
