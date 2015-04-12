@@ -115,6 +115,7 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     //todo: this function is being called when we get a formal close connection from the broker or when formally closing broker.
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
     //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
+    _connected = false;
     _stopEventLoop = true;
     std::cout <<"Error: "<< message <<std::endl;
 }
@@ -174,7 +175,7 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
             }); 
     queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
             operationSucceeded->set_value( false );
-            std::cout <<"queue declaration failed " <<std::endl;
+            std::cout <<"Failed declaring queue. error: " << message << std::endl;
             } );
     return operationSucceeded->get_future();
 }
@@ -197,7 +198,7 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
             });
     exchangeHndl.onError( [ operationSucceeded ] (const char* message ) {
                 operationSucceeded->set_value( false );
-                std::cout<<"Error Declaring Exchange" << std::endl;
+                std::cout<<"Failed declaring exchange. error: " << message << std::endl;
                 } ) ;
     return operationSucceeded->get_future();
 }

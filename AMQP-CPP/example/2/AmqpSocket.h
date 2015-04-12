@@ -21,6 +21,7 @@ class AmqpSocket
 
     bool connect(const std::string & IP, unsigned int port )
     {
+        //TODO: close socket
         _socketFd = socket( AF_INET, SOCK_STREAM, 0);
         if( _socketFd < 0 )
         {

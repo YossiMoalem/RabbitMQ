@@ -1,7 +1,6 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
 #include <AmqpConnectionDetails.h>
-#include <unistd.h>
 #include <thread>
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
