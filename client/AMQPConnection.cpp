@@ -37,14 +37,7 @@ ReturnStatus AMQPConnection::connectLoop()
         //1.2 re-start event loop
         //1.3 rebind
 
-        if ( _isConnected )
-        {
-            _isConnected = false;
-            std::cout << " Disconnected" << std::endl;
-        }
-
-
-        AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getFirstHost();
+        AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getNextHost();
         _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
         _connectionHandler.login( connectionDetails );
         _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
@@ -55,7 +48,10 @@ ReturnStatus AMQPConnection::connectLoop()
         //TODO: WAIT! check retvals!
         _isConnected = true;
         std::cout << " Connected" << std::endl;
+        _connectionDetails.reset();
         _eventLoopThread.join();
+        _isConnected = false;
+        std::cout << " Disconnected" << std::endl;
     }
     return ReturnStatus::Ok;
 }

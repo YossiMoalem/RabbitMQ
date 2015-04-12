@@ -24,6 +24,12 @@ void ConnectionDetails::addAlternatePort(int port)
     _connectionData._ports.push_back(port);
 }
 
+void ConnectionDetails::reset()
+{
+    _currentHost = _connectionData._hosts.end();
+    _currentPort = _connectionData._ports.end();
+}
+
 AMQP::AmqpConnectionDetails ConnectionDetails::getFirstHost()
 {
     _currentHost = _connectionData._hosts.begin();
@@ -36,8 +42,12 @@ AMQP::AmqpConnectionDetails ConnectionDetails::getFirstHost()
 
 AMQP::AmqpConnectionDetails ConnectionDetails::getNextHost()
 {
-  assert (_currentHost != _connectionData._hosts.end());
-  assert (_currentPort != _connectionData._ports.end());
+  if (_currentHost == _connectionData._hosts.end() &&
+      _currentPort == _connectionData._ports.end())
+  {
+    return getFirstHost();
+  }
+
   ++_currentHost;
   if (_currentHost == _connectionData._hosts.end())
   {

@@ -30,6 +30,7 @@ class ConnectionDetails
 
     AMQP::AmqpConnectionDetails getFirstHost();
     AMQP::AmqpConnectionDetails getNextHost();
+    void reset();
     bool isLastHost () const;
     void addAlternateHost(const std::string& i_host);
     void addAlternatePort(int port);
