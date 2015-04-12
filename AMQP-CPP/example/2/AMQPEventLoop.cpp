@@ -15,18 +15,18 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
-    //TODO: what if we are not connected (socket-wise) yet??
     fd_set readFd;
     int queueEventFd = _jobQueue->getFD();
     int brokerReadFD =  _connectionHandlers->getReadFD();
     int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
 
-    timeval heartbeatIdenInterval;
-    heartbeatIdenInterval.tv_sec = 5;
-    heartbeatIdenInterval.tv_usec = 0;
 
     while( ! _stop )
     {
+        timeval heartbeatIdenInterval;
+        heartbeatIdenInterval.tv_sec = 5;
+        heartbeatIdenInterval.tv_usec = 0;
+
         FD_ZERO( & readFd );
         FD_SET ( queueEventFd, & readFd );
         FD_SET ( brokerReadFD, & readFd );
@@ -64,7 +64,7 @@ int AMQPEventLoop::start()
 
         if ( res == 0 ){
 //            std::cout <<"should send heartbeat" <<std::endl;
-            //TODO: send heartbeat.
+            //TODO: send heartbeat. 
             //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
         }
 
