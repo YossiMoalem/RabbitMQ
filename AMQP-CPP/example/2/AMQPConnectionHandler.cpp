@@ -54,7 +54,7 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
         RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
-    bindHndl.onSuccess([ exchangeName, queueName, routingKey, operationSucceeded ]() {
+    bindHndl.onSuccess( [ exchangeName, queueName, routingKey, operationSucceeded ]() {
             operationSucceeded->set_value( true );
             });
     bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
@@ -94,8 +94,10 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection *connection )
 
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
+    //TODO: the buffer should implement eventFD, to signal that it has value
+    //this hsould be registered by the eventloop
     _outgoingMessages.append( data, size );
-    _socket.send( _outgoingMessages );
+    //handleOutput();
 }
 
 void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *message)
@@ -119,15 +121,19 @@ bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParam
 
         while( !_connected )
         {
-            handleInput( );
+            //TODO: REALLY????
+            //1. create promiss
+            //2. onConnected will populate it
+            //3. wait on the future.
+            sleep(1);
         }
     }
     return _connected;
 }
 std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
-        bool _durable,
-        bool _exclusive,
-        bool _autoDelete ) const
+        bool isDurable, 
+        bool isExclusive, 
+        bool isAutoDelete ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -135,9 +141,9 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
         std::cout <<"ERROR!!" <<std::endl;
     }
     int flags = 0;
-    if( _durable )       flags |= AMQP::durable;
-    if( _exclusive )     flags |= AMQP::exclusive;
-    if( _autoDelete )    flags |= AMQP::autodelete;
+    if( isDurable )       flags |= AMQP::durable;
+    if( isExclusive )     flags |= AMQP::exclusive;
+    if( isAutoDelete )    flags |= AMQP::autodelete; 
 
     auto & queueHndl = _channel->declareQueue( queueName, flags );
     queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
@@ -161,7 +167,7 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
 
 std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
-        bool _durable ) const
+        bool isDurable ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     if( !_connected )
@@ -169,8 +175,7 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
         std::cout <<"ERROR!!" <<std::endl;
     }
     int flags = 0;
-    if( _durable )
-        flags |= AMQP::durable;
+    if( isDurable )     flags |= AMQP::durable;
 
     auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
     exchangeHndl.onSuccess([ operationSucceeded ]() { 

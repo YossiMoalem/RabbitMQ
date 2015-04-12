@@ -22,9 +22,9 @@ void runConsumer()
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
+    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
     if( amqpClient.login( connectionDetails ) )
     {
-        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
         std::string exchangeName( EXC );
         std::future< bool > declareExchangeResult = amqpClient.declareExchange( exchangeName, AMQP::topic );
         declareExchangeResult.wait();
@@ -47,6 +47,7 @@ void runConsumer()
         }
         std::future< bool > bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
         bindResult.wait();
+
         if( bindResult.get() )
         {
             std::cout <<"Queue Binded!" <<std::endl;
@@ -55,7 +56,8 @@ void runConsumer()
             exit( 1 );
         }
         sleep( 5 );
-        amqpClient.stop( false );
+
+        //amqpClient.stop( false );
         eventLoop.join();
     }
 }
@@ -64,8 +66,8 @@ void runProducer()
 {
     AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     AMQPClient amqpClient( nullptr );
+    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
     amqpClient.login( connectionDetails );
-        std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
     std::string exchangeName( EXC );
     amqpClient.declareExchange( exchangeName, AMQP::topic );
     std::string message = std::string( "tananainai" );

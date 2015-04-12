@@ -29,8 +29,8 @@ ReturnStatus AMQPConnection::start()
     //1.3 rebind
     _stop = false;
     AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getFirstHost();
-    _connectionHandler.login( connectionDetails );
     _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
+    _connectionHandler.login( connectionDetails );
     _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
     _connectionHandler.declareQueue( _queueName, false, true, false );
     //TODO: WAIT! check retvals!

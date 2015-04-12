@@ -15,13 +15,15 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
-    //    if (!_connected )
-    //        return 1;
-
+    //TODO: what if we are not connected (socket-wise) yet??
     fd_set readFd;
     int queueEventFd = _jobQueue->getFD();
     int brokerReadFD =  _connectionHandlers->getReadFD();
     int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
+
+    timeval heartbeatIdenInterval;
+    heartbeatIdenInterval.tv_sec = 5;
+    heartbeatIdenInterval.tv_usec = 0;
 
     while( ! _stop )
     {
@@ -29,8 +31,9 @@ int AMQPEventLoop::start()
         FD_SET ( queueEventFd, & readFd );
         FD_SET ( brokerReadFD, & readFd );
 
-        int res = select( maxReadFd, & readFd, NULL, NULL, NULL );
-        if( res > 0 )
+        int res = select( maxReadFd, & readFd, NULL, NULL, &heartbeatIdenInterval);
+        //TODO: change to res > 0. this is a temp workaround till we will handle the send as described bellow.
+        if( res >= 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFd ) )
             {
@@ -47,10 +50,15 @@ int AMQPEventLoop::start()
             // 2. when it is called - send
             // 2.1 after sending, if not everything sent - back to 1. 
             // 2.2 otherwise - do not register write
+            //
+            // BUG ALLERT: as it is now - if we did not finish the send, nothing will trigger us to do so!
             if ( _connectionHandlers->pendingSend() )
             {
                 _connectionHandlers->handleOutput();
             }
+        } else if ( res == 0 ){
+            //TODO: send heartbeat. 
+            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
         } else {
             std::cout <<"select returned : " <<res <<" Errno = " <<errno <<std::endl;
         }
