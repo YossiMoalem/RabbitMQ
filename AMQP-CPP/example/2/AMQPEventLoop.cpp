@@ -56,11 +56,22 @@ int AMQPEventLoop::start()
             {
                 _connectionHandlers->handleOutput();
             }
-        } else if ( res == 0 ){
-            //TODO: send heartbeat. 
-            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
-        } else {
+        }
+        else
+        {
             std::cout <<"select returned : " <<res <<" Errno = " <<errno <<std::endl;
+        }
+
+        if ( res == 0 ){
+//            std::cout <<"should send heartbeat" <<std::endl;
+            //TODO: send heartbeat.
+            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
+        }
+
+        if ( _connectionHandlers->stopEventLoop() )
+        {
+            _connectionHandlers->setStopEventLoop( false );
+            return 1;
         }
     }
     return 0;

@@ -1,8 +1,7 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
-
 #include <AmqpConnectionDetails.h>
-
+#include <unistd.h>
 #include <thread>
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
@@ -15,6 +14,7 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
             { return i_onMessageReceiveCB( message ); } ),
     _connectionDetails( connectionDetails ),
     _stop( false ),
+    _isConnected( false ),
     _exchangeName( exchangeName ),
     _queueName( queueName ),
     _routingKey( routingKey )
@@ -22,22 +22,42 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
 
 ReturnStatus AMQPConnection::start()
 {
-    //TODO: handle disconnection:
-    //1. when the thread exits - get new host, 
-    //1.1 login
-    //1.2 re-start event loop
-    //1.3 rebind
+//    _startLoopThread = std::thread( std::bind( &AMQP::AMQPClient::connectLoop, this ) );
+    _startLoopThread = std::thread( std::bind( &AMQPConnection::connectLoop, this ) );
+    return ReturnStatus::Ok;
+}
+
+ReturnStatus AMQPConnection::connectLoop()
+{
     _stop = false;
-    AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getFirstHost();
-    _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
-    _connectionHandler.login( connectionDetails );
-    _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
-    _connectionHandler.declareQueue( _queueName, false, true, false );
-    //TODO: WAIT! check retvals!
+    while ( _stop == false )
+    {
+        //TODO: handle disconnection:
+        //1. when the thread exits - get new host,
+        //1.1 login
+        //1.2 re-start event loop
+        //1.3 rebind
 
-    _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-    //TODO: WAIT! check retvals!
+        if ( _isConnected )
+        {
+            _isConnected = false;
+            std::cout << " Disconnected" << std::endl;
+        }
 
+
+        AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getFirstHost();
+        _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
+        _connectionHandler.login( connectionDetails );
+        _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
+        _connectionHandler.declareQueue( _queueName, false, true, false );
+        //TODO: WAIT! check retvals!
+
+        _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+        //TODO: WAIT! check retvals!
+        _isConnected = true;
+        std::cout << " Connected" << std::endl;
+        _eventLoopThread.join();
+    }
     return ReturnStatus::Ok;
 }
 
@@ -45,7 +65,7 @@ ReturnStatus AMQPConnection::stop( bool immediate )
 {
     _stop = true;
     _connectionHandler.stop( immediate );
-    _eventLoopThread.join();
+    _startLoopThread.join();
     return ReturnStatus::Ok;
 }
 
@@ -74,6 +94,5 @@ ReturnStatus AMQPConnection::unBind( const std::string & exchangeName,
 
 bool AMQPConnection::connected() const
 {
-    //implement
-    return true;
+    return _isConnected;
 }

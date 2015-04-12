@@ -288,6 +288,16 @@ Deferred &ChannelImpl::removeExchange(const std::string &name, int flags)
  */
 DeferredQueue &ChannelImpl::declareQueue(const std::string &name, int flags, const Table &arguments)
 {
+//    printf ("flags: %d", flags );
+//    std::cout << std::endl;
+//    printf ("passive %d", flags & passive);
+//    std::cout << std::endl;
+//    printf ("durable %d", flags & durable);
+//    std::cout << std::endl;
+//    printf ("exclusive %d", flags & exclusive);
+//    std::cout << std::endl;
+//    printf ("autodelete %d", flags & autodelete);
+//    std::cout << std::endl;
     // the frame to send
     QueueDeclareFrame frame(_id, name, flags & passive, flags & durable, flags & exclusive, flags & autodelete, false, arguments);
 
@@ -315,7 +325,7 @@ DeferredQueue &ChannelImpl::declareQueue(const std::string &name, int flags, con
 Deferred &ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
 {
     // send the bind queue frame
-    return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, false, arguments));
+    return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, true, arguments));
 }
 
 /**

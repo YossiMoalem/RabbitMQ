@@ -16,6 +16,8 @@ class AMQPConnection
 
    ReturnStatus start();
 
+   ReturnStatus connectLoop();
+
    ReturnStatus stop( bool immediate );
 
    void publish( const std::string & exchangeName, 
@@ -36,7 +38,9 @@ class AMQPConnection
    AMQP::AMQPClient             _connectionHandler;
    ConnectionDetails            _connectionDetails;
    bool                         _stop;
+   bool                         _isConnected;
    std::thread                  _eventLoopThread;
+   std::thread                  _startLoopThread;
    std::string                  _exchangeName;
    std::string                  _queueName;
    std::string                  _routingKey;

@@ -19,7 +19,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
    virtual ~AMQPConnectionHandler ();
 
-   void doPublish( const std::string & exchangeName, 
+   void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
            const std::string & message, 
            RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
@@ -37,6 +37,8 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
+   bool stopEventLoop();
+   void setStopEventLoop( bool newBoolValue );
 
    /**
     * Blocking untill connection is either established or failes
@@ -69,6 +71,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    AMQP::Connection*                _connection;
    AMQP::Channel *                  _channel = nullptr;
    bool                             _connected = false;
+   bool                             _stopEventLoop = false;
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
