@@ -55,8 +55,7 @@ void runConsumer()
             std::cout <<"Error binding queue" <<std::endl;
             exit( 1 );
         }
-        sleep( 5 );
-
+//        sleep( 5 );
         //amqpClient.stop( false );
         eventLoop.join();
     }

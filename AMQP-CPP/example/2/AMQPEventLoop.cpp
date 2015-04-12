@@ -15,6 +15,8 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
+    _connectionHandlers->waitForConnection();
+
     fd_set readFd;
     int queueEventFd = _jobQueue->getFD();
     int brokerReadFD =  _connectionHandlers->getReadFD();

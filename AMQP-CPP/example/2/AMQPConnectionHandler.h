@@ -40,6 +40,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool stopEventLoop();
    void setStopEventLoop( bool newBoolValue );
 
+   void waitForConnection();
    /**
     * Blocking untill connection is either established or failes
     **/
@@ -75,6 +76,8 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
+
+   std::mutex                       _connectionEstablishedMutex;
 };
 
 } //namespace AMQP

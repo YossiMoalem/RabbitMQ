@@ -5,7 +5,9 @@ namespace AMQP {
 
 AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
     _onMsgReceivedBC( onMsgReceivedCB )
-{}
+{
+    _connectionEstablishedMutex.lock();
+}
 
 AMQPConnectionHandler::~AMQPConnectionHandler()
 {
@@ -116,6 +118,7 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
     //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
     _connected = false;
+    _connectionEstablishedMutex.lock();
     _stopEventLoop = true;
     std::cout <<"Error: "<< message <<std::endl;
 }
@@ -131,16 +134,17 @@ bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParam
     {
         std::cout <<"Error creating socket" <<std::endl;
     } else {
-        Login login( connectionParams._userName, connectionParams._password );
-        _connection = new AMQP::Connection(this, login, std::string( "/" ) );
+    _connectionEstablishedMutex.unlock();
+    Login login( connectionParams._userName, connectionParams._password );
+    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
 
-        while( !_connected )
-        {
-            //TODO: REALLY????
-            //1. create promiss
-            //2. onConnected will populate it
-            //3. wait on the future.
-            sleep(1);
+    while( !_connected )
+    {
+        //TODO: REALLY????
+        //1. create promiss
+        //2. onConnected will populate it
+        //3. wait on the future.
+        sleep(1);
         }
     }
     return _connected;
@@ -208,5 +212,11 @@ int AMQPConnectionHandler::getReadFD() const
     return _socket.readFD();
 }
 
+void AMQPConnectionHandler::waitForConnection()
+{
+    _connectionEstablishedMutex.lock();
+    _connectionEstablishedMutex.unlock();
+
+}
 } //namespace AMQP
 
