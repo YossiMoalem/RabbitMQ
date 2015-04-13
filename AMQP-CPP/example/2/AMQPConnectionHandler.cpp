@@ -1,5 +1,5 @@
 #include "AMQPConnectionHandler.h"
-#include "AmqpConnectionDetails.h"
+#include "AMQPConnectionDetails.h"
 
 namespace AMQP {
 
@@ -128,7 +128,7 @@ void AMQPConnectionHandler::onClosed(AMQP::Connection *connection)
     std::cout <<"Info: Connection Closed"<< std::endl;
 }
 
-bool AMQPConnectionHandler::login( const AmqpConnectionDetails & connectionParams )
+bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParams )
 {
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {

@@ -1,7 +1,7 @@
 #include "ConnectionDetails.h"
 
 #include <assert.h>
-#include <AmqpConnectionDetails.h>
+#include <AMQPConnectionDetails.h>
 
 ConnectionDetails::ConnectionDetailsData::ConnectionDetailsData( const std::string & userName,
             const std::string & password,
@@ -30,17 +30,17 @@ void ConnectionDetails::reset()
     _currentPort = _connectionData._ports.end();
 }
 
-AMQP::AmqpConnectionDetails ConnectionDetails::getFirstHost()
+AMQP::AMQPConnectionDetails ConnectionDetails::getFirstHost()
 {
     _currentHost = _connectionData._hosts.begin();
     _currentPort = _connectionData._ports.begin();
-    return AMQP::AmqpConnectionDetails( _connectionData._userName,
+    return AMQP::AMQPConnectionDetails( _connectionData._userName,
                                 _connectionData._password,
                                 *_currentHost,
                                 *_currentPort );
 }
 
-AMQP::AmqpConnectionDetails ConnectionDetails::getNextHost()
+AMQP::AMQPConnectionDetails ConnectionDetails::getNextHost()
 {
   if (_currentHost == _connectionData._hosts.end() &&
       _currentPort == _connectionData._ports.end())
@@ -58,7 +58,7 @@ AMQP::AmqpConnectionDetails ConnectionDetails::getNextHost()
       _currentPort = _connectionData._ports.begin();
     }
   }
-  return AMQP::AmqpConnectionDetails ( _connectionData._userName,
+  return AMQP::AMQPConnectionDetails ( _connectionData._userName,
       _connectionData._password,
       *_currentHost,
       *_currentPort );

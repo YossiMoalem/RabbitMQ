@@ -1,5 +1,5 @@
 #include "AMQPClient.h"
-#include "AmqpConnectionDetails.h"
+#include "AMQPConnectionDetails.h"
 
 #include <thread>
 #include <unistd.h>
@@ -18,7 +18,7 @@ using namespace AMQP;
 
 void runConsumer()
 {
-    AmqpConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
@@ -63,7 +63,7 @@ void runConsumer()
 
 void runProducer()
 {
-    AmqpConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     AMQPClient amqpClient( nullptr );
     std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
     amqpClient.login( connectionDetails );

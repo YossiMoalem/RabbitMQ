@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace AMQP {
-class AmqpConnectionDetails;
+class AMQPConnectionDetails;
 }
 
 class ConnectionDetails
@@ -28,8 +28,8 @@ class ConnectionDetails
         _connectionData( i_userName,i_password,i_host,port )
     {}
 
-    AMQP::AmqpConnectionDetails getFirstHost();
-    AMQP::AmqpConnectionDetails getNextHost();
+    AMQP::AMQPConnectionDetails getFirstHost();
+    AMQP::AMQPConnectionDetails getNextHost();
     void reset();
     bool isLastHost () const;
     void addAlternateHost(const std::string& i_host);

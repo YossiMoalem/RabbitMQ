@@ -5,10 +5,10 @@
 
 namespace AMQP {
 
-struct AmqpConnectionDetails
+struct AMQPConnectionDetails
 {
  public:
-   AmqpConnectionDetails(const std::string& i_userName,
+   AMQPConnectionDetails(const std::string& i_userName,
            const std::string& i_password,
            const std::string& i_host,
            int port) :

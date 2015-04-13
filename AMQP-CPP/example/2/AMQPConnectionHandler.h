@@ -10,7 +10,7 @@
 #include "RabbitOperation.h"
 
 namespace AMQP {
-class AmqpConnectionDetails;
+class AMQPConnectionDetails;
 
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
@@ -44,7 +44,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    /**
     * Blocking untill connection is either established or failes
     **/
-   bool login( const AmqpConnectionDetails & connectionParams );
+   bool login( const AMQPConnectionDetails & connectionParams );
 
 // protected:
 

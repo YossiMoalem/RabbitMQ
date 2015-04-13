@@ -1,5 +1,5 @@
 #include "AMQPClient.h"
-#include "AmqpConnectionDetails.h"
+#include "AMQPConnectionDetails.h"
 #include "AMQPConnectionHandler.h"
 #include "AMQPEventLoop.h"
 
@@ -59,7 +59,7 @@ std::future< bool > AMQPClient::stop( bool immediate )
     return stopMessage->deferedResult();
 }
 
-bool AMQPClient::login( const AmqpConnectionDetails & connectionParams )
+bool AMQPClient::login( const AMQPConnectionDetails & connectionParams )
 {
     //TODO: move to event loop thread
     return _eventLoop->connectionHandler()->login( connectionParams );

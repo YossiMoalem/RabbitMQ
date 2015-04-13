@@ -10,7 +10,7 @@
 namespace AMQP {
 
 class RabbitMessageBase;
-class AmqpConnectionDetails;
+class AMQPConnectionDetails;
 class AMQPEventLoop;
 
 class AMQPClient : private boost::noncopyable
@@ -25,7 +25,7 @@ class AMQPClient : private boost::noncopyable
    /**
     * Blocking untill connection is either established or failes
     **/
-   bool login( const AmqpConnectionDetails & connectionParams );
+   bool login( const AMQPConnectionDetails & connectionParams );
 
    int startEventLoop();
 

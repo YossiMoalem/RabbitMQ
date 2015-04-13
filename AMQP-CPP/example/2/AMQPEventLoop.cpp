@@ -39,7 +39,10 @@ int AMQPEventLoop::start()
         {
             if( FD_ISSET( brokerReadFD, & readFd ) )
             {
-                _connectionHandlers->handleInput();
+                if ( !_connectionHandlers->handleInput() );
+                {
+                    _connectionHandlers->setStopEventLoop( true );
+                }
             }
             if( FD_ISSET( queueEventFd, & readFd ) )
             {

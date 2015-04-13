@@ -1,6 +1,6 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
-#include <AmqpConnectionDetails.h>
+#include <AMQPConnectionDetails.h>
 #include <thread>
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
@@ -37,7 +37,7 @@ ReturnStatus AMQPConnection::connectLoop()
         //1.2 re-start event loop
         //1.3 rebind
 
-        AMQP::AmqpConnectionDetails connectionDetails = _connectionDetails.getNextHost();
+        AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
         _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
         _connectionHandler.login( connectionDetails );
         _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
