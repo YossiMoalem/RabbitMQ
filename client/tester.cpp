@@ -44,7 +44,7 @@ class BindTester
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Send message to relevant/nonrelevane queue:");
        RABBIT_DEBUG ("Tester:: Going to send 6 lalalila messages to the relevant queue. Should be recieved");
-       if ( client.sendUnicast(std::string("lalalila1"), MY_NAME, MY_NAME ) != ReturnStatus::Ok ) sleep(1);
+       while ( client.sendUnicast(std::string("lalalila1"), MY_NAME, MY_NAME ) != ReturnStatus::Ok ) sleep(1);
        client.sendUnicast(std::string("lalalila2"), MY_NAME, MY_NAME );
        client.sendUnicast(std::string("lalalila3"), MY_NAME, MY_NAME );
        client.sendUnicast(std::string("lalalila4"), MY_NAME, MY_NAME );
