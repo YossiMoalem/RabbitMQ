@@ -83,8 +83,8 @@ ReturnStatus AMQPConnection::connectLoop()
             _isConnected = true;
             std::cout << "CONNECTED" << std::endl;
             _connectionDetails.reset();
-            eventLoopThread.join();
             _isConnected = false;
+            eventLoopThread.join();
             std::cout << "DISCONNECTED" << std::endl;
         }
         else
@@ -105,17 +105,26 @@ ReturnStatus AMQPConnection::stop( bool immediate )
     return ReturnStatus::Ok;
 }
 
-void AMQPConnection::publish( const std::string & exchangeName, 
+ReturnStatus AMQPConnection::publish( const std::string & exchangeName, 
         const std::string & routingKey,
         const std::string & message ) const
 {
+    if ( (bool) _isConnected )
+    {
+        return  ReturnStatus::ClientDisconnected;
+    }
     _connectionHandler.publish( _exchangeName, routingKey, message );
+    return ReturnStatus::Ok;
 }
 
 ReturnStatus AMQPConnection::bind( const std::string & exchangeName,
         const std::string & queueName,
         const std::string routingKey) const
 {
+    if (! _isConnected )
+    {
+        return  ReturnStatus::ClientDisconnected;
+    }
     _connectionHandler.bindQueue( exchangeName, queueName, routingKey );
     return ReturnStatus::Ok;
 }
@@ -124,6 +133,10 @@ ReturnStatus AMQPConnection::unBind( const std::string & exchangeName,
         const std::string & queueName,
         const std::string routingKey) const
 {
+    if (! _isConnected )
+    {
+        return  ReturnStatus::ClientDisconnected;
+    }
     _connectionHandler.unBindQueue( exchangeName, queueName, routingKey );
     return ReturnStatus::Ok;
 }

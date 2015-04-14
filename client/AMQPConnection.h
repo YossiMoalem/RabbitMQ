@@ -1,18 +1,19 @@
 #ifndef AMQP_CONNECTION_H
 #define AMQP_CONNECTION_H
 
+#include <boost/noncopyable.hpp>
 #include "AMQPClient.h"
 #include "Types.h"
 #include "ConnectionDetails.h"
 
-class AMQPConnection
+class AMQPConnection : boost::noncopyable
 {
  public:
    AMQPConnection( const ConnectionDetails & connectionDetails,
            const std::string & exchangeName ,
            const std::string & queueName,
            const std::string & routingKey,
-           AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB );
+           AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB ) ;
 
    ReturnStatus start();
 
@@ -20,7 +21,7 @@ class AMQPConnection
 
    ReturnStatus stop( bool immediate );
 
-   void publish( const std::string & exchangeName, 
+   ReturnStatus publish( const std::string & exchangeName, 
            const std::string & routingKey,
            const std::string & message ) const;
 
@@ -38,7 +39,7 @@ class AMQPConnection
    AMQP::AMQPClient             _connectionHandler;
    ConnectionDetails            _connectionDetails;
    bool                         _stop;
-   bool                         _isConnected;
+   std::atomic_bool             _isConnected;
    std::thread                  _startLoopThread;
    std::string                  _exchangeName;
    std::string                  _queueName;

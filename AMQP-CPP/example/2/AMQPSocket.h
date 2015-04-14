@@ -30,10 +30,11 @@ class AMQPSocket
             return false;
         }
 
+        /*
         struct timeval tv;
         tv.tv_sec = 1 ; 
         tv.tv_usec = 0;
-
+        */
         //if next line is commented out, read will be blocking the socket.
         //hence, if we use multiple readers in the future, we will probably need multiple sockets
 //        setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
