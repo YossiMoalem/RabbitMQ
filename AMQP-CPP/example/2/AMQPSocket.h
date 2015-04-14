@@ -15,7 +15,7 @@
 
 namespace AMQP{
 
-class AmqpSocket
+class AMQPSocket
 {
  public:
 
@@ -23,6 +23,8 @@ class AmqpSocket
     {
         //TODO: close socket
         //TODO: add keep alive parameter
+        std::cerr<< "IP: " << IP <<std::endl;
+        std::cerr<< "Port: " << port <<std::endl;
         _socketFd = socket( AF_INET, SOCK_STREAM, 0);
         if( _socketFd < 0 )
         {
@@ -34,7 +36,16 @@ class AmqpSocket
         tv.tv_sec = 1 ; 
         tv.tv_usec = 0;
 
-        setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+        //if next line is commented out, read will be blocking the socket.
+        //hence, if we use multiple readers in the future, we will probably need multiple sockets
+//        setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+        int optval = 1;
+        if (setsockopt(_socketFd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
+            perror("setsockopt()");
+            close(_socketFd);
+            exit(1);
+        }
+
 // TODO: fix the error in the next line because we want the socket to be non blocking!
 //        fcntl(_socketFd, F_SETFL, O_NONBLOCK);  // set to non-blocking
 
@@ -61,7 +72,9 @@ class AmqpSocket
         ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
-            return false;
+            //return false;
+            //TODO: throw a real AMQPException
+            throw "Socket down?";
         }
         else
         {
@@ -87,12 +100,14 @@ class AmqpSocket
         if( bytesRead < 0 )
         {
             if( errno != 11 /* not EWOULDBLOCK, EAGAIN */)
-              std::cout <<"ERROR RECEIVING!: errno = " <<errno <<std::endl;
+              std::cout << "ERROR RECEIVING!: errno = " <<errno <<std::endl;
             return false;
         }
         if( bytesRead == 0 )
         {
-          return false;
+          std::cout << "read 0 bytes." <<std::endl;
+          //TODO: throw a real AMQPException
+          throw "Socket down?";
         }
         sbuffer.append(buff, bytesRead);
         return true;

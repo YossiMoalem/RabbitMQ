@@ -33,8 +33,9 @@ bool AMQPConnectionHandler::handleInput( )
     {
         size_t processed = _connection->parse( _incomingMessages.data(), _incomingMessages.size() );
         _incomingMessages.shrink( processed );
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool AMQPConnectionHandler::handleOutput()
@@ -133,6 +134,8 @@ bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParam
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
+        _connectionEstablishedMutex.unlock();
+        return false;
     } else {
     _connectionEstablishedMutex.unlock();
     Login login( connectionParams._userName, connectionParams._password );
@@ -149,6 +152,15 @@ bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParam
     }
     return _connected;
 }
+
+//void AMQPConnectionHandler::handleTimeout( const std::string & exchangeName) const
+void AMQPConnectionHandler::handleTimeout() const
+{
+    //TODO: get exchangename as param instead of hardcoded
+    //TODO: use heartbeat message instead of a normal message
+    _channel->publish( "exchange_name", "KeepAliveTest", "i'll be back (not)" );
+}
+
 std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
         bool isDurable, 
         bool isExclusive, 

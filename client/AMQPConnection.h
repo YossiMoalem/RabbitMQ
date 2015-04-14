@@ -39,7 +39,6 @@ class AMQPConnection
    ConnectionDetails            _connectionDetails;
    bool                         _stop;
    bool                         _isConnected;
-   std::thread                  _eventLoopThread;
    std::thread                  _startLoopThread;
    std::string                  _exchangeName;
    std::string                  _queueName;

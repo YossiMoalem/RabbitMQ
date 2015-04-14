@@ -15,18 +15,19 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
+    std::cout << " started event loop" << std::endl;
     _connectionHandlers->waitForConnection();
 
     fd_set readFd;
     int queueEventFd = _jobQueue->getFD();
-    int brokerReadFD =  _connectionHandlers->getReadFD();
+    int brokerReadFD = _connectionHandlers->getReadFD();
     int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
 
 
     while( ! _stop )
     {
         timeval heartbeatIdenInterval;
-        heartbeatIdenInterval.tv_sec = 5;
+        heartbeatIdenInterval.tv_sec = 4;
         heartbeatIdenInterval.tv_usec = 0;
 
         FD_ZERO( & readFd );
@@ -34,13 +35,19 @@ int AMQPEventLoop::start()
         FD_SET ( brokerReadFD, & readFd );
 
         int res = select( maxReadFd, & readFd, NULL, NULL, &heartbeatIdenInterval);
+//        std::cout << "select res: " <<res <<std::endl;
         //TODO: change to res > 0. this is a temp workaround till we will handle the send as described bellow.
         if( res >= 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFd ) )
             {
-                if ( !_connectionHandlers->handleInput() );
+                try
                 {
+                    _connectionHandlers->handleInput();
+                }
+                catch(...)
+                {
+                    std::cout << "read failed. closing event loop" <<std::endl;
                     _connectionHandlers->setStopEventLoop( true );
                 }
             }
@@ -59,7 +66,15 @@ int AMQPEventLoop::start()
             // BUG ALLERT: as it is now - if we did not finish the send, nothing will trigger us to do so!
             if ( _connectionHandlers->pendingSend() )
             {
-                _connectionHandlers->handleOutput();
+                try
+                {
+                    _connectionHandlers->handleOutput();
+                }
+                catch(...)
+                {
+                    std::cout << "send failed. closing event loop" <<std::endl;
+                    _connectionHandlers->setStopEventLoop( true );
+                }
             }
         }
         else
@@ -68,6 +83,7 @@ int AMQPEventLoop::start()
         }
 
         if ( res == 0 ){
+//            _connectionHandlers->handleTimeout();
 //            std::cout <<"should send heartbeat" <<std::endl;
             //TODO: send heartbeat. 
             //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.

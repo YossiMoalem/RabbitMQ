@@ -11,6 +11,13 @@ class AMQPConnectionDetails;
 class ConnectionDetails
 {
  public:
+    ConnectionDetails( const ConnectionDetails & other ) :
+        _connectionData( other._connectionData )
+    {
+        _currentHost = _connectionData._hosts.end();
+        _currentPort = _connectionData._ports.end();
+    }
+
     ConnectionDetails(const char * i_userName,
             const char * i_password,
             const char * i_host,
@@ -19,7 +26,10 @@ class ConnectionDetails
                 std::string( i_password), 
                 std::string( i_host ), 
                 port )
-    {}
+    {
+        _currentHost = _connectionData._hosts.end();
+        _currentPort = _connectionData._ports.end();
+    }
 
     ConnectionDetails(const std::string& i_userName,
             const std::string& i_password,

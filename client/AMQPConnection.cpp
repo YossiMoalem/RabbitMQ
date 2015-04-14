@@ -28,6 +28,7 @@ ReturnStatus AMQPConnection::start()
 
 ReturnStatus AMQPConnection::connectLoop()
 {
+    std::thread eventLoopThread;
     _stop = false;
     while ( _stop == false )
     {
@@ -36,22 +37,33 @@ ReturnStatus AMQPConnection::connectLoop()
         //1.1 login
         //1.2 re-start event loop
         //1.3 rebind
-
+        std::cout << " started AMQPConnection::connectLoop() " << std::endl;
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
-        _eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
-        _connectionHandler.login( connectionDetails );
-        _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
-        _connectionHandler.declareQueue( _queueName, false, true, false );
-        //TODO: WAIT! check retvals!
+//        std::cout << _connectionDetails. << std::endl;
+        eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
+        //TODO: currently the login returns false if it cant create socket (e.g internet down)
+        //but it will not return false if the credentials are wrong. we should catch it somehow
+        if ( _connectionHandler.login( connectionDetails ) )
+        {
+            _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
+            _connectionHandler.declareQueue( _queueName, false, true, false );
+            //TODO: WAIT! check retvals!
 
-        _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-        //TODO: WAIT! check retvals!
-        _isConnected = true;
-        std::cout << " Connected" << std::endl;
-        _connectionDetails.reset();
-        _eventLoopThread.join();
-        _isConnected = false;
-        std::cout << " Disconnected" << std::endl;
+            _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+            //TODO: WAIT! check retvals!
+            _isConnected = true;
+            std::cout << " Connected" << std::endl;
+            _connectionDetails.reset();
+            eventLoopThread.join();
+            _isConnected = false;
+            std::cout << " Disconnected" << std::endl;
+        }
+        else
+        {
+            //TODO: fix this
+//            stop(true);
+        }
+        //TODO: add sleep
     }
     return ReturnStatus::Ok;
 }

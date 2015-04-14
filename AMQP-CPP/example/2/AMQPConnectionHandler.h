@@ -6,7 +6,7 @@
 #include <future>
 
 #include <amqpcpp.h>
-#include "AmqpSocket.h"
+#include "AMQPSocket.h"
 #include "RabbitOperation.h"
 
 namespace AMQP {
@@ -18,6 +18,8 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
    AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
    virtual ~AMQPConnectionHandler ();
+
+   void handleTimeout() const;
 
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
@@ -68,7 +70,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    int getReadFD() const;
 
  private:
-   AmqpSocket                       _socket;
+   AMQPSocket                       _socket;
    AMQP::Connection*                _connection;
    AMQP::Channel *                  _channel = nullptr;
    bool                             _connected = false;
