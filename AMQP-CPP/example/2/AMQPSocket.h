@@ -23,8 +23,6 @@ class AMQPSocket
     {
         //TODO: close socket
         //TODO: add keep alive parameter
-        std::cerr<< "IP: " << IP <<std::endl;
-        std::cerr<< "Port: " << port <<std::endl;
         _socketFd = socket( AF_INET, SOCK_STREAM, 0);
         if( _socketFd < 0 )
         {

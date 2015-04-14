@@ -15,7 +15,7 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
-    std::cout << " started event loop" << std::endl;
+    std::cout << "started event loop" << std::endl;
     _connectionHandlers->waitForConnection();
 
     fd_set readFd;
@@ -27,7 +27,7 @@ int AMQPEventLoop::start()
     while( ! _stop )
     {
         timeval heartbeatIdenInterval;
-        heartbeatIdenInterval.tv_sec = 4;
+        heartbeatIdenInterval.tv_sec = 2;
         heartbeatIdenInterval.tv_usec = 0;
 
         FD_ZERO( & readFd );
@@ -72,14 +72,14 @@ int AMQPEventLoop::start()
                 }
                 catch(...)
                 {
-                    std::cout << "send failed. closing event loop" <<std::endl;
+                    std::cout << "send failedclosing event loop" <<std::endl;
                     _connectionHandlers->setStopEventLoop( true );
                 }
             }
         }
         else
         {
-            std::cout <<"select returned : " <<res <<" Errno = " <<errno <<std::endl;
+            std::cout << "select returned : " << res << "Errno = " << errno << std::endl;
         }
 
         if ( res == 0 ){
