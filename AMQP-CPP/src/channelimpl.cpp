@@ -325,7 +325,8 @@ DeferredQueue &ChannelImpl::declareQueue(const std::string &name, int flags, con
 Deferred &ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
 {
     // send the bind queue frame
-    return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, true, arguments));
+    return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, false, arguments));
+    //todo: change to true? otherwise it will have slow binding.
 }
 
 /**

@@ -27,8 +27,8 @@ int AMQPEventLoop::start()
     while( ! _stop )
     {
         timeval heartbeatIdenInterval;
-        heartbeatIdenInterval.tv_sec = 2;
-        heartbeatIdenInterval.tv_usec = 0;
+        heartbeatIdenInterval.tv_sec = 0;
+        heartbeatIdenInterval.tv_usec = 50;
 
         FD_ZERO( & readFd );
         FD_SET ( queueEventFd, & readFd );
