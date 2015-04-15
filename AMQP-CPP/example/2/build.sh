@@ -1,2 +1,2 @@
-rm myConnectionHandler.o
+rm AMQPEventLoop.o
 scons

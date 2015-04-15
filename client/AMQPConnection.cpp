@@ -119,8 +119,11 @@ ReturnStatus AMQPConnection::publish( const std::string & exchangeName,
 
 ReturnStatus AMQPConnection::bind( const std::string & exchangeName,
         const std::string & queueName,
-        const std::string routingKey) const
+        const std::string routingKey)
 {
+    _bindingsSetMutex.lock();
+    _bindingsSet.insert( routingKey );
+    _bindingsSetMutex.unlock();
     if (! _isConnected )
     {
         return  ReturnStatus::ClientDisconnected;
@@ -131,8 +134,11 @@ ReturnStatus AMQPConnection::bind( const std::string & exchangeName,
 
 ReturnStatus AMQPConnection::unBind( const std::string & exchangeName, 
         const std::string & queueName,
-        const std::string routingKey) const
+        const std::string routingKey)
 {
+    _bindingsSetMutex.lock();
+    _bindingsSet.erase( routingKey );
+    _bindingsSetMutex.unlock();
     if (! _isConnected )
     {
         return  ReturnStatus::ClientDisconnected;

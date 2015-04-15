@@ -28,9 +28,9 @@ class RabbitClientImpl : public boost::noncopyable
        const std::string& i_senderID, 
        DeliveryType i_deliveryType) const;
 
-   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType) const;
+   ReturnStatus bind(const std::string& i_key, DeliveryType i_deliveryType);
 
-   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType) const;
+   ReturnStatus unbind(const std::string& i_key, DeliveryType i_deliveryType);
 
    bool         connected () const;
 

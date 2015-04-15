@@ -4,10 +4,10 @@
 #include <boost/noncopyable.hpp>
 #include <memory>
 #include <future>
-
 #include <amqpcpp.h>
 #include "AMQPSocket.h"
 #include "RabbitOperation.h"
+
 
 namespace AMQP {
 class AMQPConnectionDetails;
@@ -79,7 +79,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
-
    std::mutex                       _connectionEstablishedMutex;
 };
 

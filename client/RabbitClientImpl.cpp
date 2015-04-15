@@ -36,16 +36,14 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message,
     //return sendMessage(newMessage);
 }
 
-ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType) const
+ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-    //Add to subscription list!!
     std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
     return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
 }
 
-ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType) const
+ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
 { 
-    //Remove from subscroption list!
     std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
   return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
 }
