@@ -4,13 +4,18 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdint.h>             /* Definition of uint64_t */
+#include <sys/eventfd.h>
+#include <unistd.h>
+
 
 class SmartBuffer
 {
  public:
     friend std::ostream& operator <<(std::ostream& stream, const SmartBuffer& sb);
 
-    SmartBuffer( )
+    SmartBuffer( ):
+        _eventFD( eventfd( 0, 0 ) )
     {
     }
 
@@ -38,17 +43,28 @@ class SmartBuffer
     {
         elementsToRemove = std::min( elementsToRemove,(unsigned int)_buffer.size() );
         _buffer.erase ( _buffer.begin(), _buffer.begin()+elementsToRemove );
+        ssize_t i = elementsToRemove;
+        read( _eventFD, & i, sizeof( uint64_t ) );
         return _getBuffer();
     }
 
     void append( const char* data, unsigned int size )
     {
         _buffer.insert( _buffer.end(), data, data+size );
+        uint64_t i = size;
+        write( _eventFD, &i, sizeof( uint64_t ) );
     }
 
     void clear()
     {
         _buffer.clear();
+        ssize_t i = _buffer.size();
+        read( _eventFD, & i, sizeof( uint64_t ) );
+    }
+
+    int getFD() const
+    {
+        return _eventFD;
     }
 
  private:
@@ -58,7 +74,8 @@ class SmartBuffer
     }
 
  private:
-    std::vector<char>    _buffer;
+    std::vector<char>   _buffer;
+    int                 _eventFD;
 
 };
 

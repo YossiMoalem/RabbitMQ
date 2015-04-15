@@ -2,7 +2,7 @@
 #include "BlockingQueue.h"
 #include "RabbitOperation.h"
 #include "AMQPConnectionHandler.h"
-
+#include <algorithm>
 #include <amqpcpp.h>
 
 namespace AMQP {
@@ -19,25 +19,27 @@ int AMQPEventLoop::start()
     _connectionHandlers->waitForConnection();
 
     fd_set readFd;
+    int outgoingMessagesEventFd = _connectionHandlers->getOutgoingMessagesFD();
     int queueEventFd = _jobQueue->getFD();
     int brokerReadFD = _connectionHandlers->getReadFD();
-    int maxReadFd = ( queueEventFd > brokerReadFD ) ? queueEventFd + 1 : brokerReadFD + 1 ;
+    int maxReadFd =  std::max( outgoingMessagesEventFd, std::max( queueEventFd, brokerReadFD ) ) +1;
 
 
     while( ! _stop )
     {
         timeval heartbeatIdenInterval;
-        heartbeatIdenInterval.tv_sec = 0;
+        heartbeatIdenInterval.tv_sec = 2;
         heartbeatIdenInterval.tv_usec = 50;
 
         FD_ZERO( & readFd );
+        FD_SET ( outgoingMessagesEventFd, & readFd );
         FD_SET ( queueEventFd, & readFd );
         FD_SET ( brokerReadFD, & readFd );
 
         int res = select( maxReadFd, & readFd, NULL, NULL, &heartbeatIdenInterval);
 //        std::cout << "select res: " <<res <<std::endl;
         //TODO: change to res > 0. this is a temp workaround till we will handle the send as described bellow.
-        if( res >= 0 )
+        if( res > 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFd ) )
             {
@@ -64,8 +66,9 @@ int AMQPEventLoop::start()
             // 2.2 otherwise - do not register write
             //
             // BUG ALLERT: as it is now - if we did not finish the send, nothing will trigger us to do so!
-            if ( _connectionHandlers->pendingSend() )
+            if( FD_ISSET( outgoingMessagesEventFd, & readFd ) )
             {
+                assert ( _connectionHandlers->pendingSend() );
                 try
                 {
                     _connectionHandlers->handleOutput();
@@ -77,16 +80,16 @@ int AMQPEventLoop::start()
                 }
             }
         }
+        else if ( res == 0 ){
+            assert (! _connectionHandlers->pendingSend() );
+            std::cout <<"sending heartbeat" <<std::endl;
+            _connectionHandlers->handleTimeout();
+            //TODO: send heartbeat. 
+            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
+        }
         else
         {
             std::cout << "select returned : " << res << "Errno = " << errno << std::endl;
-        }
-
-        if ( res == 0 ){
-//            _connectionHandlers->handleTimeout();
-//            std::cout <<"should send heartbeat" <<std::endl;
-            //TODO: send heartbeat. 
-            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
         }
 
         if ( _connectionHandlers->stopEventLoop() )

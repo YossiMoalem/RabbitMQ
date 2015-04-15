@@ -68,6 +68,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
            bool autoDelete = false ) const;
 
    int getReadFD() const;
+   int getOutgoingMessagesFD() const;
 
  private:
    AMQPSocket                       _socket;

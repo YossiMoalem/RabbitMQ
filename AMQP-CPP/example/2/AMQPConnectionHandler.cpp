@@ -224,6 +224,11 @@ int AMQPConnectionHandler::getReadFD() const
     return _socket.readFD();
 }
 
+int AMQPConnectionHandler::getOutgoingMessagesFD() const
+{
+    return _outgoingMessages.getFD();
+}
+
 void AMQPConnectionHandler::waitForConnection()
 {
     _connectionEstablishedMutex.lock();
