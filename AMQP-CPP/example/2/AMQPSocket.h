@@ -69,7 +69,6 @@ class AMQPSocket
     bool send( SmartBuffer & sbuffer)
     {
         ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
-        std::cout << "bytesSent: " << bytesSent <<std::endl;
         if (bytesSent < 0)
         {
             //return false;

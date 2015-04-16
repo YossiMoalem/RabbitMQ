@@ -81,10 +81,11 @@ ReturnStatus AMQPConnection::connectLoop()
             }
 
             _isConnected = true;
+            rebind();
             std::cout << "CONNECTED" << std::endl;
             _connectionDetails.reset();
-            _isConnected = false;
             eventLoopThread.join();
+            _isConnected = false;
             std::cout << "DISCONNECTED" << std::endl;
         }
         else
@@ -109,7 +110,7 @@ ReturnStatus AMQPConnection::publish( const std::string & exchangeName,
         const std::string & routingKey,
         const std::string & message ) const
 {
-    if ( (bool) _isConnected )
+    if ( ! connected() )
     {
         return  ReturnStatus::ClientDisconnected;
     }
@@ -124,11 +125,18 @@ ReturnStatus AMQPConnection::bind( const std::string & exchangeName,
     _bindingsSetMutex.lock();
     _bindingsSet.insert( routingKey );
     _bindingsSetMutex.unlock();
-    if (! _isConnected )
+    return AMQPConnection::_bind( exchangeName, queueName, routingKey );
+}
+
+ReturnStatus AMQPConnection::_bind( const std::string & exchangeName,
+        const std::string & queueName,
+        const std::string routingKey) const
+{
+    if ( ! connected() )
     {
         return  ReturnStatus::ClientDisconnected;
     }
-    _connectionHandler.bindQueue( exchangeName, queueName, routingKey );
+    _connectionHandler.bindQueue( exchangeName, queueName, routingKey ).get();
     return ReturnStatus::Ok;
 }
 
@@ -139,11 +147,27 @@ ReturnStatus AMQPConnection::unBind( const std::string & exchangeName,
     _bindingsSetMutex.lock();
     _bindingsSet.erase( routingKey );
     _bindingsSetMutex.unlock();
-    if (! _isConnected )
+    return AMQPConnection::_unBind( exchangeName, queueName, routingKey );
+}
+
+ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
+        const std::string & queueName,
+        const std::string routingKey) const
+{
+    if ( ! connected() )
     {
         return  ReturnStatus::ClientDisconnected;
     }
     _connectionHandler.unBindQueue( exchangeName, queueName, routingKey );
+    return ReturnStatus::Ok;
+}
+
+ReturnStatus AMQPConnection::rebind()
+{
+    _bindingsSetMutex.lock();
+    for ( const std::string& routingKey: _bindingsSet )
+        AMQPConnection::_bind( _exchangeName, _queueName, routingKey );
+    _bindingsSetMutex.unlock();
     return ReturnStatus::Ok;
 }
 

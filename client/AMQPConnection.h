@@ -30,11 +30,21 @@ class AMQPConnection : boost::noncopyable
            const std::string & queueName,
            const std::string routingKey);
 
-   ReturnStatus unBind( const std::string & exchangeName, 
+   ReturnStatus unBind( const std::string & exchangeName,
            const std::string & queueName,
            const std::string routingKey);
 
    bool connected() const;
+   ReturnStatus rebind();
+
+ private:
+   ReturnStatus _bind( const std::string & exchangeName,
+           const std::string & queueName,
+           const std::string routingKey) const;
+
+   ReturnStatus _unBind( const std::string & exchangeName,
+           const std::string & queueName,
+           const std::string routingKey) const;
 
  private:
    AMQP::AMQPClient                 _connectionHandler;
