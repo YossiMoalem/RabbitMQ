@@ -17,6 +17,8 @@ AMQPConnectionHandler::~AMQPConnectionHandler()
         delete _channel;
 }
 
+//TODO: not nice. This is based on the event loop TO
+//checnge to rabbit opperation!
 bool AMQPConnectionHandler::stopEventLoop()
 {
     return _stopEventLoop;
@@ -125,7 +127,7 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     _connected = false;
     _connectionEstablishedMutex.lock();
     _stopEventLoop = true;
-    std::cout <<"Error: "<< message <<std::endl;
+    std::cout <<"(onError)Error: "<< message <<std::endl;
 }
 
 void AMQPConnectionHandler::onClosed(AMQP::Connection *connection) 
@@ -135,23 +137,27 @@ void AMQPConnectionHandler::onClosed(AMQP::Connection *connection)
 
 bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParams )
 {
+    _incomingMessages.clear();
+    _outgoingMessages.clear();
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
         _connectionEstablishedMutex.unlock();
         return false;
     } else {
-    _connectionEstablishedMutex.unlock();
-    Login login( connectionParams._userName, connectionParams._password );
-    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
+        std::cout <<"socket Created!" << std::endl;
+        _connectionEstablishedMutex.unlock();
+        Login login( connectionParams._userName, connectionParams._password );
+        _connection = new AMQP::Connection(this, login, std::string( "/" ) );
 
-    while( !_connected )
-    {
-        //TODO: REALLY????
-        //1. create promiss
-        //2. onConnected will populate it
-        //3. wait on the future.
-        sleep(1);
+        while( !_connected && ! _stopEventLoop)
+        {
+            //TODO: REALLY????
+            //1. create promiss
+            //2. onConnected will populate it
+            //3. wait on the future.
+            //4. kame sure event loop was not stoped...
+            sleep(1);
         }
     }
     return _connected;
@@ -171,10 +177,6 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
         bool isAutoDelete ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
-    if( !_connected )
-    {
-        std::cout <<"ERROR!!" <<std::endl;
-    }
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
     if( isExclusive )     flags |= AMQP::exclusive;
@@ -205,10 +207,6 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
         bool isDurable ) const
 {
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
-    if( !_connected )
-    {
-        std::cout <<"ERROR!!" <<std::endl;
-    }
     int flags = 0;
     if( isDurable )     flags |= AMQP::durable;
 

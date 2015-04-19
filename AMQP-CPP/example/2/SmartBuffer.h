@@ -7,9 +7,9 @@
 #include <stdint.h>             /* Definition of uint64_t */
 #include <sys/eventfd.h>
 #include <unistd.h>
+#include <boost/noncopyable.hpp>
 
-
-class SmartBuffer
+class SmartBuffer : boost::noncopyable
 {
  public:
     friend std::ostream& operator <<(std::ostream& stream, const SmartBuffer& sb);
@@ -55,9 +55,12 @@ class SmartBuffer
 
     void clear()
     {
-        _buffer.clear();
         uint64_t i = _buffer.size();
-        read( _eventFD, & i, sizeof( i ) );
+        if ( i > 0 )
+        {
+            _buffer.clear();
+            read( _eventFD, & i, sizeof( i ) );
+        }
     }
 
     int getFD() const

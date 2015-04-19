@@ -17,6 +17,7 @@ int AMQPEventLoop::start()
 {
     std::cout << "started event loop" << std::endl;
     _connectionHandlers->waitForConnection();
+    std::cout <<"Eventloop unleashed! "<<std::endl;
 
     fd_set readFd;
     int outgoingMessagesEventFd = _connectionHandlers->getOutgoingMessagesFD();
@@ -95,9 +96,11 @@ int AMQPEventLoop::start()
         if ( _connectionHandlers->stopEventLoop() )
         {
             _connectionHandlers->setStopEventLoop( false );
+            std::cout <<"EventLoop stoped 1 "<< std::endl;
             return 1;
         }
     }
+    std::cout <<"EventLoop stoped 0 "<< std::endl;
     return 0;
 }
 

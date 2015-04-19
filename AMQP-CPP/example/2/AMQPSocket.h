@@ -12,10 +12,11 @@
 #include <unistd.h>
 #include <strings.h>
 #include "SmartBuffer.h"
+#include <boost/noncopyable.hpp>
 
 namespace AMQP{
 
-class AMQPSocket
+class AMQPSocket : boost::noncopyable
 {
  public:
 
