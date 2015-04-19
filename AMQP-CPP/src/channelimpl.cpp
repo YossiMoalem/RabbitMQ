@@ -347,7 +347,7 @@ void ChannelImpl::unbindQueue(const std::string &exchange, const std::string &qu
 //Deferred &ChannelImpl::unbindQueue(const std::string &exchange, const std::string &queue, const std::string &routingkey, const Table &arguments)
 {
     // send the unbind queue frame
-    return push(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
+    // return push(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
     send(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
 }
 

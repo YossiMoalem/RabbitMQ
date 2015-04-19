@@ -69,16 +69,18 @@ ReturnStatus AMQPConnection::connectLoop()
                 sleep( 3 );
                 continue;
             }
-            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-            status = bindResult.wait_for(std::chrono::seconds(5));
-            if( status == std::future_status::ready && bindResult.get() )
-            {
-                std::cout << "queue binded" <<std::endl;
-            } else {
-                std::cout << "error binding queue" <<std::endl;
-                sleep( 3 );
-                continue;
-            }
+//            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+//            status = bindResult.wait_for(std::chrono::seconds(5));
+//            if( status == std::future_status::ready && bindResult.get() )
+//            {
+//                std::cout << "queue binded" <<std::endl;
+//            } else {
+//                std::cout << "error binding queue" <<std::endl;
+//                sleep( 3 );
+//                continue;
+//            }
+            _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+            sleep( 3 );
 
             _isConnected = true;
             rebind();
