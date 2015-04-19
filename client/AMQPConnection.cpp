@@ -124,7 +124,7 @@ ReturnStatus AMQPConnection::bind( const std::string & exchangeName,
         const std::string & queueName,
         const std::string routingKey)
 {
-    std::lock_guard< std::mutex > ( _bindingsSetMutex );
+    std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
     _bindingsSet.insert( routingKey );
     return AMQPConnection::_bind( exchangeName, queueName, routingKey );
 }
@@ -145,7 +145,7 @@ ReturnStatus AMQPConnection::unBind( const std::string & exchangeName,
         const std::string & queueName,
         const std::string routingKey)
 {
-    std::lock_guard< std::mutex > ( _bindingsSetMutex );
+    std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
     _bindingsSet.erase( routingKey );
     return AMQPConnection::_unBind( exchangeName, queueName, routingKey );
 }
@@ -164,7 +164,7 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
 
 ReturnStatus AMQPConnection::rebind()
 {
-    std::lock_guard< std::mutex > ( _bindingsSetMutex );
+    std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
     for ( const std::string& routingKey: _bindingsSet )
         AMQPConnection::_bind( _exchangeName, _queueName, routingKey );
     return ReturnStatus::Ok;
