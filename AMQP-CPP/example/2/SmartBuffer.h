@@ -43,23 +43,21 @@ class SmartBuffer
     {
         elementsToRemove = std::min( elementsToRemove,(unsigned int)_buffer.size() );
         _buffer.erase ( _buffer.begin(), _buffer.begin()+elementsToRemove );
-        ssize_t i = elementsToRemove;
-        read( _eventFD, & i, sizeof( uint64_t ) );
+        read( _eventFD, & elementsToRemove, sizeof( elementsToRemove ) );
         return _getBuffer();
     }
 
     void append( const char* data, unsigned int size )
     {
         _buffer.insert( _buffer.end(), data, data+size );
-        uint64_t i = size;
-        write( _eventFD, &i, sizeof( uint64_t ) );
+        write( _eventFD, & size, sizeof( size ) );
     }
 
     void clear()
     {
         _buffer.clear();
         ssize_t i = _buffer.size();
-        read( _eventFD, & i, sizeof( uint64_t ) );
+        read( _eventFD, & i, sizeof( i ) );
     }
 
     int getFD() const

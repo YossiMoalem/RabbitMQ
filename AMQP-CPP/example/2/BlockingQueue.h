@@ -87,8 +87,8 @@ void BlockingQueue< DataType >::pop( DataType & data )
 
     if( ! _queue.empty )
     {
-        ssize_t i;
-        read( _eventFD, & i, sizeof( uint64_t ) );
+        ssize_t dummy;
+        read( _eventFD, & dummy, sizeof( dummy ) );
         data = _queue.front();
         _queue.pop_front();
     }
@@ -103,8 +103,8 @@ bool BlockingQueue< DataType >::try_pop( DataType & data )
         return false;
     }
 
-    ssize_t i;
-    read( _eventFD, &i, sizeof( uint64_t ) );
+    ssize_t dummy;
+    read( _eventFD, & dummy, sizeof( dummy ) );
     data=_queue.front();
     _queue.pop_front();
     return true;
@@ -145,8 +145,8 @@ bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst )
         } else {
             _queue.push_back(i_data);
         }
-        uint64_t i = 1;
-        write( _eventFD, &i, sizeof( uint64_t ) );
+        uint64_t dummy = 1;
+        write( _eventFD, &dummy, sizeof( dummy ) );
         lock.unlock();
         _queueEmptyCondition.notify_all();
         return true;
