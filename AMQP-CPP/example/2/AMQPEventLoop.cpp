@@ -82,7 +82,7 @@ int AMQPEventLoop::start()
         }
         else if ( res == 0 ){
             assert (! _connectionHandlers->pendingSend() );
-            std::cout <<"sending heartbeat" <<std::endl;
+//            std::cout <<"sending heartbeat" <<std::endl;
 //            _connectionHandlers->handleTimeout();
             //TODO: send heartbeat. 
             //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.

@@ -53,7 +53,7 @@ ReturnStatus AMQPConnection::connectLoop()
             status = declareExchangeResult.wait_for(std::chrono::seconds(5));
             if( status == std::future_status::ready && declareExchangeResult.get() )
             {
-                std::cout << "exchange declared!" <<std::endl;
+                std::cout << "exchange declared" <<std::endl;
             } else {
                 std::cout << "error declaring exchange" <<std::endl;
                 sleep( 3 );
@@ -63,7 +63,7 @@ ReturnStatus AMQPConnection::connectLoop()
             status = declareQueueResult.wait_for(std::chrono::seconds(5));
             if( status == std::future_status::ready && declareQueueResult.get() )
             {
-                std::cout << "queue declared!" <<std::endl;
+                std::cout << "queue declared" <<std::endl;
             } else {
                 std::cout << "error declaring queue" <<std::endl;
                 sleep( 3 );
@@ -73,7 +73,7 @@ ReturnStatus AMQPConnection::connectLoop()
             status = bindResult.wait_for(std::chrono::seconds(5));
             if( status == std::future_status::ready && bindResult.get() )
             {
-                std::cout << "queue binded!" <<std::endl;
+                std::cout << "queue binded" <<std::endl;
             } else {
                 std::cout << "error binding queue" <<std::endl;
                 sleep( 3 );
