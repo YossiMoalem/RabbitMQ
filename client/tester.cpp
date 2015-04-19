@@ -228,11 +228,21 @@ class ContinousSendTester
 \*****************************************************************************/
 int main ()
 {
-  BindTester tester;
-  //MeasureTester tester;
-  //RepeatedBindTester tester;
-  //ContinousSendTester tester;
-  std::thread testerThread( std::bind( &BindTester::operator(), &tester ) );
-  testerThread.join();
-  RABBIT_DEBUG ("Tester:: Test finished");
+    BindTester bindTester;
+    MeasureTester measureTester;
+    RepeatedBindTester repeatediBindTester;
+    ContinousSendTester continousTester;
+
+    ( void ) bindTester;
+    ( void ) measureTester;
+    ( void ) repeatediBindTester;
+    ( void ) continousTester;
+
+    //std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
+    //std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
+    //std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
+    std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester) );
+
+    testerThread.join();
+    RABBIT_DEBUG ("Tester:: Test finished");
 }
