@@ -43,7 +43,7 @@ class AMQPSocket : boost::noncopyable
         if (setsockopt(_socketFd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
             perror("setsockopt()");
             close(_socketFd);
-            exit(1);
+            return false;
         }
 
 // TODO: fix the error in the next line because we want the socket to be non blocking!
@@ -72,7 +72,7 @@ class AMQPSocket : boost::noncopyable
         ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
-            //return false;
+//            return false;
             //TODO: throw a real AMQPException
             throw "Socket down?";
         }
@@ -101,11 +101,13 @@ class AMQPSocket : boost::noncopyable
         {
             if( errno != 11 /* not EWOULDBLOCK, EAGAIN */)
               std::cout << "ERROR RECEIVING!: errno = " <<errno <<std::endl;
+          throw "Socket down?";
             return false;
         }
         if( bytesRead == 0 )
         {
           std::cout << "read 0 bytes." <<std::endl;
+//          return false;
           //TODO: throw a real AMQPException
           throw "Socket down?";
         }

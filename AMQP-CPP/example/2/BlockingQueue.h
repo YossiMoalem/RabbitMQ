@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdint.h>             /* Definition of uint64_t */
 
+#include <iostream>
+
 
 namespace{
 template< typename T >
@@ -70,8 +72,8 @@ class BlockingQueue : public boost::noncopyable
 
  private:
    std::deque<DataType>         _queue;
-   mutable std::mutex           _queueMutex;
-   std::condition_variable      _queueEmptyCondition;
+   mutable std::recursive_mutex           _queueMutex;
+   std::condition_variable_any      _queueEmptyCondition;
    bool                         _queueOpen;
    int                          _eventFD;
 };
@@ -79,13 +81,13 @@ class BlockingQueue : public boost::noncopyable
     template<typename DataType>
 void BlockingQueue< DataType >::pop( DataType & data )
 {
-    std::unique_lock< std::mutex > lock(_queueMutex);
+    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
     while( _queue.empty() && _queueOpen )
     {
-        _queueEmptyCondition.wait(lock);
+        _queueEmptyCondition.wait( _queueMutex );
     }
 
-    if( ! _queue.empty )
+    if( ! _queue.empty() )
     {
         ssize_t dummy;
         read( _eventFD, & dummy, sizeof( dummy ) );
@@ -97,7 +99,7 @@ void BlockingQueue< DataType >::pop( DataType & data )
     template<typename DataType>
 bool BlockingQueue< DataType >::try_pop( DataType & data )
 {
-    std::unique_lock< std::mutex > lock(_queueMutex);
+    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
     if( _queue.empty() )
     {
         return false;
@@ -113,13 +115,12 @@ bool BlockingQueue< DataType >::try_pop( DataType & data )
     template<typename DataType >
 void BlockingQueue<DataType>::flush()
 {
-    std::unique_lock< std::mutex > lock(_queueMutex);
-    //make sure...
-    _queueOpen = false;
+    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
     while( ! _queue.empty() )
     {
-        DataType d = _queue.front();
-        _queue.pop_front();
+        //TODO: Not nice.
+        DataType d;
+        pop( d );//for updating the eventFD
         dispose( d );
     }
     //If there is any client still waiting.
@@ -129,14 +130,14 @@ void BlockingQueue<DataType>::flush()
 template<typename DataType>
 bool BlockingQueue<DataType>::empty() const
 {
-    std::unique_lock< std::mutex > lock(_queueMutex);
+    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
     return _queue.empty();
 }
 
 template<typename DataType>
 bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst ) 
 {
-    std::unique_lock< std::mutex > lock(_queueMutex);
+    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
     if( _queueOpen )
     {
         if (forceFirst)
@@ -147,6 +148,7 @@ bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst )
         }
         uint64_t dummy = 1;
         write( _eventFD, &dummy, sizeof( dummy ) );
+
         lock.unlock();
         _queueEmptyCondition.notify_all();
         return true;

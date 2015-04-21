@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include <string>
 #include <stdint.h>             /* Definition of uint64_t */
 #include <sys/eventfd.h>
 #include <unistd.h>
@@ -34,23 +33,29 @@ class SmartBuffer : boost::noncopyable
         return _buffer.capacity();
     }
 
-    char* data()
+    const char* data()
     {
         return _buffer.data();
     }
 
-    char* shrink( uint64_t elementsToRemove )
+    size_t shrink( uint64_t elementsToRemove )
     {
-        elementsToRemove = ( uint64_t )std::min( elementsToRemove, _buffer.size() );
-        _buffer.erase ( _buffer.begin(), _buffer.begin() + elementsToRemove );
-        read( _eventFD, & elementsToRemove, sizeof( elementsToRemove ) );
-        return _getBuffer();
+        if ( elementsToRemove > 0 )
+        {
+            elementsToRemove = ( uint64_t )std::min( elementsToRemove, _buffer.size() );
+            _buffer.erase ( _buffer.begin(), _buffer.begin() + elementsToRemove );
+            read( _eventFD, & elementsToRemove, sizeof( elementsToRemove ) );
+        }
+        return size();
     }
 
     void append( const char* data, uint64_t size )
     {
-        _buffer.insert( _buffer.end(), data, data + size );
-        write( _eventFD, & size, sizeof( size ) );
+        if( size > 0 )
+        {
+            _buffer.insert( _buffer.end(), data, data + size );
+            write( _eventFD, & size, sizeof( size ) );
+        }
     }
 
     void clear()
@@ -66,12 +71,6 @@ class SmartBuffer : boost::noncopyable
     int getFD() const
     {
         return _eventFD;
-    }
-
- private:
-    char* _getBuffer()
-    {
-        return _buffer.data()+_buffer.size();
     }
 
  private:

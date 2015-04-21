@@ -31,66 +31,67 @@ ReturnStatus AMQPConnection::start()
 
 ReturnStatus AMQPConnection::connectLoop()
 {
-    std::thread eventLoopThread;
     _stop = false;
     while ( _stop == false )
     {
         std::cout << "started AMQPConnection::connectLoop() " << std::endl;
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
-        eventLoopThread = std::thread( std::bind( &AMQP::AMQPClient::startEventLoop, &_connectionHandler ) );
+        std::thread eventLoopThread = std::thread( std::bind( 
+                    &AMQP::AMQPClient::startEventLoop, 
+                    &_connectionHandler ) );
 
         //TODO: currently the login returns false if it cant create socket (e.g internet down)
         //but it will not return false if the credentials are wrong. we should catch it somehow
         std::future_status status;
-        if ( _connectionHandler.login( connectionDetails ) )
+        if (! _connectionHandler.login( connectionDetails ) )
         {
-            std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( _exchangeName, AMQP::topic, false );
-            status = declareExchangeResult.wait_for(std::chrono::seconds(5));
-            if( status == std::future_status::ready && declareExchangeResult.get() )
+            std::cout <<"Login failed. Disconnecting..."<<std::endl;
+        } else {
+            std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
+                    _exchangeName, 
+                    AMQP::topic, 
+                    false );
+            status = declareExchangeResult.wait_for(std::chrono::seconds(10));
+            if( ! ( status == std::future_status::ready && declareExchangeResult.get() ) )
             {
-                std::cout << "exchange declared" <<std::endl;
-            } else {
+                _connectionHandler.stop( true );
                 std::cout << "error declaring exchange" <<std::endl;
-                sleep( 3 );
-                continue;
-            }
-            std::future< bool > declareQueueResult = _connectionHandler.declareQueue( _queueName, false, true, false );
-            status = declareQueueResult.wait_for(std::chrono::seconds(5));
-            if( status == std::future_status::ready && declareQueueResult.get() )
-            {
-                std::cout << "queue declared" <<std::endl;
             } else {
-                std::cout << "error declaring queue" <<std::endl;
-                sleep( 3 );
-                continue;
+                std::cout << "exchange declared" <<std::endl;
+                std::future< bool > declareQueueResult = _connectionHandler.declareQueue( 
+                        _queueName, 
+                        false, 
+                        true, 
+                        false );
+                status = declareQueueResult.wait_for(std::chrono::seconds(10));
+                if( ! ( status == std::future_status::ready && declareQueueResult.get() ) )
+                {
+                    _connectionHandler.stop( true );
+                    std::cout << "error declaring queue" <<std::endl;
+                } else {
+                    std::cout << "queue declared" <<std::endl;
+                    //            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+                    //            status = bindResult.wait_for(std::chrono::seconds(5));
+                    //            if( status == std::future_status::ready && bindResult.get() )
+                    //            {
+                    //                std::cout << "queue binded" <<std::endl;
+                    //            } else {
+                    //                std::cout << "error binding queue" <<std::endl;
+                    //                sleep( 3 );
+                    //                continue;
+                    //            }
+                    _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+                    _isConnected = true;
+                    rebind();
+                    std::cout << "CONNECTED" << std::endl;
+                    _connectionDetails.reset();
+                }
             }
-//            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-//            status = bindResult.wait_for(std::chrono::seconds(5));
-//            if( status == std::future_status::ready && bindResult.get() )
-//            {
-//                std::cout << "queue binded" <<std::endl;
-//            } else {
-//                std::cout << "error binding queue" <<std::endl;
-//                sleep( 3 );
-//                continue;
-//            }
-            _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-            sleep( 3 );
-
-            _isConnected = true;
-            rebind();
-            std::cout << "CONNECTED" << std::endl;
-            _connectionDetails.reset();
-            eventLoopThread.join();
-            _isConnected = false;
-            std::cout << "DISCONNECTED" << std::endl;
         }
-        else
-        {
-            //TODO: fix this
-//            stop(true);
-        }
-        //TODO: add sleep
+        eventLoopThread.join();
+        _isConnected = false;
+        std::cout << "DISCONNECTED" << std::endl;
+        sleep(1);
     }
     return ReturnStatus::Ok;
 }
@@ -132,7 +133,7 @@ ReturnStatus AMQPConnection::_bind( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
-    _connectionHandler.bindQueue( exchangeName, queueName, routingKey ).get();
+    _connectionHandler.bindQueue( exchangeName, queueName, routingKey ); //.get();
     return ReturnStatus::Ok;
 }
 

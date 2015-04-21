@@ -1,6 +1,8 @@
 #include "AMQPConnectionHandler.h"
 #include "AMQPConnectionDetails.h"
 
+#include <assert.h>
+
 namespace AMQP {
 
 AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
@@ -24,6 +26,7 @@ bool AMQPConnectionHandler::stopEventLoop()
     return _stopEventLoop;
 }
 
+//WHat???
 void AMQPConnectionHandler::setStopEventLoop( bool newBoolValue )
 {
     _stopEventLoop = newBoolValue;
@@ -96,21 +99,44 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
 //             } ) ;
 }
 
-void AMQPConnectionHandler::onConnected( AMQP::Connection *connection )
+void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
 {
     if( _channel )
         delete _channel;
-    _channel = new AMQP::Channel(_connection);
+    _channel = new AMQP::Channel( _connection );
 
     _channel->onError([](const char *message) {
             std::cout << "channel error " << message << std::endl;
             });
 
     _channel->onReady([ this ]() {
+            std::cout <<"channel ready "<<std::endl;
             _connected = true;
-            });
+    });
 }
 
+//TODO: Remove
+void AMQPConnectionHandler::initTO()const 
+{
+    //TODO: this block is ONLY for heartbeat. 
+    //Shoud go to the place bad code goes
+    declareExchange("admin", fanout, false);
+
+    auto & queueHndl = _channel->declareQueue( "admin", 0);
+    queueHndl.onSuccess([ this ]() { 
+            std::cout <<"Admin queue declared OK \n";
+            _channel->consume( "admin" ).onReceived([ ](const AMQP::Message &message, 
+                    uint64_t deliveryTag, 
+                    bool redelivered ) {
+                std::cout<<" Got: " << message.message() <<" from RK" << message.routingKey() <<std::endl;
+                }); 
+            } );
+    queueHndl.onError( [ ] ( const char* message ) {
+            std::cout <<"Failed declaring queue. error: " << message << std::endl;
+            } );
+
+    _channel->bindQueue( "admin", "admin", "admin");
+} //end of bad block
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
     //TODO: the buffer should implement eventFD, to signal that it has value
@@ -124,10 +150,8 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     //todo: this function is being called when we get a formal close connection from the broker or when formally closing broker.
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
     //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
-    _connected = false;
-    _connectionEstablishedMutex.lock();
-    _stopEventLoop = true;
     std::cout <<"(onError)Error: "<< message <<std::endl;
+    closeSocket();
 }
 
 void AMQPConnectionHandler::onClosed(AMQP::Connection *connection) 
@@ -137,6 +161,7 @@ void AMQPConnectionHandler::onClosed(AMQP::Connection *connection)
 
 bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParams )
 {
+    assert (! _connected );
     _incomingMessages.clear();
     _outgoingMessages.clear();
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
@@ -145,6 +170,7 @@ bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParam
         _connectionEstablishedMutex.unlock();
         return false;
     } else {
+        _stopEventLoop = false;
         std::cout <<"socket Created!" << std::endl;
         _connectionEstablishedMutex.unlock();
         Login login( connectionParams._userName, connectionParams._password );
@@ -159,16 +185,43 @@ bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParam
             //4. kame sure event loop was not stoped...
             sleep(1);
         }
+        if ( _stopEventLoop)
+            std::cout<< "login out because _stop event loop is called";
+        else
+            std::cout <<"Login Done!" << std::endl;
     }
     return _connected;
 }
 
 //void AMQPConnectionHandler::handleTimeout( const std::string & exchangeName) const
-void AMQPConnectionHandler::handleTimeout() const
+    static bool  TO_init = false;
+bool AMQPConnectionHandler::handleTimeout() const
 {
-    //TODO: get exchangename as param instead of hardcoded
-    //TODO: use heartbeat message instead of a normal message
-    _channel->publish( "exchange_name", "KeepAliveTest", "i'll be back (not)" );
+    //TODO: Remove
+    //FOr timeout!
+    //POC! 
+    //just to make sure it works
+    std::cout <<" In TO!!!!!" <<std::endl;
+    if( _connected )
+    {
+        if ( TO_init )
+        {
+        std::cout <<"TO after we are connected. Sending HB" <<std::endl;
+
+        //TODO: get exchangename as param instead of hardcoded
+        //TODO: use heartbeat message instead of a normal message
+        _channel->publish( "admin", "admin", "admin");
+        return true;
+        } else {
+            initTO();
+            TO_init= true;
+            return false;
+        }
+    } else {
+        std::cout <<"TO after we are NOT connected. Ignoring " <<std::endl;
+        return false;
+    }
+
 }
 
 std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
@@ -206,12 +259,14 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
         ExchangeType type, 
         bool isDurable ) const
 {
+    std::cout <<"declaring exchange: " << exchangeName <<std::endl;
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     int flags = 0;
     if( isDurable )     flags |= AMQP::durable;
 
     auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
     exchangeHndl.onSuccess([ operationSucceeded ]() { 
+            std::cout <<"Exchange declared successfully" <<std::endl;
             operationSucceeded->set_value( true );
             });
     exchangeHndl.onError( [ operationSucceeded ] (const char* message ) {
@@ -236,6 +291,15 @@ void AMQPConnectionHandler::waitForConnection()
     _connectionEstablishedMutex.lock();
     _connectionEstablishedMutex.unlock();
 
+}
+
+void AMQPConnectionHandler::closeSocket()
+{
+    _stopEventLoop = true;
+    _connectionEstablishedMutex.try_lock();
+    _connected = false;
+    TO_init = false;
+    // TODO: _socket.close();
 }
 } //namespace AMQP
 

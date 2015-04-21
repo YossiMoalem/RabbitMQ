@@ -25,13 +25,15 @@ int AMQPEventLoop::start()
     int brokerReadFD = _connectionHandlers->getReadFD();
     int maxReadFd =  std::max( outgoingMessagesEventFd, std::max( queueEventFd, brokerReadFD ) ) +1;
 
+    timeval heartbeatIdenInterval;
+    heartbeatIdenInterval.tv_sec = 15;
+    heartbeatIdenInterval.tv_usec = 50;
 
+    bool lastCallWasTimeOut = false;
+
+    _jobQueue->flush();
     while( ! _stop )
     {
-        timeval heartbeatIdenInterval;
-        heartbeatIdenInterval.tv_sec = 2;
-        heartbeatIdenInterval.tv_usec = 50;
-
         FD_ZERO( & readFd );
         FD_SET ( outgoingMessagesEventFd, & readFd );
         FD_SET ( queueEventFd, & readFd );
@@ -48,11 +50,15 @@ int AMQPEventLoop::start()
                 {
                     _connectionHandlers->handleInput();
                 }
+                
                 catch(...)
                 {
                     std::cout << "read failed. closing event loop" <<std::endl;
                     _connectionHandlers->setStopEventLoop( true );
                 }
+                lastCallWasTimeOut = false;
+                heartbeatIdenInterval.tv_sec = 7;
+                heartbeatIdenInterval.tv_usec = 50;
             }
             if( FD_ISSET( queueEventFd, & readFd ) )
             {
@@ -65,28 +71,38 @@ int AMQPEventLoop::start()
             // 2. when it is called - send
             // 2.1 after sending, if not everything sent - back to 1. 
             // 2.2 otherwise - do not register write
-            //
-            // BUG ALLERT: as it is now - if we did not finish the send, nothing will trigger us to do so!
             if( FD_ISSET( outgoingMessagesEventFd, & readFd ) )
             {
                 assert ( _connectionHandlers->pendingSend() );
-                try
+                //try
                 {
                     _connectionHandlers->handleOutput();
                 }
+                /*
                 catch(...)
                 {
                     std::cout << "send failedclosing event loop" <<std::endl;
                     _connectionHandlers->setStopEventLoop( true );
-                }
+                } */
             }
         }
         else if ( res == 0 ){
+            //TODO: hide impl.
+            std::cout <<" select timeout \n";
             assert (! _connectionHandlers->pendingSend() );
-//            std::cout <<"sending heartbeat" <<std::endl;
-//            _connectionHandlers->handleTimeout();
-            //TODO: send heartbeat. 
-            //If we already sent heartbeat in the last timeout and did not get response - we are in trouble.
+            if (  lastCallWasTimeOut )
+            {
+                std::cout <<"Timeout expired. disconnect!" <<std::endl;
+                _connectionHandlers->closeSocket();
+                return 2;
+            } else {
+                if( _connectionHandlers->handleTimeout() )
+                {
+                    lastCallWasTimeOut = true;
+                }
+                heartbeatIdenInterval.tv_sec = 5;
+                heartbeatIdenInterval.tv_usec = 50;
+            } 
         }
         else
         {
@@ -97,20 +113,20 @@ int AMQPEventLoop::start()
         {
             _connectionHandlers->setStopEventLoop( false );
             std::cout <<"EventLoop stoped 1 "<< std::endl;
+    _connectionHandlers->closeSocket();
             return 1;
         }
     }
     std::cout <<"EventLoop stoped 0 "<< std::endl;
+    _connectionHandlers->closeSocket();
     return 0;
 }
 
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
-    if( _jobQueue->try_pop( msg ) )
-    {
-        msg->handle( this );
-    }
+     _jobQueue->pop( msg ) ;
+     msg->handle( this );
     delete msg;
 }
 
