@@ -12,6 +12,7 @@ sources = Split ("""
     SmartBuffer.cpp
     AMQPEventLoop.cpp
     RabbitOperation.cpp
+    Heartbeat.cpp
     """)
 
 appSourced = sources + [ "main.cpp" ]

@@ -11,9 +11,11 @@
 
 namespace AMQP {
 class AMQPConnectionDetails;
+class Heartbeat;
 
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
+    friend class Heartbeat;
  public:
 
    AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
@@ -71,7 +73,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    int getOutgoingMessagesFD() const;
 
     void closeSocket();
-    void initTO() const ;
+
  private:
    AMQPSocket                       _socket;
    AMQP::Connection*                _connection;
@@ -82,6 +84,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
    std::mutex                       _connectionEstablishedMutex;
+   std::unique_ptr< Heartbeat >     _heartbeat;
 };
 
 } //namespace AMQP

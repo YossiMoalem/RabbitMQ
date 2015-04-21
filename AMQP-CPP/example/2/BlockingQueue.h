@@ -72,7 +72,8 @@ class BlockingQueue : public boost::noncopyable
 
  private:
    std::deque<DataType>         _queue;
-   mutable std::recursive_mutex           _queueMutex;
+	//TODO: try to re-replace with non-recursive mutex.
+   std::recursive_mutex           _queueMutex;
    std::condition_variable_any      _queueEmptyCondition;
    bool                         _queueOpen;
    int                          _eventFD;

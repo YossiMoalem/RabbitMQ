@@ -2,11 +2,15 @@
 #include "AMQPConnectionDetails.h"
 
 #include <assert.h>
+#include <memory>
+
+#include "Heartbeat.h"
 
 namespace AMQP {
 
 AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _onMsgReceivedBC( onMsgReceivedCB )
+    _onMsgReceivedBC( onMsgReceivedCB ),
+    _heartbeat( new Heartbeat( this ) )
 {
     _connectionEstablishedMutex.lock();
 }
@@ -115,28 +119,6 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
     });
 }
 
-//TODO: Remove
-void AMQPConnectionHandler::initTO()const 
-{
-    //TODO: this block is ONLY for heartbeat. 
-    //Shoud go to the place bad code goes
-    declareExchange("admin", fanout, false);
-
-    auto & queueHndl = _channel->declareQueue( "admin", 0);
-    queueHndl.onSuccess([ this ]() { 
-            std::cout <<"Admin queue declared OK \n";
-            _channel->consume( "admin" ).onReceived([ ](const AMQP::Message &message, 
-                    uint64_t deliveryTag, 
-                    bool redelivered ) {
-                std::cout<<" Got: " << message.message() <<" from RK" << message.routingKey() <<std::endl;
-                }); 
-            } );
-    queueHndl.onError( [ ] ( const char* message ) {
-            std::cout <<"Failed declaring queue. error: " << message << std::endl;
-            } );
-
-    _channel->bindQueue( "admin", "admin", "admin");
-} //end of bad block
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
     //TODO: the buffer should implement eventFD, to signal that it has value
@@ -190,33 +172,17 @@ bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParam
         else
             std::cout <<"Login Done!" << std::endl;
     }
+    _heartbeat->initialize();
     return _connected;
 }
 
 //void AMQPConnectionHandler::handleTimeout( const std::string & exchangeName) const
-    static bool  TO_init = false;
 bool AMQPConnectionHandler::handleTimeout() const
 {
-    //TODO: Remove
-    //FOr timeout!
-    //POC! 
-    //just to make sure it works
     std::cout <<" In TO!!!!!" <<std::endl;
     if( _connected )
     {
-        if ( TO_init )
-        {
-        std::cout <<"TO after we are connected. Sending HB" <<std::endl;
-
-        //TODO: get exchangename as param instead of hardcoded
-        //TODO: use heartbeat message instead of a normal message
-        _channel->publish( "admin", "admin", "admin");
-        return true;
-        } else {
-            initTO();
-            TO_init= true;
-            return false;
-        }
+        return _heartbeat->send();
     } else {
         std::cout <<"TO after we are NOT connected. Ignoring " <<std::endl;
         return false;
@@ -298,7 +264,7 @@ void AMQPConnectionHandler::closeSocket()
     _stopEventLoop = true;
     _connectionEstablishedMutex.try_lock();
     _connected = false;
-    TO_init = false;
+    _heartbeat->invalidate();
     // TODO: _socket.close();
 }
 } //namespace AMQP
