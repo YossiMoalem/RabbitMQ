@@ -33,7 +33,6 @@ class BlockingQueue : public boost::noncopyable
  public:
 
    BlockingQueue () : 
-       _queueOpen( true ),
        _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
     {}
 
@@ -57,11 +56,6 @@ class BlockingQueue : public boost::noncopyable
         return _eventFD;
    }
 
-   void close()
-   {
-       _queueOpen = false;
-   }
-
    bool empty() const;
    void flush( );
    bool try_pop( DataType & data );
@@ -75,7 +69,6 @@ class BlockingQueue : public boost::noncopyable
 	//TODO: try to re-replace with non-recursive mutex.
    std::recursive_mutex           _queueMutex;
    std::condition_variable_any      _queueEmptyCondition;
-   bool                         _queueOpen;
    int                          _eventFD;
 };
 
@@ -83,7 +76,7 @@ class BlockingQueue : public boost::noncopyable
 void BlockingQueue< DataType >::pop( DataType & data )
 {
     std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    while( _queue.empty() && _queueOpen )
+    while( _queue.empty() )
     {
         _queueEmptyCondition.wait( _queueMutex );
     }
@@ -139,23 +132,18 @@ template<typename DataType>
 bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst ) 
 {
     std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    if( _queueOpen )
+    if (forceFirst)
     {
-        if (forceFirst)
-        {
-            _queue.push_front(i_data);
-        } else {
-            _queue.push_back(i_data);
-        }
-        uint64_t dummy = 1;
-        write( _eventFD, &dummy, sizeof( dummy ) );
-
-        lock.unlock();
-        _queueEmptyCondition.notify_all();
-        return true;
+        _queue.push_front(i_data);
+    } else {
+        _queue.push_back(i_data);
     }
-    assert ( ! _queueOpen );
-    return false;
+    uint64_t dummy = 1;
+    write( _eventFD, &dummy, sizeof( dummy ) );
+
+    lock.unlock();
+    _queueEmptyCondition.notify_all();
+    return true;
 }
 
 

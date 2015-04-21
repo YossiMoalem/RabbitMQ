@@ -26,6 +26,9 @@ class AMQPEventLoop
    //till then, client sends commands to the broker, so it needs the connection handler.
    //this needs to be removed!!!!!
    AMQPConnectionHandler* connectionHandler() { return _connectionHandlers.get(); } 
+   //TODO: this is for the connection handler to be able to break from login wait
+   //in case the event loop exits. Needs to be removed when login moved to event loop thread
+   bool active() { return ! _stop ; } 
 
    void publish( const std::string & exchangeName, 
            const std::string & routingKey, 

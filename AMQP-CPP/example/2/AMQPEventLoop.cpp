@@ -9,12 +9,15 @@ namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB,
         BlockingQueue<RabbitMessageBase * >  * jobQueue ) :
-    _connectionHandlers( new AMQPConnectionHandler ( onMsgReceivedCB ) ),
+    _connectionHandlers( new AMQPConnectionHandler ( onMsgReceivedCB, this ) ),
     _jobQueue( jobQueue )
 { }
 
 int AMQPEventLoop::start()
 {
+    //TODO: should we update stop here or only after we unleash the EL???
+    //(It's been a long day, vant think right now....
+    _stop = false;
     std::cout << "started event loop" << std::endl;
     _connectionHandlers->waitForConnection();
     std::cout <<"Eventloop unleashed! "<<std::endl;
@@ -40,7 +43,7 @@ int AMQPEventLoop::start()
         FD_SET ( brokerReadFD, & readFd );
 
         int res = select( maxReadFd, & readFd, NULL, NULL, &heartbeatIdenInterval);
-//        std::cout << "select res: " <<res <<std::endl;
+        //        std::cout << "select res: " <<res <<std::endl;
         //TODO: change to res > 0. this is a temp workaround till we will handle the send as described bellow.
         if( res > 0 )
         {
@@ -50,11 +53,11 @@ int AMQPEventLoop::start()
                 {
                     _connectionHandlers->handleInput();
                 }
-                
+
                 catch(...)
                 {
                     std::cout << "read failed. closing event loop" <<std::endl;
-                    _connectionHandlers->setStopEventLoop( true );
+                    _stop = true;
                 }
                 lastCallWasTimeOut = false;
                 heartbeatIdenInterval.tv_sec = 7;
@@ -74,16 +77,15 @@ int AMQPEventLoop::start()
             if( FD_ISSET( outgoingMessagesEventFd, & readFd ) )
             {
                 assert ( _connectionHandlers->pendingSend() );
-                //try
+                try
                 {
                     _connectionHandlers->handleOutput();
                 }
-                /*
                 catch(...)
                 {
                     std::cout << "send failedclosing event loop" <<std::endl;
-                    _connectionHandlers->setStopEventLoop( true );
-                } */
+                    _stop = true;
+                } 
             }
         }
         else if ( res == 0 ){
@@ -108,14 +110,6 @@ int AMQPEventLoop::start()
         {
             std::cout << "select returned : " << res << "Errno = " << errno << std::endl;
         }
-
-        if ( _connectionHandlers->stopEventLoop() )
-        {
-            _connectionHandlers->setStopEventLoop( false );
-            std::cout <<"EventLoop stoped 1 "<< std::endl;
-    _connectionHandlers->closeSocket();
-            return 1;
-        }
     }
     std::cout <<"EventLoop stoped 0 "<< std::endl;
     _connectionHandlers->closeSocket();
@@ -132,7 +126,6 @@ void AMQPEventLoop::handleQueue( )
 
 void AMQPEventLoop::stop( bool terminateNow )
 {
-    _jobQueue->close();
     if( terminateNow )
     {
         _stop = true;

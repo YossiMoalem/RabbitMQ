@@ -18,7 +18,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
     friend class Heartbeat;
  public:
 
-   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB );
+   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, AMQPEventLoop * eventloop );
    virtual ~AMQPConnectionHandler ();
 
    bool handleTimeout() const;
@@ -41,8 +41,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
-   bool stopEventLoop();
-   void setStopEventLoop( bool newBoolValue );
 
    void waitForConnection();
    /**
@@ -79,12 +77,16 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    AMQP::Connection*                _connection;
    AMQP::Channel *                  _channel = nullptr;
    volatile bool                             _connected = false;
-   volatile bool                             _stopEventLoop = false;
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
    std::mutex                       _connectionEstablishedMutex;
    std::unique_ptr< Heartbeat >     _heartbeat;
+   //TODO: this is a temporary WA. 
+   //Till login will be moved to the eventloop thread, we need to release it
+   //if event loop is terminated.
+   //for this we want oto ask the event lop if it is still running
+   AMQPEventLoop *                  _eventLoop;
 };
 
 } //namespace AMQP

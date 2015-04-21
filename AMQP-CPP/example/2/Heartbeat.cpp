@@ -23,8 +23,8 @@ void Heartbeat::initialize()
             _initialized = true;
             } );
     queueHndl.onError( [ this ] ( const char* message ) {
-            std::cout <<"Failed declaring queue. error: " << message << std::endl;
-            _initialized = true;
+            std::cout <<"Failed declaring admin. error: " << message << std::endl;
+            _initialized = false;
             } );
 
     _connectionHandler->_channel->bindQueue( "admin", "admin", "admin");
