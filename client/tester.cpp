@@ -4,10 +4,12 @@
 #include <iostream>
 #include <unistd.h>
 #include <thread>
+#include <boost/lexical_cast.hpp>
 
 #define MY_NAME "USR1"
 #define OTHER_NAME "Kuku"
 #define RABBIT_IP1 "184.169.148.90"
+#define _RABBIT_IP1 "54.241.242.26"
 #define RABBIT_PORT 5672
 #define USER "yossi"
 #define PASSWORD "yossipassword"
@@ -183,7 +185,6 @@ class RepeatedBindTester
        client.stop(false);
        return 0;
    }
-
 };
 
 /*****************************************************************************\
@@ -221,8 +222,50 @@ class ContinousSendTester
        client.stop(false);
        return 0;
    }
-
 };
+
+/*****************************************************************************\
+ *  Continous send Tester 
+\*****************************************************************************/
+class ManyBindTester
+{
+    public:
+    int operator ()()
+    {
+        std::string myID ("MyId");
+
+        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+        RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+                std::cout <<"Free CB:: Received: "<< o_message 
+                <<" From : "<< o_sender << std::endl;
+                return 0;
+                } );
+        client.start();
+        sleep (timeToConnect);
+        RABBIT_DEBUG ( "Tester:: Tester started ");
+        RABBIT_DEBUG ("Tester::  + Bind to queues ");
+        for( int keyIndex = 0; keyIndex < 2000; ++keyIndex )
+        {
+            std::string key = std::string( "key" ) + boost::lexical_cast< std::string >( keyIndex );
+            client.bindToDestination ( key );
+        }
+        sleep (timeToBindUnbind);
+        sleep (timeToBindUnbind);
+        sleep (timeToBindUnbind);
+        RABBIT_DEBUG ("Tester::  + sending messages to queues ");
+        for( int keyIndex = 0; keyIndex < 2000; ++keyIndex )
+        {
+            std::string key = std::string( "key" ) + boost::lexical_cast< std::string >( keyIndex );
+            client.sendMulticast(std::string("mamamia"), key );
+        }
+        sleep (timeToFlushAllMessages);
+        while (true)
+            sleep (timeToFlushAllMessages);
+        return 0;
+    }
+};
+
+
 /*****************************************************************************\
  * Main
 \*****************************************************************************/
@@ -232,16 +275,19 @@ int main ()
     MeasureTester measureTester;
     RepeatedBindTester repeatediBindTester;
     ContinousSendTester continousTester;
+    ManyBindTester manyBindTester;
 
     ( void ) bindTester;
     ( void ) measureTester;
     ( void ) repeatediBindTester;
     ( void ) continousTester;
+    ( void ) manyBindTester;
 
     //std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
     //std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
     //std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
-    std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester) );
+    //std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester ) );
+    std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );
 
     testerThread.join();
     RABBIT_DEBUG ("Tester:: Test finished");
