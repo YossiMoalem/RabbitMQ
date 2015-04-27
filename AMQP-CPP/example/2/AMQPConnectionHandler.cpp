@@ -65,6 +65,7 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
+    std::cout << "binding: " << routingKey << std::endl;
     _channel->bindQueue( exchangeName, queueName, routingKey );
     operationSucceeded->set_value( true );
 //    auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
@@ -81,6 +82,7 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
 {
+    std::cout << "unbinding: " << routingKey << std::endl;
     _channel->unbindQueue( exchangeName, queueName, routingKey );
     operationSucceeded->set_value( true );
 //    auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
@@ -189,7 +191,8 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
     RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
-    //if( isExclusive )     flags |= AMQP::exclusive;
+    // TODO: why was it commented out?!
+    if( isExclusive )     flags |= AMQP::exclusive;
     if( isAutoDelete )    flags |= AMQP::autodelete; 
 
     auto & queueHndl = _channel->declareQueue( queueName, flags );

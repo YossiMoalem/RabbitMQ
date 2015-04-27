@@ -15,10 +15,11 @@ void Heartbeat::initialize()
     auto & queueHndl = _connectionHandler->_channel->declareQueue( "admin", 0);
     queueHndl.onSuccess([ this ]() { 
             std::cout <<"Admin queue declared OK \n";
-            _connectionHandler->_channel->consume( "admin" ).onReceived([ ](const AMQP::Message &message, 
+            _connectionHandler->_channel->consume( "admin" ).onReceived([ this ](const AMQP::Message &message,
                     uint64_t deliveryTag, 
                     bool redelivered ) {
-                std::cout<<" Got: " << message.message() <<" from RK" << message.routingKey() <<std::endl;
+                _connectionHandler->_channel->ack( deliveryTag );
+//                std::cout<<" Got: " << message.message() <<" from RK" << message.routingKey() <<std::endl;
                 }); 
             _initialized = true;
             } );
@@ -34,7 +35,7 @@ bool Heartbeat::send( )
 {
     if ( _initialized )
     {
-        std::cout <<"TO after we are connected. Sending HB" <<std::endl;
+//        std::cout <<"TO after we are connected. Sending HB" <<std::endl;
         _connectionHandler->_channel->publish( "admin", "admin", "admin");
     } else {
         initialize() ;

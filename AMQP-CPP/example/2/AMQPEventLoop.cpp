@@ -90,7 +90,7 @@ int AMQPEventLoop::start()
         }
         else if ( res == 0 ){
             //TODO: hide impl.
-            std::cout <<" select timeout \n";
+            //std::cout <<" select timeout \n";
             assert (! _connectionHandlers->pendingSend() );
             if (  lastCallWasTimeOut )
             {
