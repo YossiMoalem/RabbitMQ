@@ -81,8 +81,8 @@ ReturnStatus AMQPConnection::connectLoop()
                     //                continue;
                     //            }
                     _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-                    _isConnected = true;
                     rebind();
+                    _isConnected = true;
                     std::cout << "CONNECTED" << std::endl;
                     _connectionDetails.reset();
                 }
