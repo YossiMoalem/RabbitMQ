@@ -1,18 +1,16 @@
 #ifndef BASIC_SOCKET_H
 #define BASIC_SOCKET_H
 
-#include <sys/fcntl.h>
 #include <string>
+#include <string.h>
 #include <iostream>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <strings.h>
-#include "SmartBuffer.h"
 #include <boost/noncopyable.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include "SmartBuffer.h"
 
 namespace AMQP{
 
@@ -20,51 +18,61 @@ class AMQPSocket : boost::noncopyable
 {
  public:
 
-    bool connect(const std::string & IP, unsigned int port )
+    bool connect(const std::string & address, unsigned int port )
     {
-        //TODO: close socket
-        //TODO: add keep alive parameter
-        _socketFd = socket( AF_INET, SOCK_STREAM, 0);
-        if( _socketFd < 0 )
+        std::string portStr = boost::lexical_cast< std::string > ( port );
+        return connect( address, portStr );
+    }
+
+    bool connect(const std::string & address, const std::string & port )
+    {
+        addrinfo hints;
+        addrinfo * resolvedAddr;
+        addrinfo * currentAddress;
+
+        memset( & hints, 0, sizeof( hints ) );
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = 0 ; 
+        hints.ai_flags = 0;
+        hints.ai_protocol = 0;
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+
+        int addrinfiResult = getaddrinfo( address.c_str(), port.c_str(), &hints, & resolvedAddr );
+        if( addrinfiResult != 0 )
         {
-            std::cerr<<"Error creating Socket " <<std::endl;
+            std::cout <<"Faild getaddrinfo. Result was" << addrinfiResult <<std::endl;
             return false;
         }
 
-        /*
-        struct timeval tv;
-        tv.tv_sec = 1 ; 
-        tv.tv_usec = 0;
-        */
-        //if next line is commented out, read will be blocking the socket.
-        //hence, if we use multiple readers in the future, we will probably need multiple sockets
-//        setsockopt(_socketFd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
-        int optval = 1;
-        if (setsockopt(_socketFd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
-            perror("setsockopt()");
-            close(_socketFd);
-            return false;
-        }
-
-// TODO: fix the error in the next line because we want the socket to be non blocking!
-//        fcntl(_socketFd, F_SETFL, O_NONBLOCK);  // set to non-blocking
-
-        sockaddr_in serv_addr = { 0 };
-        bzero((char *) &serv_addr, sizeof(serv_addr));
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_port = htons( port ); 
-        if( inet_pton(AF_INET, IP.c_str(), &serv_addr.sin_addr) <= 0 )
+        bool connected = false;
+        for( currentAddress = resolvedAddr; 
+                currentAddress != NULL && ! connected;
+                currentAddress = currentAddress->ai_next )
         {
-            std::cerr<<"inet_pton error occured" <<std::endl;
-            return false;
-        }
+            _socketFd = socket( currentAddress->ai_family,
+                    currentAddress->ai_socktype,
+                    currentAddress->ai_protocol );
 
-        if( ::connect(_socketFd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-        {
-            std::cerr <<"Error : Connect Failed "<< std::endl;
-            return false;
-        } 
-        return true;
+            if( _socketFd < 0 )
+            {
+                std::cerr<<"Error creating Socket " <<std::endl;
+            } else {
+                //TODO: close socket when done with it
+                if( ::connect(_socketFd, 
+                            currentAddress->ai_addr, 
+                            currentAddress->ai_addrlen) < 0 )
+                {
+                    std::cerr <<"Error : Connect Failed "<< std::endl;
+                    close( _socketFd );
+                }  else {
+                    connected = true;
+                }
+            }
+        }
+        freeaddrinfo( resolvedAddr );
+        return connected;
     }
 
     bool send( SmartBuffer & sbuffer)
@@ -121,7 +129,7 @@ class AMQPSocket : boost::noncopyable
     }
 
  private:
-   int                  _socketFd;
+   int _socketFd;
 };
 
 } //namespace AMQP

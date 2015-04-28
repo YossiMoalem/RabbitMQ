@@ -8,8 +8,10 @@
 
 #define MY_NAME "USR1"
 #define OTHER_NAME "Kuku"
-#define RABBIT_IP1 "184.169.148.90"
-#define _RABBIT_IP1 "54.241.242.26"
+#define RABBIT_IP1 "test.mb.hubs.liveu.tv"
+#define RABBIT_IP2 "54.235.137.169"
+#define RABBIT_IP3 "184.169.148.90"
+#define RABBIT_IP4 "54.241.242.26"
 #define RABBIT_PORT 5672
 #define USER "yossi"
 #define PASSWORD "yossipassword"
@@ -250,8 +252,6 @@ class ManyBindTester
             client.bindToDestination ( key );
         }
         sleep (timeToBindUnbind);
-        sleep (timeToBindUnbind);
-        sleep (timeToBindUnbind);
         RABBIT_DEBUG ("Tester::  + sending messages to queues ");
         for( int keyIndex = 0; keyIndex < 2000; ++keyIndex )
         {
@@ -259,8 +259,7 @@ class ManyBindTester
             client.sendMulticast(std::string("mamamia"), key );
         }
         sleep (timeToFlushAllMessages);
-        while (true)
-            sleep (timeToFlushAllMessages);
+        sleep (timeToFlushAllMessages);
         return 0;
     }
 };
@@ -283,11 +282,11 @@ int main ()
     ( void ) continousTester;
     ( void ) manyBindTester;
 
-    //std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
+    std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
     //std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
     //std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
     //std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester ) );
-    std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );
+    //std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );
 
     testerThread.join();
     RABBIT_DEBUG ("Tester:: Test finished");
