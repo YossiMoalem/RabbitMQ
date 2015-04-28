@@ -59,13 +59,12 @@ class AMQPSocket : boost::noncopyable
             {
                 std::cerr<<"Error creating Socket " <<std::endl;
             } else {
-                //TODO: close socket when done with it
                 if( ::connect(_socketFd, 
                             currentAddress->ai_addr, 
                             currentAddress->ai_addrlen) < 0 )
                 {
                     std::cerr <<"Error : Connect Failed "<< std::endl;
-                    close( _socketFd );
+                    ::close( _socketFd );
                 }  else {
                     connected = true;
                 }
@@ -125,7 +124,7 @@ class AMQPSocket : boost::noncopyable
 
     void close()
     {
-        close( _socketFd );
+        ::close( _socketFd );
     }
 
     int readFD() const 
