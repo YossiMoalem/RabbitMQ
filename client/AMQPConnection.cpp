@@ -58,11 +58,13 @@ ReturnStatus AMQPConnection::connectLoop()
                 std::cout << "error declaring exchange" <<std::endl;
             } else {
                 std::cout << "exchange declared" <<std::endl;
-                std::future< bool > declareQueueResult = _connectionHandler.declareQueue( 
+
+                // TODO: change to exclusive (_queueName, false, true, false)
+                std::future< bool > declareQueueResult = _connectionHandler.declareQueue(
                         _queueName, 
                         false, 
-                        true, 
-                        false );
+                        false,
+                        true );
                 status = declareQueueResult.wait_for(std::chrono::seconds(10));
                 if( ! ( status == std::future_status::ready && declareQueueResult.get() ) )
                 {
