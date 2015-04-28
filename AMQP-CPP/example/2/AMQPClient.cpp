@@ -26,8 +26,9 @@ std::future< bool > AMQPClient::publish( const std::string & exchangeName,
     PostMessage * msg = new PostMessage( exchangeName, 
             routingKey, 
             message );
+    auto res = msg->deferedResult();
     _jobQueue.push( msg );
-    return msg->deferedResult();
+    return res;
 }
 
 std::future< bool > AMQPClient::bindQueue( const std::string & exchangeName, 

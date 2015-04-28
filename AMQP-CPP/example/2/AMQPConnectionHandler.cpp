@@ -258,7 +258,7 @@ void AMQPConnectionHandler::closeSocket()
     _connectionEstablishedMutex.try_lock();
     _connected = false;
     _heartbeat->invalidate();
-    // TODO: _socket.close();
+    _socket.close();
 }
 } //namespace AMQP
 
