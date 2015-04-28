@@ -37,8 +37,9 @@ std::future< bool > AMQPClient::bindQueue( const std::string & exchangeName,
     BindMessage * bindMessage = new BindMessage( exchangeName, 
             queueName, 
             routingKey );
+    auto res = bindMessage->deferedResult();
     _jobQueue.push( bindMessage );
-    return bindMessage->deferedResult();
+    return res;
 }
 
 std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName, 
@@ -48,8 +49,9 @@ std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName,
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, 
             queueName, 
             routingKey );
+    auto res = unBindMessage->deferedResult();
     _jobQueue.push( unBindMessage );
-    return unBindMessage->deferedResult();
+    return res;
 }
 
 std::future< bool > AMQPClient::stop( bool immediate )
