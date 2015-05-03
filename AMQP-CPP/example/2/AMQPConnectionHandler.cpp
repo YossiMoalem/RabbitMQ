@@ -105,6 +105,25 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
             std::cout << "channel error " << message << std::endl;
             });
 
+    //TODO: 
+    //this CB is called twice: 
+    //from AMQP::ConnectionOpenOKFrame::process ->  
+    //          AMQP::ConnectionImpl::setConnected  ->
+    //               AMQP::AMQPConnectionHandler::onConnected ( this function, on exit )->
+    //                   AMQP::Channel::onReady ->
+    //                      AMQP::ChannelImpl::onReady
+    // and: 
+    //  AMQP::ChannelOpenOKFrame::process ->
+    //      AMQP::ChannelImpl::reportReady 
+    //          
+    //This is because we install teh CB when the channel is already connected, so the FW called this CB
+    //on installation.
+    //This indicates that we can install the CB on the channel, before the channel is connected, 
+    //which may indicate that we can:
+    //1. create is in advance
+    //2. reuse it on reconnection
+    //3. something else we can think of.
+    //At the minimum we should filter out the second call (based on _connected )
     _channel->onReady([ this ]() {
             std::cout <<"channel ready "<<std::endl;
             _connected = true;

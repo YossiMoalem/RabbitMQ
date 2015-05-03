@@ -15,39 +15,34 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 
 int AMQPEventLoop::start()
 {
-    //TODO: should we update stop here or only after we unleash the EL???
-    //(It's been a long day, vant think right now....
     _stop = false;
     std::cout << "started event loop" << std::endl;
     _connectionHandlers->waitForConnection();
     std::cout <<"Eventloop unleashed! "<<std::endl;
 
-    fd_set readFd;
+    fd_set readFdSet;
     int outgoingMessagesEventFd = _connectionHandlers->getOutgoingMessagesFD();
     int queueEventFd = _jobQueue->getFD();
     int brokerReadFD = _connectionHandlers->getReadFD();
     int maxReadFd =  std::max( outgoingMessagesEventFd, std::max( queueEventFd, brokerReadFD ) ) +1;
 
     timeval heartbeatIdenInterval;
-    heartbeatIdenInterval.tv_sec = 15;
-    heartbeatIdenInterval.tv_usec = 50;
+    _resetTimeout( heartbeatIdenInterval );
 
     bool lastCallWasTimeOut = false;
 
     _jobQueue->flush();
     while( ! _stop )
     {
-        FD_ZERO( & readFd );
-        FD_SET ( outgoingMessagesEventFd, & readFd );
-        FD_SET ( queueEventFd, & readFd );
-        FD_SET ( brokerReadFD, & readFd );
+        FD_ZERO( & readFdSet );
+        FD_SET ( outgoingMessagesEventFd, & readFdSet );
+        FD_SET ( queueEventFd, & readFdSet );
+        FD_SET ( brokerReadFD, & readFdSet );
 
-        int res = select( maxReadFd, & readFd, NULL, NULL, &heartbeatIdenInterval);
-        //        std::cout << "select res: " <<res <<std::endl;
-        //TODO: change to res > 0. this is a temp workaround till we will handle the send as described bellow.
+        int res = select( maxReadFd, & readFdSet, NULL, NULL, &heartbeatIdenInterval);
         if( res > 0 )
         {
-            if( FD_ISSET( brokerReadFD, & readFd ) )
+            if( FD_ISSET( brokerReadFD, & readFdSet ) )
             {
                 try
                 {
@@ -60,10 +55,9 @@ int AMQPEventLoop::start()
                     _stop = true;
                 }
                 lastCallWasTimeOut = false;
-                heartbeatIdenInterval.tv_sec = 7;
-                heartbeatIdenInterval.tv_usec = 50;
+                _resetTimeout( heartbeatIdenInterval );
             }
-            if( FD_ISSET( queueEventFd, & readFd ) )
+            if( FD_ISSET( queueEventFd, & readFdSet ) )
             {
                 handleQueue();
             }
@@ -74,7 +68,7 @@ int AMQPEventLoop::start()
             // 2. when it is called - send
             // 2.1 after sending, if not everything sent - back to 1. 
             // 2.2 otherwise - do not register write
-            if( FD_ISSET( outgoingMessagesEventFd, & readFd ) )
+            if( FD_ISSET( outgoingMessagesEventFd, & readFdSet ) )
             {
                 assert ( _connectionHandlers->pendingSend() );
                 try
@@ -90,11 +84,10 @@ int AMQPEventLoop::start()
         }
         else if ( res == 0 ){
             //TODO: hide impl.
-            //std::cout <<" select timeout \n";
             assert (! _connectionHandlers->pendingSend() );
             if (  lastCallWasTimeOut )
             {
-                std::cout <<"Timeout expired. disconnect!" <<std::endl;
+                std::cout <<"Did not receive anythiong even after sending hertbeat. disconnect!" <<std::endl;
                 _connectionHandlers->closeSocket();
                 return 2;
             } else {
@@ -102,8 +95,7 @@ int AMQPEventLoop::start()
                 {
                     lastCallWasTimeOut = true;
                 }
-                heartbeatIdenInterval.tv_sec = 5;
-                heartbeatIdenInterval.tv_usec = 50;
+                _resetTimeout( heartbeatIdenInterval );
             } 
         }
         else
@@ -116,6 +108,11 @@ int AMQPEventLoop::start()
     return 0;
 }
 
+void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
+{
+    timeoutTimeval.tv_sec = 7;
+    timeoutTimeval.tv_usec = 0;
+} 
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;

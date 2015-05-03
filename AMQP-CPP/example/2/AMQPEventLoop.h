@@ -49,6 +49,7 @@ class AMQPEventLoop
 
  private:
    void handleQueue( );
+   void _resetTimeout( timeval & timeoutTimeval );
  private:
    bool                                     _stop = false;
    std::unique_ptr< AMQPConnectionHandler > _connectionHandlers;

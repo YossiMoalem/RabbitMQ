@@ -32,8 +32,6 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message,
     std::string routingKey = createRoutingKey( i_senderID, i_destination, i_deliveryType);
     std::string serializedMessage = serializePostMessage( i_senderID, i_destination,i_deliveryType, i_message );
     return _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
-    //PostMessage* newMessage = new PostMessage(i_message, i_destination, i_senderID, i_deliveryType );
-    //return sendMessage(newMessage);
 }
 
 ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
