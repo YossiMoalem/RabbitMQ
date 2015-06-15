@@ -14,9 +14,7 @@ AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Mes
     _onMsgReceivedBC( onMsgReceivedCB ),
     _heartbeat( new Heartbeat( this ) ),
     _eventLoop( eventLoop )
-{
-    _connectionEstablishedMutex.lock();
-}
+{ }
 
 AMQPConnectionHandler::~AMQPConnectionHandler()
 {
@@ -128,6 +126,14 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
             std::cout <<"channel ready "<<std::endl;
             _connected = true;
     });
+    if( _loginValueSetter )
+    {
+        //TODO: detect failure and populate with false!
+        //TODO: if EL stops before login finished - populate eit false
+        _loginValueSetter->set_value( true );
+        _loginValueSetter = nullptr;
+    }
+    _heartbeat->initialize();
 }
 
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
@@ -152,41 +158,13 @@ void AMQPConnectionHandler::onClosed(AMQP::Connection *connection)
     std::cout <<"Info: Connection Closed"<< std::endl;
 }
 
-bool AMQPConnectionHandler::login( const AMQPConnectionDetails & connectionParams )
+void AMQPConnectionHandler::login( const std::string & userName,
+        const std::string & password,
+        RabbitMessageBase::OperationSucceededSetter operationSucceeded )
 {
-    assert (! _connected );
-    _incomingMessages.clear();
-    _outgoingMessages.clear();
-    if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
-    {
-        std::cout <<"Error creating socket" <<std::endl;
-        _connectionEstablishedMutex.unlock();
-        return false;
-    } else {
-        std::cout <<"socket Created!" << std::endl;
-        _connectionEstablishedMutex.unlock();
-        Login login( connectionParams._userName, connectionParams._password );
-        _connection = new AMQP::Connection(this, login, std::string( "/" ) );
-
-        //TODO: 
-        //When this code will move to the eventloop thread, it will not be imortant 
-        //but till then....
-        while( !_connected  && _eventLoop->active() )
-        {
-            //TODO: REALLY????
-            //1. create promiss
-            //2. onConnected will populate it
-            //3. wait on the future.
-            //4. kame sure event loop was not stoped...
-            sleep(1);
-        }
-        if ( _eventLoop->active() )
-            std::cout <<"Login Done!" << std::endl;
-        else
-            std::cout<< "login out because _stop event loop is called";
-    }
-    _heartbeat->initialize();
-    return _connected;
+    Login login( userName, password );
+    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
+    _loginValueSetter = operationSucceeded;
 }
 
 //void AMQPConnectionHandler::handleTimeout( const std::string & exchangeName) const
@@ -265,16 +243,22 @@ int AMQPConnectionHandler::getOutgoingMessagesFD() const
     return _outgoingMessages.getFD();
 }
 
-void AMQPConnectionHandler::waitForConnection()
+bool AMQPConnectionHandler::openConnection(const AMQPConnectionDetails & connectionParams )
 {
-    _connectionEstablishedMutex.lock();
-    _connectionEstablishedMutex.unlock();
-
+    assert (! _connected );
+    _incomingMessages.clear();
+    _outgoingMessages.clear();
+    if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
+    {
+        std::cout <<"Error creating socket" <<std::endl;
+        _eventLoop->stop( false );
+        return false;
+    } else {
+        return true;
+    }
 }
-
 void AMQPConnectionHandler::closeSocket()
 {
-    _connectionEstablishedMutex.try_lock();
     _connected = false;
     _heartbeat->invalidate();
     _socket.close();

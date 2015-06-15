@@ -22,12 +22,10 @@ class AMQPClient : private boost::noncopyable
 
    ~AMQPClient();
 
-   /**
-    * Blocking untill connection is either established or failes
-    **/
-   bool login( const AMQPConnectionDetails & connectionParams );
+   //TODO: should keep the connection details from start!
+   std::future< bool > login( const AMQPConnectionDetails & connectionParams );
 
-   int startEventLoop();
+   int startEventLoop( const AMQPConnectionDetails & connectionParams );
 
    std::future< bool > stop( bool immediate );
 

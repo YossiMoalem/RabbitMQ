@@ -16,8 +16,6 @@ AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgR
 int AMQPEventLoop::start()
 {
     _stop = false;
-    std::cout << "started event loop" << std::endl;
-    _connectionHandlers->waitForConnection();
     std::cout <<"Eventloop unleashed! "<<std::endl;
 
     fd_set readFdSet;
@@ -163,6 +161,13 @@ void AMQPEventLoop::unBindQueue( const std::string & exchangeName,
             queueName,
             routingKey,
             operationSucceeded );
+}
+
+void AMQPEventLoop::login( const std::string & userName,
+           const std::string & password, 
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+{
+    _connectionHandlers->login( userName, password, operationSucceeded );
 }
 
 }//namespace AMQP

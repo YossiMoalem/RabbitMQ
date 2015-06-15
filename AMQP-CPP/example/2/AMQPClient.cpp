@@ -14,9 +14,15 @@ AMQPClient::~AMQPClient()
     delete _eventLoop;
 }
 
-int AMQPClient::startEventLoop()
+int AMQPClient::startEventLoop( const AMQPConnectionDetails & connectionParams )
 {
-    return _eventLoop->start();
+    bool connected = _eventLoop->connectionHandler()->openConnection( connectionParams );
+    if ( connected )
+    {
+        _eventLoop->start();
+        return 0;
+    }
+    return 3;
 }
 
 std::future< bool > AMQPClient::publish( const std::string & exchangeName, 
@@ -62,10 +68,11 @@ std::future< bool > AMQPClient::stop( bool immediate )
     return stopMessage->deferedResult();
 }
 
-bool AMQPClient::login( const AMQPConnectionDetails & connectionParams )
+std::future< bool > AMQPClient::login( const AMQPConnectionDetails & connectionParams )
 {
-    //TODO: move to event loop thread
-    return _eventLoop->connectionHandler()->login( connectionParams );
+    LoginMessage * loginMessage = new LoginMessage( connectionParams._userName, connectionParams._password );
+    _jobQueue.pushFront( loginMessage );
+    return loginMessage->deferedResult();
 }
 
 std::future< bool > AMQPClient::declareExchange( const std::string & exchangeName, 

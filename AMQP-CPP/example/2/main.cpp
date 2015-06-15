@@ -22,8 +22,11 @@ void runConsumer()
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
-    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
-    if( amqpClient.login( connectionDetails ) )
+    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient, connectionDetails) );
+    sleep(1);
+    std::future< bool > loginStatus = amqpClient.login( connectionDetails );
+    loginStatus.wait();
+    if ( loginStatus.get() )
     {
         std::string exchangeName( EXC );
         std::future< bool > declareExchangeResult = amqpClient.declareExchange( exchangeName, AMQP::topic );
@@ -63,22 +66,28 @@ void runConsumer()
 
 void runProducer()
 {
-    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
     AMQPClient amqpClient( nullptr );
-    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient) );
-    amqpClient.login( connectionDetails );
-    std::string exchangeName( EXC );
-    amqpClient.declareExchange( exchangeName, AMQP::topic );
-    std::string message = std::string( "tananainai" );
-    for( int i = 0; i < 100; ++i)
+    std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient, connectionDetails ) );
+    sleep(1);
+    std::future< bool > loginStatus = amqpClient.login( connectionDetails );
+    loginStatus.wait();
+    if ( loginStatus.get() )
     {
-        sleep(1);
-        amqpClient.publish(exchangeName, KEY1, message );
+
+        std::string exchangeName( EXC );
+        amqpClient.declareExchange( exchangeName, AMQP::topic );
+        std::string message = std::string( "tananainai" );
+        for( int i = 0; i < 100; ++i)
+        {
+            sleep(1);
+            amqpClient.publish(exchangeName, KEY1, message );
+        }
+        std::cout <<"Calling stop" <<std::endl;
+        amqpClient.stop(false);
+        std::cout <<"stoped" <<std::endl;
+        eventLoop.join();
     }
-    std::cout <<"Calling stop" <<std::endl;
-    amqpClient.stop(false);
-    std::cout <<"stoped" <<std::endl;
-    eventLoop.join();
 }
 
 #define showUsage \

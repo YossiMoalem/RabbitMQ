@@ -179,5 +179,28 @@ class StopMessage : public RabbitMessageBase
     bool _immediate;
 };
 
+class LoginMessage : public RabbitMessageBase
+{
+ public:
+    LoginMessage( const std::string & userName, 
+                const std::string & password ) :
+        _userName( userName ),
+        _password( password )
+    {}
+
+    void credentials( std::string & userName,
+                std::string & password )
+    {
+        userName = _userName;
+        password = _password;
+    }
+
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
+
+ protected:
+    std::string _userName;
+    std::string _password;
+};
+
 } //namespace AMQP
 #endif

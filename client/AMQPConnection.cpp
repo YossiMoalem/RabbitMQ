@@ -38,15 +38,20 @@ ReturnStatus AMQPConnection::connectLoop()
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
         std::thread eventLoopThread = std::thread( std::bind( 
                     &AMQP::AMQPClient::startEventLoop, 
-                    &_connectionHandler ) );
-
+                    &_connectionHandler, 
+                    connectionDetails ) );
+        //TODO: wait on some condition till we are either connected or failed to connect...
+        //Or, better, move the bellow into CB
+        sleep(1);
+        std::future< bool > loginStatus = _connectionHandler.login( connectionDetails );
+        loginStatus.wait();
         //TODO: currently the login returns false if it cant create socket (e.g internet down)
         //but it will not return false if the credentials are wrong. we should catch it somehow
-        std::future_status status;
-        if (! _connectionHandler.login( connectionDetails ) )
+        if (! loginStatus.get() )
         {
             std::cout <<"Login failed. Disconnecting..."<<std::endl;
         } else {
+            std::future_status status;
             std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
                     _exchangeName, 
                     AMQP::topic, 

@@ -42,11 +42,9 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleOutput( );
    bool pendingSend();
 
-   void waitForConnection();
-   /**
-    * Blocking untill connection is either established or failes
-    **/
-   bool login( const AMQPConnectionDetails & connectionParams );
+   void login( const std::string & userName, 
+           const std::string & password,
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded );
 
 // protected:
 
@@ -71,6 +69,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    int getOutgoingMessagesFD() const;
 
     void closeSocket();
+    bool openConnection(const AMQPConnectionDetails & connectionParams );
 
  private:
    AMQPSocket                       _socket;
@@ -80,8 +79,8 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
-   std::mutex                       _connectionEstablishedMutex;
    std::unique_ptr< Heartbeat >     _heartbeat;
+   RabbitMessageBase::OperationSucceededSetter _loginValueSetter;
    //TODO: this is a temporary WA. 
    //Till login will be moved to the eventloop thread, we need to release it
    //if event loop is terminated.

@@ -34,4 +34,9 @@ void StopMessage::handle( AMQPEventLoop * eventLoop )
     eventLoop->stop( immediate ); 
 }
 
+void LoginMessage::handle( AMQPEventLoop * eventLoop )
+{
+    eventLoop-> login( _userName, _password, resultSetter() );
+}
+
 } //namespace AMQP

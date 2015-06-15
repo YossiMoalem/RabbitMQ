@@ -45,6 +45,10 @@ class AMQPEventLoop
            const std::string & routingKey, 
            RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
 
+   void login( const std::string & userName,
+           const std::string & password,
+           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+
    void stop( bool immediate );
 
  private:
