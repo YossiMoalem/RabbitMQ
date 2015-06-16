@@ -13,7 +13,8 @@ void Heartbeat::initialize()
 {
     //TODO:
     //Shoud go to the place bad code goes
-    _connectionHandler->declareExchange(AdminExchangeName, fanout, false);
+    std::shared_ptr< std::promise< bool > > deferedResultSetter = std::make_shared< std::promise< bool > > ();
+    _connectionHandler->declareExchange(AdminExchangeName, fanout, false, deferedResultSetter );
 
     auto & queueHndl = _connectionHandler->_channel->declareQueue( AdminQueueName, 0);
     queueHndl.onSuccess([ this ]() { 

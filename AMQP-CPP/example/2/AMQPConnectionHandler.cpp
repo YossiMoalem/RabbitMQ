@@ -52,7 +52,7 @@ bool AMQPConnectionHandler::pendingSend()
 void AMQPConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
@@ -61,7 +61,7 @@ void AMQPConnectionHandler::doPublish( const std::string & exchangeName,
 void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     std::cout << "binding: " << routingKey << std::endl;
     _channel->bindQueue( exchangeName, queueName, routingKey );
@@ -78,7 +78,7 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
 void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     std::cout << "unbinding: " << routingKey << std::endl;
     _channel->unbindQueue( exchangeName, queueName, routingKey );
@@ -160,7 +160,7 @@ void AMQPConnectionHandler::onClosed(AMQP::Connection *connection)
 
 void AMQPConnectionHandler::login( const std::string & userName,
         const std::string & password,
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded )
+        RabbitMessageBase::DeferedResultSetter operationSucceeded )
 {
     Login login( userName, password );
     _connection = new AMQP::Connection(this, login, std::string( "/" ) );
@@ -180,12 +180,12 @@ bool AMQPConnectionHandler::handleTimeout() const
 
 }
 
-std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & queueName, 
+void AMQPConnectionHandler::declareQueue( const std::string & queueName, 
         bool isDurable, 
         bool isExclusive, 
-        bool isAutoDelete ) const
+        bool isAutoDelete,
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
-    RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
     // TODO: why was it commented out?!
@@ -209,15 +209,14 @@ std::future< bool > AMQPConnectionHandler::declareQueue( const std::string & que
             operationSucceeded->set_value( false );
             std::cout <<"Failed declaring queue. error: " << message << std::endl;
             } );
-    return operationSucceeded->get_future();
 }
 
-std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
+void AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
-        bool isDurable ) const
+        bool isDurable,
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     std::cout <<"declaring exchange: " << exchangeName <<std::endl;
-    RabbitMessageBase::OperationSucceededSetter operationSucceeded( new std::promise< bool > );
     int flags = 0;
     if( isDurable )     flags |= AMQP::durable;
 
@@ -230,7 +229,6 @@ std::future< bool > AMQPConnectionHandler::declareExchange( const std::string & 
                 operationSucceeded->set_value( false );
                 std::cout<<"Failed declaring exchange. error: " << message << std::endl;
                 } ) ;
-    return operationSucceeded->get_future();
 }
 
 int AMQPConnectionHandler::getReadFD() const

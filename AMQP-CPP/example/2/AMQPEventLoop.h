@@ -33,21 +33,32 @@ class AMQPEventLoop
    void publish( const std::string & exchangeName, 
            const std::string & routingKey, 
            const std::string & message, 
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void bindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey,  
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void unBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey, 
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void login( const std::string & userName,
            const std::string & password,
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+
+   void declareExchange( const std::string & exchangeName, 
+           ExchangeType exchangetype,
+           bool durable,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+
+    void declareQueue( const std::string & queueName, 
+            bool durable, 
+            bool exclusive, 
+            bool autoDelete,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void stop( bool immediate );
 

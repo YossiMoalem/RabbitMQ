@@ -7,6 +7,9 @@
 #include <boost/noncopyable.hpp>
 #include <future>
 
+//TODO: 
+#include "RabbitOperation.h"
+
 namespace AMQP {
 
 class RabbitMessageBase;
@@ -23,13 +26,16 @@ class AMQPClient : private boost::noncopyable
    ~AMQPClient();
 
    //TODO: should keep the connection details from start!
-   std::future< bool > login( const AMQPConnectionDetails & connectionParams );
+   //TODO: what if event loop is not started (say, did not manage to connect?)
+   //wait for it, or, better indicate upstream that it is not connected.
+   DeferedResult login( const AMQPConnectionDetails & connectionParams );
 
+   //TODO: need some form of identication upwords that we are ready to contionue.
    int startEventLoop( const AMQPConnectionDetails & connectionParams );
 
-   std::future< bool > stop( bool immediate );
+   DeferedResult stop( bool immediate );
 
-   std::future< bool > declareQueue( const std::string & queueName, 
+   DeferedResult declareQueue( const std::string & queueName, 
            bool durable = false, 
            bool exclusive = false, 
            bool autoDelete = false ) const;
@@ -37,19 +43,19 @@ class AMQPClient : private boost::noncopyable
    /**
     * ExchangeType: as defined at amqpcpp/exchangetype.h
     **/
-   std::future< bool > declareExchange( const std::string & exchangeName, 
+   DeferedResult declareExchange( const std::string & exchangeName, 
            ExchangeType type = AMQP::fanout, 
            bool durable = false ) const ;
 
-   std::future< bool > bindQueue( const std::string & exchangeName, 
+   DeferedResult bindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey) const;
 
-   std::future< bool > unBindQueue( const std::string & exchangeName,
+   DeferedResult unBindQueue( const std::string & exchangeName,
            const std::string & queueName, 
            const std::string & routingKey) const;
 
-   std::future< bool > publish( const std::string & exchangeName, 
+   DeferedResult publish( const std::string & exchangeName, 
            const std::string & routingKey, 
            const std::string & message ) const;
 

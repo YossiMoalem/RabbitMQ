@@ -3,10 +3,12 @@
 
 #include <memory>
 #include <future>
+#include <amqpcpp.h>
 
 namespace AMQP {
 
 class AMQPEventLoop;
+typedef std::future< bool > DeferedResult;
 
 /********************************************************************************\
  * RabbitMessageBase
@@ -14,23 +16,23 @@ class AMQPEventLoop;
 class RabbitMessageBase
 {
  public:
-   typedef std::shared_ptr< std::promise< bool > > OperationSucceededSetter;
+   typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
 
     RabbitMessageBase( ):
         _returnValueSetter( new std::promise< bool > )
-    {}
+    { }
     
     virtual ~RabbitMessageBase () {}
 
     RabbitMessageBase( const RabbitMessageBase& ) = delete;
     RabbitMessageBase& operator= (const RabbitMessageBase& ) = delete;
 
-    OperationSucceededSetter resultSetter()
+    DeferedResultSetter resultSetter()
     {
         return _returnValueSetter;
     }
 
-    std::future< bool > deferedResult()
+    DeferedResult deferedResult()
     {
         return _returnValueSetter->get_future();
     }
@@ -38,8 +40,7 @@ class RabbitMessageBase
     virtual void handle( AMQPEventLoop * eventLoop ) = 0;
 
  protected:
-    OperationSucceededSetter _returnValueSetter;
-
+    DeferedResultSetter    _returnValueSetter;
 };
 
 /********************************************************************************\
@@ -179,6 +180,9 @@ class StopMessage : public RabbitMessageBase
     bool _immediate;
 };
 
+/********************************************************************************\
+ * LoginMessage
+ ********************************************************************************/
 class LoginMessage : public RabbitMessageBase
 {
  public:
@@ -188,18 +192,58 @@ class LoginMessage : public RabbitMessageBase
         _password( password )
     {}
 
-    void credentials( std::string & userName,
-                std::string & password )
-    {
-        userName = _userName;
-        password = _password;
-    }
-
     virtual void handle( AMQPEventLoop * eventLoop ) override;
 
  protected:
     std::string _userName;
     std::string _password;
+};
+
+/********************************************************************************\
+ * DeclareExchange
+ ********************************************************************************/
+class DeclareExchangeMessage : public RabbitMessageBase
+{
+ public:
+   DeclareExchangeMessage( const std::string & exchangeName, 
+           ExchangeType exchangetype, 
+           bool durable ) :
+       _exchangeName( exchangeName ),
+       _exchangeType( exchangetype ),
+       _durable( durable )
+    {}
+
+    virtual void handle( AMQPEventLoop * eventLoop ) override;
+
+ protected:
+   std::string      _exchangeName;
+   ExchangeType     _exchangeType;
+   bool             _durable;
+};
+
+/********************************************************************************\
+ * DeclareQueue
+ ********************************************************************************/
+class DeclareQueueMessage : public RabbitMessageBase
+{
+ public:
+   DeclareQueueMessage( const std::string & queueName, 
+           bool durable,
+           bool exclusive, 
+           bool autoDelete) :
+       _queueName( queueName ),
+       _durable( durable ),
+       _exclusive( exclusive ),
+       _autoDelete( autoDelete )
+    {}
+
+   virtual void handle( AMQPEventLoop * eventLoop ) override;
+
+ protected:
+   std::string     _queueName;
+   bool            _durable;
+   bool            _exclusive;
+   bool            _autoDelete;
 };
 
 } //namespace AMQP

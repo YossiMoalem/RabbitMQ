@@ -25,71 +25,79 @@ int AMQPClient::startEventLoop( const AMQPConnectionDetails & connectionParams )
     return 3;
 }
 
-std::future< bool > AMQPClient::publish( const std::string & exchangeName, 
+DeferedResult AMQPClient::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message ) const
 {
     PostMessage * msg = new PostMessage( exchangeName, 
             routingKey, 
             message );
-    auto res = msg->deferedResult();
+    auto result = msg->deferedResult();
     _jobQueue.push( msg );
-    return res;
+    return result;
 }
 
-std::future< bool > AMQPClient::bindQueue( const std::string & exchangeName, 
+DeferedResult AMQPClient::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
     BindMessage * bindMessage = new BindMessage( exchangeName, 
             queueName, 
             routingKey );
-    auto res = bindMessage->deferedResult();
+    auto result = bindMessage->deferedResult();
     _jobQueue.push( bindMessage );
-    return res;
+    return result;
 }
 
-std::future< bool > AMQPClient::unBindQueue( const std::string & exchangeName, 
+DeferedResult AMQPClient::unBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, 
             queueName, 
             routingKey );
-    auto res = unBindMessage->deferedResult();
+    auto result = unBindMessage->deferedResult();
     _jobQueue.push( unBindMessage );
-    return res;
+    return result;
 }
 
-std::future< bool > AMQPClient::stop( bool immediate )
+DeferedResult AMQPClient::stop( bool immediate )
 {
     StopMessage * stopMessage = new StopMessage( immediate );
     _jobQueue.pushFront( stopMessage );
     return stopMessage->deferedResult();
 }
 
-std::future< bool > AMQPClient::login( const AMQPConnectionDetails & connectionParams )
+DeferedResult AMQPClient::login( const AMQPConnectionDetails & connectionParams )
 {
+    //TODO: wait (?) for event loop to start, or indicate it is not started in some way
     LoginMessage * loginMessage = new LoginMessage( connectionParams._userName, connectionParams._password );
+    auto result = loginMessage->deferedResult();
     _jobQueue.pushFront( loginMessage );
-    return loginMessage->deferedResult();
+    return result;
 }
 
-std::future< bool > AMQPClient::declareExchange( const std::string & exchangeName, 
-           ExchangeType type , 
+DeferedResult AMQPClient::declareExchange( const std::string & exchangeName, 
+           ExchangeType exchangetype, 
            bool durable ) const 
 {
-    //TODO: move to event loop thread
-    return _eventLoop->connectionHandler()->declareExchange( exchangeName, type, durable );
+    DeclareExchangeMessage * declareExchangeMessage = new DeclareExchangeMessage( exchangeName, 
+            exchangetype, 
+            durable );
+    auto result = declareExchangeMessage->deferedResult(); 
+    _jobQueue.pushFront( declareExchangeMessage );
+    return result;
 }
 
-std::future< bool > AMQPClient::declareQueue( const std::string & queueName, 
+DeferedResult AMQPClient::declareQueue( const std::string & queueName, 
            bool durable,
            bool exclusive, 
            bool autoDelete) const
 {
-    //TODO: move to event loop thread
-    return _eventLoop->connectionHandler()->declareQueue( queueName, durable, exclusive, autoDelete );
+    DeclareQueueMessage * declareQueueMessage = new DeclareQueueMessage( queueName, durable, exclusive, autoDelete );
+    auto result = declareQueueMessage->deferedResult();
+    _jobQueue.pushFront( declareQueueMessage );
+    return result;
 }
 } //namespace AMQP
 

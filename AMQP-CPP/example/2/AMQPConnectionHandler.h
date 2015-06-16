@@ -26,25 +26,37 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
            const std::string & message, 
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void doBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey,  
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
 
    void doUnBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey, 
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const;
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+
+   void declareExchange( const std::string & exchangeName, 
+           ExchangeType type, 
+           bool durable,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+
+   void declareQueue( const std::string & queueName, 
+           bool durable, 
+           bool exclusive, 
+           bool autoDelete,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+
+   void login( const std::string & userName, 
+           const std::string & password,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded );
 
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
 
-   void login( const std::string & userName, 
-           const std::string & password,
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded );
 
 // protected:
 
@@ -55,15 +67,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    virtual void onError(AMQP::Connection *connection, const char *message) override;
 
    virtual void onClosed(AMQP::Connection *connection) override;
-
-   std::future< bool > declareExchange( const std::string & exchangeName, 
-           ExchangeType type = AMQP::fanout, 
-           bool durable = false ) const ;
-
-   std::future< bool > declareQueue( const std::string & queueName, 
-           bool durable = false, 
-           bool exclusive = false, 
-           bool autoDelete = false ) const;
 
    int getReadFD() const;
    int getOutgoingMessagesFD() const;
@@ -80,7 +83,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingMessages;
    std::unique_ptr< Heartbeat >     _heartbeat;
-   RabbitMessageBase::OperationSucceededSetter _loginValueSetter;
+   RabbitMessageBase::DeferedResultSetter _loginValueSetter;
    //TODO: this is a temporary WA. 
    //Till login will be moved to the eventloop thread, we need to release it
    //if event loop is terminated.

@@ -133,7 +133,7 @@ void AMQPEventLoop::stop( bool terminateNow )
 void AMQPEventLoop::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     _connectionHandlers->doPublish(exchangeName,
             routingKey,
@@ -144,7 +144,7 @@ void AMQPEventLoop::publish( const std::string & exchangeName,
 void AMQPEventLoop::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey,  
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     _connectionHandlers->doBindQueue(exchangeName,
             queueName,
@@ -155,7 +155,7 @@ void AMQPEventLoop::bindQueue( const std::string & exchangeName,
 void AMQPEventLoop::unBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     _connectionHandlers->doUnBindQueue( exchangeName,
             queueName,
@@ -165,9 +165,25 @@ void AMQPEventLoop::unBindQueue( const std::string & exchangeName,
 
 void AMQPEventLoop::login( const std::string & userName,
            const std::string & password, 
-           RabbitMessageBase::OperationSucceededSetter operationSucceeded ) const
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
 {
     _connectionHandlers->login( userName, password, operationSucceeded );
 }
 
+void AMQPEventLoop::declareExchange( const std::string & exchangeName, 
+           ExchangeType exchangetype,
+           bool durable,
+           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
+{
+    _connectionHandlers-> declareExchange( exchangeName, exchangetype, durable, operationSucceeded );
+}
+
+void AMQPEventLoop::declareQueue( const std::string & queueName, 
+            bool durable, 
+            bool exclusive, 
+            bool autoDelete,
+            RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
+{
+    _connectionHandlers-> declareQueue( queueName, durable, exclusive, autoDelete, operationSucceeded );
+}
 }//namespace AMQP

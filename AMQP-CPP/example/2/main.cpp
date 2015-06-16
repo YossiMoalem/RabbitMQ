@@ -14,6 +14,9 @@
 #define USER "yossi"
 #define PASSWORD "yossipassword"
 
+//TODO: remove
+#include "RabbitOperation.h"
+
 using namespace AMQP;
 
 void runConsumer()
@@ -24,12 +27,13 @@ void runConsumer()
             return 0; } );
     std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient, connectionDetails) );
     sleep(1);
-    std::future< bool > loginStatus = amqpClient.login( connectionDetails );
+    DeferedResult loginStatus = amqpClient.login( connectionDetails );
     loginStatus.wait();
     if ( loginStatus.get() )
     {
         std::string exchangeName( EXC );
-        std::future< bool > declareExchangeResult = amqpClient.declareExchange( exchangeName, AMQP::topic );
+        DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
+                AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
@@ -38,8 +42,7 @@ void runConsumer()
             std::cout <<"Error declaring exchange" <<std::endl;
             exit( 1 );
         }
-
-        std::future< bool > declareQueueResult = amqpClient.declareQueue( QUEUE );
+        DeferedResult declareQueueResult = amqpClient.declareQueue( QUEUE );
         declareQueueResult.wait();
         if( declareQueueResult.get() )
         {
@@ -48,7 +51,7 @@ void runConsumer()
             std::cout <<"Error declaring queue" <<std::endl;
             exit( 1 );
         }
-        std::future< bool > bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
+        DeferedResult bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
         bindResult.wait();
 
         if( bindResult.get() )
@@ -70,7 +73,7 @@ void runProducer()
     AMQPClient amqpClient( nullptr );
     std::thread eventLoop = std::thread( std::bind( &AMQPClient::startEventLoop, &amqpClient, connectionDetails ) );
     sleep(1);
-    std::future< bool > loginStatus = amqpClient.login( connectionDetails );
+    DeferedResult loginStatus = amqpClient.login( connectionDetails );
     loginStatus.wait();
     if ( loginStatus.get() )
     {

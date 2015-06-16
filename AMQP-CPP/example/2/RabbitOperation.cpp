@@ -36,7 +36,17 @@ void StopMessage::handle( AMQPEventLoop * eventLoop )
 
 void LoginMessage::handle( AMQPEventLoop * eventLoop )
 {
-    eventLoop-> login( _userName, _password, resultSetter() );
+    eventLoop->login( _userName, _password, resultSetter() );
+}
+
+void DeclareExchangeMessage::handle( AMQPEventLoop * eventLoop )
+{
+    eventLoop->declareExchange( _exchangeName, _exchangeType, _durable, resultSetter() );
+}
+
+void DeclareQueueMessage::handle( AMQPEventLoop * eventLoop )
+{
+    eventLoop->declareQueue( _queueName, _durable, _exclusive, _autoDelete, resultSetter() ); 
 }
 
 } //namespace AMQP
