@@ -69,6 +69,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    virtual void onClosed(AMQP::Connection *connection) override;
 
    int getReadFD() const;
+   int getWriteFD() const;
    int getOutgoingMessagesFD() const;
 
     void closeSocket();

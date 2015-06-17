@@ -19,10 +19,13 @@ int AMQPEventLoop::start()
     std::cout <<"Eventloop unleashed! "<<std::endl;
 
     fd_set readFdSet;
+    fd_set writeFdSet;
     int outgoingMessagesEventFd = _connectionHandlers->getOutgoingMessagesFD();
     int queueEventFd = _jobQueue->getFD();
+    int brokerWriteFD = _connectionHandlers->getWriteFD();
     int brokerReadFD = _connectionHandlers->getReadFD();
-    int maxReadFd =  std::max( outgoingMessagesEventFd, std::max( queueEventFd, brokerReadFD ) ) +1;
+    int maxReadFd =  std::max( std::max( outgoingMessagesEventFd, queueEventFd ), 
+            std::max( brokerWriteFD, brokerReadFD ) ) +1;
 
     timeval heartbeatIdenInterval;
     _resetTimeout( heartbeatIdenInterval );
@@ -37,7 +40,13 @@ int AMQPEventLoop::start()
         FD_SET ( queueEventFd, & readFdSet );
         FD_SET ( brokerReadFD, & readFdSet );
 
-        int res = select( maxReadFd, & readFdSet, NULL, NULL, &heartbeatIdenInterval);
+        FD_ZERO( & writeFdSet );
+        if( _connectionHandlers->pendingSend() )
+        {
+            FD_SET ( brokerWriteFD, & writeFdSet );
+        }
+
+        int res = select( maxReadFd, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
         if( res > 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFdSet ) )
@@ -60,13 +69,7 @@ int AMQPEventLoop::start()
                 handleQueue();
             }
 
-            //TODO:
-            // if we have messages to send, do not try to immediatly send it:
-            // 1. register teh write socket with the select.
-            // 2. when it is called - send
-            // 2.1 after sending, if not everything sent - back to 1. 
-            // 2.2 otherwise - do not register write
-            if( FD_ISSET( outgoingMessagesEventFd, & readFdSet ) )
+            if( FD_ISSET( brokerWriteFD, & writeFdSet ) )
             {
                 assert ( _connectionHandlers->pendingSend() );
                 try

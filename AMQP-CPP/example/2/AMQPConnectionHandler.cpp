@@ -236,6 +236,11 @@ int AMQPConnectionHandler::getReadFD() const
     return _socket.readFD();
 }
 
+int AMQPConnectionHandler::getWriteFD() const
+{
+    return _socket.readFD();
+}
+
 int AMQPConnectionHandler::getOutgoingMessagesFD() const
 {
     return _outgoingMessages.getFD();
@@ -249,7 +254,6 @@ bool AMQPConnectionHandler::openConnection(const AMQPConnectionDetails & connect
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
-        _eventLoop->stop( false );
         return false;
     } else {
         return true;
