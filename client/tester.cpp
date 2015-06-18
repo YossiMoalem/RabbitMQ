@@ -117,10 +117,11 @@ class MeasureTester
        firstSendTime ( ),
        lastSendTime ( ),
        numOfReceived ( 0 ),
-       numOfMessagesToSend ( 1000000 )
+       numOfMessagesToSend ( 1000 )
     { }
    int operator ()()
    {
+       RABBIT_DEBUG("Tester:: Tester Started");
        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        RabbitClient client (cnd, "EXC1", MY_NAME, [ this ] ( std::string o_sender, 
                    std::string destination, 
@@ -129,20 +130,25 @@ class MeasureTester
                return onMessageReceive( o_sender, destination, deliveryType, message );
                } ) ;
                client.start();
-               sleep(timeToConnect);
-               RABBIT_DEBUG("Tester:: Tester Started");
+               while( ! client.isConnected() )
+                   sleep( 1 );
+               RABBIT_DEBUG("Tester:: Tester Connected");
                RABBIT_DEBUG("Going to send " << numOfMessagesToSend << " Messages");
                gettimeofday(&firstSendTime, nullptr);
                for (unsigned int leftToSend = numOfMessagesToSend; leftToSend > 0; --leftToSend)
-               client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
+                   client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
                gettimeofday(&lastSendTime, nullptr);
-               sleep(timeToFlushAllMessages);
-               RABBIT_DEBUG("-----------------------------------------");
-               RABBIT_DEBUG("Messages Received  : " << numOfReceived);
-               RABBIT_DEBUG("Sending Time                           (ms) : " << SUB_TV(lastSendTime, firstSendTime )) ;
-               RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastReceiveTime, firstReceiveTime ) );
-               RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastReceiveTime, firstSendTime)) ;
+               for( int iter = 0; iter <= 3600 ; ++iter )
+               {
+                   sleep(timeToFlushAllMessages);
+                   RABBIT_DEBUG("-----------------------------------------");
+                   RABBIT_DEBUG(" after "<< ( 1 + iter ) * timeToFlushAllMessages << "secs" );
+                   RABBIT_DEBUG("Messages Received  : " << numOfReceived);
+                   RABBIT_DEBUG("Sending Time                           (ms) : " << SUB_TV(lastSendTime, firstSendTime )) ;
+                   RABBIT_DEBUG("Recieving Time                         (ms) : " << SUB_TV(lastReceiveTime, firstReceiveTime ) );
+                   RABBIT_DEBUG("Time from first sent to last revieve   (ms) : " << SUB_TV(lastReceiveTime, firstSendTime)) ;
 
+               }
                return 0;
    }
 
@@ -282,8 +288,8 @@ int main ()
     ( void ) continousTester;
     ( void ) manyBindTester;
 
-    std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
-    //std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
+    //std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
+    std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
     //std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
     //std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester ) );
     //std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );

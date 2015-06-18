@@ -70,7 +70,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
    int getReadFD() const;
    int getWriteFD() const;
-   int getOutgoingMessagesFD() const;
 
     void closeSocket();
     bool openConnection(const AMQPConnectionDetails & connectionParams );
@@ -82,7 +81,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    volatile bool                             _connected = false;
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
-   SmartBuffer                      _outgoingMessages;
+   SmartBuffer                      _outgoingBuffer;
    std::unique_ptr< Heartbeat >     _heartbeat;
    RabbitMessageBase::DeferedResultSetter _loginValueSetter;
    //TODO: this is a temporary WA. 

@@ -3,8 +3,9 @@
 
 #include <thread>
 #include <unistd.h>
+#include <string>
 
-#define EXC "exchange_name"
+#define EXC "yossiExchange"
 #define KEY1 "YossiKey"
 #define QUEUE "YossiQueue"
 
@@ -79,13 +80,23 @@ void runProducer()
     {
 
         std::string exchangeName( EXC );
-        amqpClient.declareExchange( exchangeName, AMQP::topic );
-        std::string message = std::string( "tananainai" );
-        for( int i = 0; i < 100; ++i)
+        DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
+                AMQP::topic );
+        declareExchangeResult.wait();
+        if( declareExchangeResult.get() )
         {
-            sleep(1);
+            std::cout <<"Exchange Declared!" <<std::endl;
+        } else {
+            std::cout <<"Error declaring exchange" <<std::endl;
+            exit( 1 );
+        }
+        for( int i = 0; i < 1000; ++i)
+        {
+            std::string message = std::string( "tananainai" );
+            message += ( std::to_string( i ) );
             amqpClient.publish(exchangeName, KEY1, message );
         }
+        sleep(5);
         std::cout <<"Calling stop" <<std::endl;
         amqpClient.stop(false);
         std::cout <<"stoped" <<std::endl;

@@ -13,11 +13,6 @@ class SmartBuffer : boost::noncopyable
  public:
     friend std::ostream& operator <<(std::ostream& stream, const SmartBuffer& sb);
 
-    SmartBuffer( ):
-        _eventFD( eventfd( 0, 0 ) )
-    {
-    }
-
     size_t empty()
     {
         return ( _buffer.size() == 0 );
@@ -44,7 +39,6 @@ class SmartBuffer : boost::noncopyable
         {
             elementsToRemove = ( uint64_t )std::min( elementsToRemove, _buffer.size() );
             _buffer.erase ( _buffer.begin(), _buffer.begin() + elementsToRemove );
-            read( _eventFD, & elementsToRemove, sizeof( elementsToRemove ) );
         }
         return size();
     }
@@ -54,7 +48,6 @@ class SmartBuffer : boost::noncopyable
         if( size > 0 )
         {
             _buffer.insert( _buffer.end(), data, data + size );
-            write( _eventFD, & size, sizeof( size ) );
         }
     }
 
@@ -64,18 +57,11 @@ class SmartBuffer : boost::noncopyable
         if ( i > 0 )
         {
             _buffer.clear();
-            read( _eventFD, & i, sizeof( i ) );
         }
-    }
-
-    int getFD() const
-    {
-        return _eventFD;
     }
 
  private:
     std::vector<char>   _buffer;
-    int                 _eventFD;
 
 };
 

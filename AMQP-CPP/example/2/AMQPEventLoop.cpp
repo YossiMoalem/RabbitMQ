@@ -20,11 +20,10 @@ int AMQPEventLoop::start()
 
     fd_set readFdSet;
     fd_set writeFdSet;
-    int outgoingMessagesEventFd = _connectionHandlers->getOutgoingMessagesFD();
     int queueEventFd = _jobQueue->getFD();
     int brokerWriteFD = _connectionHandlers->getWriteFD();
     int brokerReadFD = _connectionHandlers->getReadFD();
-    int maxReadFd =  std::max( std::max( outgoingMessagesEventFd, queueEventFd ), 
+    int maxReadFd =  std::max( queueEventFd, 
             std::max( brokerWriteFD, brokerReadFD ) ) +1;
 
     timeval heartbeatIdenInterval;
@@ -36,7 +35,6 @@ int AMQPEventLoop::start()
     while( ! _stop )
     {
         FD_ZERO( & readFdSet );
-        FD_SET ( outgoingMessagesEventFd, & readFdSet );
         FD_SET ( queueEventFd, & readFdSet );
         FD_SET ( brokerReadFD, & readFdSet );
 
@@ -117,9 +115,11 @@ void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
-     _jobQueue->pop( msg ) ;
-     msg->handle( this );
-    delete msg;
+    while ( _jobQueue->try_pop( msg ) )
+    {
+        msg->handle( this );
+        delete msg;
+    }
 }
 
 void AMQPEventLoop::stop( bool terminateNow )

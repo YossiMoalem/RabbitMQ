@@ -37,16 +37,16 @@ bool AMQPConnectionHandler::handleInput( )
 
 bool AMQPConnectionHandler::handleOutput()
 {
-    if( ! _outgoingMessages.empty() )
+    if( ! _outgoingBuffer.empty() )
     {
-        return _socket.send( _outgoingMessages );
+        return _socket.send( _outgoingBuffer);
     }
     return false;
 }
 
 bool AMQPConnectionHandler::pendingSend()
 {
-    return ! _outgoingMessages.empty();
+    return ! _outgoingBuffer.empty();
 }
 
 void AMQPConnectionHandler::doPublish( const std::string & exchangeName, 
@@ -138,10 +138,7 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
 
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
-    //TODO: the buffer should implement eventFD, to signal that it has value
-    //this hsould be registered by the eventloop
-    _outgoingMessages.append( data, size );
-    //handleOutput();
+    _outgoingBuffer.append( data, size );
 }
 
 void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *message)
@@ -241,16 +238,11 @@ int AMQPConnectionHandler::getWriteFD() const
     return _socket.readFD();
 }
 
-int AMQPConnectionHandler::getOutgoingMessagesFD() const
-{
-    return _outgoingMessages.getFD();
-}
-
 bool AMQPConnectionHandler::openConnection(const AMQPConnectionDetails & connectionParams )
 {
     assert (! _connected );
     _incomingMessages.clear();
-    _outgoingMessages.clear();
+    _outgoingBuffer.clear();
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         std::cout <<"Error creating socket" <<std::endl;
