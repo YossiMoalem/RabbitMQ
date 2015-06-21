@@ -5,13 +5,9 @@
 #include <algorithm>
 #include <amqpcpp.h>
 
-#define SET_FD_UPDATE_MAX(fd,set,maxFD)   FD_SET(fd, set);\
-    maxFD = (maxFD > fd )? maxFD : fd;
-
 namespace AMQP {
 
-AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB,
-        BlockingQueue<RabbitMessageBase * >  * jobQueue,
+AMQPEventLoop::AMQPEventLoop( BlockingQueue<RabbitMessageBase * >  * jobQueue,
         AMQPConnectionHandler * connectionHandler ) :
     _connectionHandler( connectionHandler),
     _jobQueue( jobQueue )
@@ -27,26 +23,27 @@ int AMQPEventLoop::start()
     int queueEventFd = _jobQueue->getFD();
     int brokerWriteFD = _connectionHandler->getWriteFD();
     int brokerReadFD = _connectionHandler->getReadFD();
+    int maxFD =  std::max( queueEventFd, 
+            std::max( brokerWriteFD, brokerReadFD ) ) +1;
 
     timeval heartbeatIdenInterval;
     _resetTimeout( heartbeatIdenInterval );
 
     while( ! _stop )
     {
-        int maxReadFd = 0;
         FD_ZERO( & readFdSet );
         FD_ZERO( & writeFdSet );
-        SET_FD_UPDATE_MAX ( brokerReadFD, & readFdSet, maxReadFd );
+        FD_SET( brokerReadFD, & readFdSet );
         if( _connectionHandler->canHandle() )
         {
-            SET_FD_UPDATE_MAX( queueEventFd, & readFdSet, maxReadFd );
+            FD_SET( queueEventFd, & readFdSet );
         }
         if( _connectionHandler->pendingSend() )
         {
-            SET_FD_UPDATE_MAX( brokerWriteFD, & writeFdSet, maxReadFd );
+            FD_SET( brokerWriteFD, & writeFdSet );
         }
 
-        int res = select( maxReadFd, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
+        int res = select( maxFD, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
         if( res > 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFdSet ) )
@@ -65,8 +62,6 @@ int AMQPEventLoop::start()
             }
         }
         else if ( res == 0 ){
-            //TODO: hide impl.
-            assert (! _connectionHandler->pendingSend() );
             _connectionHandler->handleTimeout();
             _resetTimeout( heartbeatIdenInterval );
         }

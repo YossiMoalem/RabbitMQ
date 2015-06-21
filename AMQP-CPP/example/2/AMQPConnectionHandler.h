@@ -6,22 +6,19 @@
 #include <future>
 #include <amqpcpp.h>
 #include "AMQPSocket.h"
-#include "RabbitOperation.h"
-#include "BlockingQueue.h"
 
+#include "RabbitOperation.h"
 
 namespace AMQP {
 class AMQPConnectionDetails;
 class Heartbeat;
-class AMQPEventLoop;
 
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
     friend class Heartbeat;
  public:
 
-   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, 
-           BlockingQueue<RabbitMessageBase * > & jobQueue );
+   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) ;
 
    virtual ~AMQPConnectionHandler ();
 
@@ -60,12 +57,10 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleOutput( );
    bool pendingSend();
    void handleTimeout();
-   void stop( bool immediate );
 
 
 // protected:
 
-   void startEventLoop( );
 
    virtual void onConnected( AMQP::Connection *connection ) override ;
 
@@ -92,8 +87,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    SmartBuffer                      _outgoingBuffer;
    std::unique_ptr< Heartbeat >     _heartbeat;
    RabbitMessageBase::DeferedResultSetter _loginValueSetter;
-   BlockingQueue<RabbitMessageBase * > &  _jobQueue;
-   AMQPEventLoop *                  _eventLoop;
 };
 
 } //namespace AMQP

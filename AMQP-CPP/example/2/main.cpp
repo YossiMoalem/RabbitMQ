@@ -90,7 +90,7 @@ void runProducer()
             std::cout <<"Error declaring exchange" <<std::endl;
             exit( 1 );
         }
-        for( int i = 0; i < 1000; ++i)
+        for( int i = 0; i < 10; ++i)
         {
             std::string message = std::string( "tananainai" );
             message += ( std::to_string( i ) );

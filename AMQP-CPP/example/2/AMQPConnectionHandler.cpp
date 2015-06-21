@@ -6,15 +6,11 @@
 
 #include "Heartbeat.h"
 
-//TODO: needs to be removed!
-#include "AMQPEventLoop.h"
 namespace AMQP {
 
-AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, 
-        BlockingQueue<RabbitMessageBase * > & jobQueue ):
+AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
     _onMsgReceivedBC( onMsgReceivedCB ),
-    _heartbeat( new Heartbeat( this ) ),
-    _jobQueue( jobQueue)
+    _heartbeat( new Heartbeat( this ) )
 { }
 
 AMQPConnectionHandler::~AMQPConnectionHandler()
@@ -167,11 +163,14 @@ void AMQPConnectionHandler::login( const std::string & userName,
 
 void AMQPConnectionHandler::handleTimeout()
 {
+    //TODO: What if we hace socket (so _connected == trye)
+    //but we failed to login, still waiting for something for example??
     if( _connected )
     {
         if( _heartbeat->send() == false )
         {
-            stop( true );
+            //TODO!!!
+            //stop( true );
             closeSocket();
         }
     } else {
@@ -237,7 +236,7 @@ int AMQPConnectionHandler::getReadFD() const
 
 int AMQPConnectionHandler::getWriteFD() const
 {
-    return _socket.readFD();
+    return _socket.writeFD();
 }
 
 bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionParams )
@@ -254,29 +253,12 @@ bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionPara
     }
 }
 
-void AMQPConnectionHandler::startEventLoop()
-{
-    // TODO: Bahhhhhhhhh
-    _eventLoop = new AMQPEventLoop( _onMsgReceivedBC, &_jobQueue, this );
-    _eventLoop->start();
-}
 
 void AMQPConnectionHandler::closeSocket()
 {
     _connected = false;
     _heartbeat->invalidate();
     _socket.close();
-}
-
-void AMQPConnectionHandler::stop( bool immediate )
-{
-    if( immediate )
-    {
-        _eventLoop->stop();
-    } else {
-        //TODO:
-        _eventLoop->stop();
-    }
 }
 
 bool AMQPConnectionHandler::canHandle() const

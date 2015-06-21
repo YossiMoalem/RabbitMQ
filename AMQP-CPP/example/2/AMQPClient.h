@@ -1,8 +1,8 @@
 #ifndef AMQP_CLIENT_H
 #define AMQP_CLIENT_H
 
-#include "BlockingQueue.h"
 #include <amqpcpp.h>
+#include "RabbitJobManager.h"
 
 #include <boost/noncopyable.hpp>
 #include <future>
@@ -22,8 +22,6 @@ class AMQPClient : private boost::noncopyable
    typedef std::function<int( const AMQP::Message& )> OnMessageReveivedCB;
 
    AMQPClient( OnMessageReveivedCB onMsgReceivedCB );
-
-   ~AMQPClient();
 
    //TODO: should keep the connection details from start!
    //TODO: what if event loop is not started (say, did not manage to connect?)
@@ -62,8 +60,7 @@ class AMQPClient : private boost::noncopyable
 
 
  private:
-   AMQPConnectionHandler *              _connectionHandler;
-   mutable BlockingQueue<RabbitMessageBase * >  _jobQueue;
+   mutable RabbitJobManager                     _jobManager;
 
 };
 } //namespace AMQP

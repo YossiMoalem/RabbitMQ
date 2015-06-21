@@ -18,9 +18,8 @@ class RabbitMessageBase
  public:
    typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
 
-    RabbitMessageBase( AMQPConnectionHandler * connectionHandler ):
-        _returnValueSetter( new std::promise< bool > ),
-        _connectionHandler( connectionHandler )
+    RabbitMessageBase( ):
+        _returnValueSetter( new std::promise< bool > )
     { }
     
     virtual ~RabbitMessageBase () {}
@@ -38,11 +37,16 @@ class RabbitMessageBase
         return _returnValueSetter->get_future();
     }
 
+    void setHandler( AMQPConnectionHandler* handler )
+    {
+        _handler = handler;
+    }
+
     virtual void handle( ) = 0;
 
  protected:
     DeferedResultSetter    _returnValueSetter;
-    AMQPConnectionHandler * _connectionHandler;
+    AMQPConnectionHandler * _handler;
 };
 
 /********************************************************************************\
@@ -53,9 +57,7 @@ class PostMessage : public RabbitMessageBase
  public:
     PostMessage( const std::string & exchangeName, 
             const std::string & routingKey, 
-            const std::string & message,
-            AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+            const std::string & message ):
         _exchangeName( exchangeName ),
         _routingKey( routingKey ),
         _message( message )
@@ -92,9 +94,7 @@ class BindMessage : public RabbitMessageBase
  public:
     BindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey,
-            AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+            const std::string routingKey ):
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )
@@ -131,9 +131,7 @@ class UnBindMessage : public RabbitMessageBase
  public:
     UnBindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey,
-            AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+            const std::string routingKey ) :
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )
@@ -168,9 +166,7 @@ class UnBindMessage : public RabbitMessageBase
 class StopMessage : public RabbitMessageBase
 {
  public:
-    StopMessage( bool immediate,
-            AMQPConnectionHandler * connectionHandler ) :
-        RabbitMessageBase( connectionHandler ),
+    StopMessage( bool immediate ) :
         _immediate( immediate )
     { }
 
@@ -187,9 +183,7 @@ class LoginMessage : public RabbitMessageBase
 {
  public:
     LoginMessage( const std::string & userName, 
-                const std::string & password,
-                AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+                const std::string & password ):
         _userName( userName ),
         _password( password )
     {}
@@ -209,9 +203,7 @@ class DeclareExchangeMessage : public RabbitMessageBase
  public:
    DeclareExchangeMessage( const std::string & exchangeName, 
            ExchangeType exchangetype, 
-           bool durable,
-           AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+           bool durable ):
        _exchangeName( exchangeName ),
        _exchangeType( exchangetype ),
        _durable( durable )
@@ -234,9 +226,7 @@ class DeclareQueueMessage : public RabbitMessageBase
    DeclareQueueMessage( const std::string & queueName, 
            bool durable,
            bool exclusive, 
-           bool autoDelete,
-           AMQPConnectionHandler * connectionHandler ) :
-       RabbitMessageBase( connectionHandler ),
+           bool autoDelete ):
        _queueName( queueName ),
        _durable( durable ),
        _exclusive( exclusive ),

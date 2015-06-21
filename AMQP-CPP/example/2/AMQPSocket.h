@@ -127,6 +127,11 @@ class AMQPSocket : boost::noncopyable
         ::close( _socketFd );
     }
 
+    int writeFD() const 
+    {
+        return _socketFd;
+    }
+
     int readFD() const 
     {
         return _socketFd;

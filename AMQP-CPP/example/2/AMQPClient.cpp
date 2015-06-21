@@ -5,20 +5,15 @@
 namespace AMQP {
 
 AMQPClient::AMQPClient( OnMessageReveivedCB onMsgReceivedCB ):
-    _connectionHandler( new AMQPConnectionHandler(onMsgReceivedCB,  _jobQueue ) )
+    _jobManager( onMsgReceivedCB )
 {}
-
-AMQPClient::~AMQPClient()
-{
-    delete _connectionHandler;
-}
 
 int AMQPClient::connect( const AMQPConnectionDetails & connectionParams )
 {
-    bool connected = _connectionHandler->connect( connectionParams );
+    bool connected = _jobManager.connect( connectionParams );
     if ( connected )
     {
-        _connectionHandler->startEventLoop();
+        _jobManager.startEventLoop();
         return 0;
     }
     return 3;
@@ -30,11 +25,8 @@ DeferedResult AMQPClient::publish( const std::string & exchangeName,
 {
     PostMessage * msg = new PostMessage( exchangeName, 
             routingKey, 
-            message, 
-            _connectionHandler);
-    auto result = msg->deferedResult();
-    _jobQueue.push( msg );
-    return result;
+            message );
+    return _jobManager.addJob( msg );
 }
 
 DeferedResult AMQPClient::bindQueue( const std::string & exchangeName, 
@@ -43,11 +35,8 @@ DeferedResult AMQPClient::bindQueue( const std::string & exchangeName,
 {
     BindMessage * bindMessage = new BindMessage( exchangeName, 
             queueName, 
-            routingKey, 
-            _connectionHandler);
-    auto result = bindMessage->deferedResult();
-    _jobQueue.push( bindMessage );
-    return result;
+            routingKey );
+    return _jobManager.addJob( bindMessage );
 }
 
 DeferedResult AMQPClient::unBindQueue( const std::string & exchangeName, 
@@ -56,29 +45,22 @@ DeferedResult AMQPClient::unBindQueue( const std::string & exchangeName,
 {
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, 
             queueName, 
-            routingKey, 
-            _connectionHandler);
-    auto result = unBindMessage->deferedResult();
-    _jobQueue.push( unBindMessage );
-    return result;
+            routingKey );
+    return _jobManager.addJob( unBindMessage );
 }
 
 DeferedResult AMQPClient::stop( bool immediate )
 {
-    StopMessage * stopMessage = new StopMessage( immediate, 
-            _connectionHandler);
-    _jobQueue.pushFront( stopMessage );
-    return stopMessage->deferedResult();
+    StopMessage * stopMessage = new StopMessage( immediate );
+    return _jobManager.addJob( stopMessage );
 }
 
 DeferedResult AMQPClient::login( const AMQPConnectionDetails & connectionParams )
 {
     //TODO: wait (?) for event loop to start, or indicate it is not started in some way
-    LoginMessage * loginMessage = new LoginMessage( connectionParams._userName, connectionParams._password, 
-            _connectionHandler);
-    auto result = loginMessage->deferedResult();
-    _jobQueue.pushFront( loginMessage );
-    return result;
+    LoginMessage * loginMessage = new LoginMessage( connectionParams._userName, 
+            connectionParams._password );
+    return _jobManager.addJob( loginMessage);
 }
 
 DeferedResult AMQPClient::declareExchange( const std::string & exchangeName, 
@@ -87,11 +69,8 @@ DeferedResult AMQPClient::declareExchange( const std::string & exchangeName,
 {
     DeclareExchangeMessage * declareExchangeMessage = new DeclareExchangeMessage( exchangeName, 
             exchangetype, 
-            durable, 
-            _connectionHandler);
-    auto result = declareExchangeMessage->deferedResult(); 
-    _jobQueue.pushFront( declareExchangeMessage );
-    return result;
+            durable );
+    return _jobManager.addJob( declareExchangeMessage );
 }
 
 DeferedResult AMQPClient::declareQueue( const std::string & queueName, 
@@ -99,11 +78,11 @@ DeferedResult AMQPClient::declareQueue( const std::string & queueName,
            bool exclusive, 
            bool autoDelete) const
 {
-    DeclareQueueMessage * declareQueueMessage = new DeclareQueueMessage( queueName, durable, exclusive, autoDelete, 
-            _connectionHandler);
-    auto result = declareQueueMessage->deferedResult();
-    _jobQueue.pushFront( declareQueueMessage );
-    return result;
+    DeclareQueueMessage * declareQueueMessage = new DeclareQueueMessage( queueName,
+            durable,
+            exclusive,
+            autoDelete );
+    return _jobManager.addJob( declareQueueMessage );
 }
 } //namespace AMQP
 

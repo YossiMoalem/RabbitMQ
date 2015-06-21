@@ -7,7 +7,7 @@ namespace AMQP {
 
 void PostMessage::handle( )
 {
-    _connectionHandler->doPublish(_exchangeName,
+    _handler->doPublish(_exchangeName,
             _routingKey,
             _message,
             _returnValueSetter);
@@ -15,7 +15,7 @@ void PostMessage::handle( )
 
 void BindMessage::handle( )
 {
-    _connectionHandler->doBindQueue(_exchangeName,
+    _handler->doBindQueue(_exchangeName,
             _queueName,
             _routingKey,
             _returnValueSetter);
@@ -23,7 +23,7 @@ void BindMessage::handle( )
 
 void UnBindMessage::handle( )
 {
-    _connectionHandler->doUnBindQueue( _exchangeName,
+    _handler->doUnBindQueue( _exchangeName,
             _queueName,
             _routingKey,
             _returnValueSetter );
@@ -31,22 +31,23 @@ void UnBindMessage::handle( )
 
 void StopMessage::handle( )
 {
-    _connectionHandler->stop( _immediate );
+    //TODO:
+    //_handler->stop( _immediate );
 }
 
 void LoginMessage::handle( )
 {
-    _connectionHandler->login( _userName, _password, _returnValueSetter );
+    _handler->login( _userName, _password, _returnValueSetter );
 }
 
 void DeclareExchangeMessage::handle( )
 {
-    _connectionHandler->declareExchange( _exchangeName, _exchangeType, _durable, _returnValueSetter );
+    _handler->declareExchange( _exchangeName, _exchangeType, _durable, _returnValueSetter );
 }
 
 void DeclareQueueMessage::handle( )
 {
-    _connectionHandler->declareQueue( _queueName, _durable, _exclusive, _autoDelete, _returnValueSetter ); 
+    _handler->declareQueue( _queueName, _durable, _exclusive, _autoDelete, _returnValueSetter ); 
 }
 
 } //namespace AMQP

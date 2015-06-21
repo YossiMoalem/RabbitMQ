@@ -17,8 +17,7 @@ class Message;
 class AMQPEventLoop
 {
  public:
-   AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB, 
-           BlockingQueue< RabbitMessageBase * > * jobQueue, 
+   AMQPEventLoop( BlockingQueue< RabbitMessageBase * > * jobQueue, 
            AMQPConnectionHandler *                 connectionHandler) ;
    int start();
    void stop();
