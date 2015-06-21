@@ -12,8 +12,6 @@
 #include <stdio.h>
 #include <stdint.h>             /* Definition of uint64_t */
 
-#include <iostream>
-
 
 namespace{
 template< typename T >

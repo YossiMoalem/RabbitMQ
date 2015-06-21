@@ -14,10 +14,12 @@ class Heartbeat : boost::noncopyable
    void invalidate();
    bool send();
    void initialize();
+   void reset ();
 
  private:
    AMQPConnectionHandler *  _connectionHandler;
    bool                     _initialized = false;
+   bool                     _heartbeatSent = false;
 
 };
 

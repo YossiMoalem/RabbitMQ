@@ -23,16 +23,15 @@ class AMQPEventLoop
    int start();
    void stop();
 
-   //TODO: this is for the connection handler to be able to break from login wait
-   //in case the event loop exits. Needs to be removed when login moved to event loop thread
-   bool active() { return ! _stop ; } 
+ private:
+   void _handleQueue( );
+   void _handleInput( );
+   void _handleOutput( );
+   void _resetTimeout( timeval & timeoutTimeval );
 
  private:
-   void handleQueue( );
-   void _resetTimeout( timeval & timeoutTimeval );
- private:
-   volatile bool                                     _stop = false;
-    AMQPConnectionHandler *                 _connectionHandler;
+   volatile bool                            _stop = false;
+   AMQPConnectionHandler *                  _connectionHandler;
    BlockingQueue<RabbitMessageBase * > *    _jobQueue;
 };
 

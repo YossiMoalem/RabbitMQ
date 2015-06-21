@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <amqpcpp.h>
 
+#define SET_FD_UPDATE_MAX(fd,set,maxFD)   FD_SET(fd, set);\
+    maxFD = (maxFD > fd )? maxFD : fd;
+
 namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB,
@@ -24,25 +27,23 @@ int AMQPEventLoop::start()
     int queueEventFd = _jobQueue->getFD();
     int brokerWriteFD = _connectionHandler->getWriteFD();
     int brokerReadFD = _connectionHandler->getReadFD();
-    int maxReadFd =  std::max( queueEventFd, 
-            std::max( brokerWriteFD, brokerReadFD ) ) +1;
 
     timeval heartbeatIdenInterval;
     _resetTimeout( heartbeatIdenInterval );
 
-    bool lastCallWasTimeOut = false;
-
-    _jobQueue->flush();
     while( ! _stop )
     {
+        int maxReadFd = 0;
         FD_ZERO( & readFdSet );
-        FD_SET ( queueEventFd, & readFdSet );
-        FD_SET ( brokerReadFD, & readFdSet );
-
         FD_ZERO( & writeFdSet );
+        SET_FD_UPDATE_MAX ( brokerReadFD, & readFdSet, maxReadFd );
+        if( _connectionHandler->canHandle() )
+        {
+            SET_FD_UPDATE_MAX( queueEventFd, & readFdSet, maxReadFd );
+        }
         if( _connectionHandler->pendingSend() )
         {
-            FD_SET ( brokerWriteFD, & writeFdSet );
+            SET_FD_UPDATE_MAX( brokerWriteFD, & writeFdSet, maxReadFd );
         }
 
         int res = select( maxReadFd, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
@@ -50,53 +51,24 @@ int AMQPEventLoop::start()
         {
             if( FD_ISSET( brokerReadFD, & readFdSet ) )
             {
-                try
-                {
-                    _connectionHandler->handleInput();
-                }
-
-                catch(...)
-                {
-                    std::cout << "read failed. closing event loop" <<std::endl;
-                    _stop = true;
-                }
-                lastCallWasTimeOut = false;
+                _handleInput();
                 _resetTimeout( heartbeatIdenInterval );
             }
             if( FD_ISSET( queueEventFd, & readFdSet ) )
             {
-                handleQueue();
+                _handleQueue();
             }
 
             if( FD_ISSET( brokerWriteFD, & writeFdSet ) )
             {
-                assert ( _connectionHandler->pendingSend() );
-                try
-                {
-                    _connectionHandler->handleOutput();
-                }
-                catch(...)
-                {
-                    std::cout << "send failedclosing event loop" <<std::endl;
-                    _stop = true;
-                } 
+                _handleOutput();
             }
         }
         else if ( res == 0 ){
             //TODO: hide impl.
             assert (! _connectionHandler->pendingSend() );
-            if (  lastCallWasTimeOut )
-            {
-                std::cout <<"Did not receive anythiong even after sending hertbeat. disconnect!" <<std::endl;
-                _connectionHandler->closeSocket();
-                return 2;
-            } else {
-                if( _connectionHandler->handleTimeout() )
-                {
-                    lastCallWasTimeOut = true;
-                }
-                _resetTimeout( heartbeatIdenInterval );
-            } 
+            _connectionHandler->handleTimeout();
+            _resetTimeout( heartbeatIdenInterval );
         }
         else
         {
@@ -108,13 +80,18 @@ int AMQPEventLoop::start()
     return 0;
 }
 
+void AMQPEventLoop::stop()
+{
+    _stop = true;
+}
+
 void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
 {
     timeoutTimeval.tv_sec = 7;
     timeoutTimeval.tv_usec = 0;
 } 
 
-void AMQPEventLoop::handleQueue( )
+void AMQPEventLoop::_handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
     while ( _connectionHandler->canHandle() && _jobQueue->try_pop( msg ) )
@@ -124,9 +101,32 @@ void AMQPEventLoop::handleQueue( )
     }
 }
 
-void AMQPEventLoop::stop()
+void AMQPEventLoop::_handleOutput()
 {
-    _stop = true;
+    assert ( _connectionHandler->pendingSend() );
+    try
+    {
+        _connectionHandler->handleOutput();
+    }
+    catch(...)
+    {
+        std::cout << "send failedclosing event loop" <<std::endl;
+        stop();
+    } 
+}
+
+void AMQPEventLoop::_handleInput()
+{
+    try
+    {
+        _connectionHandler->handleInput();
+    }
+
+    catch(...)
+    {
+        std::cout << "read failed. closing event loop" <<std::endl;
+        stop();
+    }
 }
 
 }//namespace AMQP

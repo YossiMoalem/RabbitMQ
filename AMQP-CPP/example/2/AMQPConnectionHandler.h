@@ -59,7 +59,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
-   bool handleTimeout() const;
+   void handleTimeout();
    void stop( bool immediate );
 
 

@@ -36,6 +36,10 @@ void Heartbeat::initialize()
 
 bool Heartbeat::send( )
 {
+    if ( _heartbeatSent )
+    {
+        return false;
+    }
     if ( _initialized )
     {
         _connectionHandler->_channel->publish( AdminExchangeName, AdminQueueName, AdminRoutingKey );
@@ -48,5 +52,11 @@ void Heartbeat::invalidate()
 {
     _initialized = false;
 }
+
+void Heartbeat::reset()
+{
+    _heartbeatSent = false;
+}
+
 
 } //namespace AMQP

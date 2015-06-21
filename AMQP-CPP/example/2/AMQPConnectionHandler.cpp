@@ -126,6 +126,7 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
     _channel->onReady([ this ]() {
             std::cout <<"channel ready "<<std::endl;
             _connected = true;
+            _heartbeat->initialize();
     });
     if( _loginValueSetter )
     {
@@ -134,7 +135,6 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
         _loginValueSetter->set_value( true );
         _loginValueSetter = nullptr;
     }
-    _heartbeat->initialize();
 }
 
 void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
@@ -165,17 +165,18 @@ void AMQPConnectionHandler::login( const std::string & userName,
     _loginValueSetter = operationSucceeded;
 }
 
-//void AMQPConnectionHandler::handleTimeout( const std::string & exchangeName) const
-bool AMQPConnectionHandler::handleTimeout() const
+void AMQPConnectionHandler::handleTimeout()
 {
     if( _connected )
     {
-        return _heartbeat->send();
+        if( _heartbeat->send() == false )
+        {
+            stop( true );
+            closeSocket();
+        }
     } else {
-        std::cout <<"TO after we are NOT connected. Ignoring " <<std::endl;
-        return false;
+        std::cout <<"TO when we are NOT connected. Ignoring " <<std::endl;
     }
-
 }
 
 void AMQPConnectionHandler::declareQueue( const std::string & queueName, 

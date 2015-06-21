@@ -30,7 +30,6 @@ class AMQPClient : private boost::noncopyable
    //wait for it, or, better indicate upstream that it is not connected.
    DeferedResult login( const AMQPConnectionDetails & connectionParams );
 
-   //TODO: need some form of identication upwords that we are ready to contionue.
    int connect( const AMQPConnectionDetails & connectionParams );
 
    DeferedResult stop( bool immediate );
