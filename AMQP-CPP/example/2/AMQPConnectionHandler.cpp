@@ -10,10 +10,11 @@
 #include "AMQPEventLoop.h"
 namespace AMQP {
 
-AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, AMQPEventLoop * eventLoop  ) :
+AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, 
+        BlockingQueue<RabbitMessageBase * > & jobQueue ):
     _onMsgReceivedBC( onMsgReceivedCB ),
     _heartbeat( new Heartbeat( this ) ),
-    _eventLoop( eventLoop )
+    _jobQueue( jobQueue)
 { }
 
 AMQPConnectionHandler::~AMQPConnectionHandler()
@@ -238,7 +239,7 @@ int AMQPConnectionHandler::getWriteFD() const
     return _socket.readFD();
 }
 
-bool AMQPConnectionHandler::openConnection(const AMQPConnectionDetails & connectionParams )
+bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionParams )
 {
     assert (! _connected );
     _incomingMessages.clear();
@@ -251,11 +252,35 @@ bool AMQPConnectionHandler::openConnection(const AMQPConnectionDetails & connect
         return true;
     }
 }
+
+void AMQPConnectionHandler::startEventLoop()
+{
+    // TODO: Bahhhhhhhhh
+    _eventLoop = new AMQPEventLoop( _onMsgReceivedBC, &_jobQueue, this );
+    _eventLoop->start();
+}
+
 void AMQPConnectionHandler::closeSocket()
 {
     _connected = false;
     _heartbeat->invalidate();
     _socket.close();
+}
+
+void AMQPConnectionHandler::stop( bool immediate )
+{
+    if( immediate )
+    {
+        _eventLoop->stop();
+    } else {
+        //TODO:
+        _eventLoop->stop();
+    }
+}
+
+bool AMQPConnectionHandler::canHandle() const
+{
+    return _outgoingBuffer.size() < 4096;
 }
 } //namespace AMQP
 

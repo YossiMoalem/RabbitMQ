@@ -14,7 +14,7 @@ namespace AMQP {
 
 class RabbitMessageBase;
 class AMQPConnectionDetails;
-class AMQPEventLoop;
+class AMQPConnectionHandler;
 
 class AMQPClient : private boost::noncopyable
 {
@@ -31,7 +31,7 @@ class AMQPClient : private boost::noncopyable
    DeferedResult login( const AMQPConnectionDetails & connectionParams );
 
    //TODO: need some form of identication upwords that we are ready to contionue.
-   int startEventLoop( const AMQPConnectionDetails & connectionParams );
+   int connect( const AMQPConnectionDetails & connectionParams );
 
    DeferedResult stop( bool immediate );
 
@@ -63,7 +63,7 @@ class AMQPClient : private boost::noncopyable
 
 
  private:
-   AMQPEventLoop *                              _eventLoop;
+   AMQPConnectionHandler *              _connectionHandler;
    mutable BlockingQueue<RabbitMessageBase * >  _jobQueue;
 
 };

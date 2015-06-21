@@ -6,8 +6,8 @@
 #include <amqpcpp.h>
 
 namespace AMQP {
+class AMQPConnectionHandler;
 
-class AMQPEventLoop;
 typedef std::future< bool > DeferedResult;
 
 /********************************************************************************\
@@ -18,8 +18,9 @@ class RabbitMessageBase
  public:
    typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
 
-    RabbitMessageBase( ):
-        _returnValueSetter( new std::promise< bool > )
+    RabbitMessageBase( AMQPConnectionHandler * connectionHandler ):
+        _returnValueSetter( new std::promise< bool > ),
+        _connectionHandler( connectionHandler )
     { }
     
     virtual ~RabbitMessageBase () {}
@@ -37,10 +38,11 @@ class RabbitMessageBase
         return _returnValueSetter->get_future();
     }
 
-    virtual void handle( AMQPEventLoop * eventLoop ) = 0;
+    virtual void handle( ) = 0;
 
  protected:
     DeferedResultSetter    _returnValueSetter;
+    AMQPConnectionHandler * _connectionHandler;
 };
 
 /********************************************************************************\
@@ -51,7 +53,9 @@ class PostMessage : public RabbitMessageBase
  public:
     PostMessage( const std::string & exchangeName, 
             const std::string & routingKey, 
-            const std::string & message) :
+            const std::string & message,
+            AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
         _exchangeName( exchangeName ),
         _routingKey( routingKey ),
         _message( message )
@@ -72,7 +76,7 @@ class PostMessage : public RabbitMessageBase
         return _exchangeName;
     }
 
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
     std::string _exchangeName;
@@ -88,7 +92,9 @@ class BindMessage : public RabbitMessageBase
  public:
     BindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey ) :
+            const std::string routingKey,
+            AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )
@@ -109,7 +115,7 @@ class BindMessage : public RabbitMessageBase
         return _queueName;
     }
 
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
     std::string _exchangeName;
@@ -125,7 +131,9 @@ class UnBindMessage : public RabbitMessageBase
  public:
     UnBindMessage( const std::string & exchangeName, 
             const std::string & queueName,
-            const std::string routingKey ) :
+            const std::string routingKey,
+            AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
         _exchangeName( exchangeName ),
         _queueName( queueName ),
         _routingKey( routingKey )
@@ -146,7 +154,7 @@ class UnBindMessage : public RabbitMessageBase
         return _queueName;
     }
 
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
     std::string _exchangeName;
@@ -160,21 +168,13 @@ class UnBindMessage : public RabbitMessageBase
 class StopMessage : public RabbitMessageBase
 {
  public:
-    StopMessage( bool immediate ) :
+    StopMessage( bool immediate,
+            AMQPConnectionHandler * connectionHandler ) :
+        RabbitMessageBase( connectionHandler ),
         _immediate( immediate )
     { }
 
-    bool terminateNow()
-    {
-        return _immediate;
-    }
-
-    void setTerminateNow()
-    {
-        _immediate = true;
-    }
-
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
     bool _immediate;
@@ -187,12 +187,14 @@ class LoginMessage : public RabbitMessageBase
 {
  public:
     LoginMessage( const std::string & userName, 
-                const std::string & password ) :
+                const std::string & password,
+                AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
         _userName( userName ),
         _password( password )
     {}
 
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
     std::string _userName;
@@ -207,13 +209,15 @@ class DeclareExchangeMessage : public RabbitMessageBase
  public:
    DeclareExchangeMessage( const std::string & exchangeName, 
            ExchangeType exchangetype, 
-           bool durable ) :
+           bool durable,
+           AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
        _exchangeName( exchangeName ),
        _exchangeType( exchangetype ),
        _durable( durable )
     {}
 
-    virtual void handle( AMQPEventLoop * eventLoop ) override;
+    virtual void handle( ) override;
 
  protected:
    std::string      _exchangeName;
@@ -230,14 +234,16 @@ class DeclareQueueMessage : public RabbitMessageBase
    DeclareQueueMessage( const std::string & queueName, 
            bool durable,
            bool exclusive, 
-           bool autoDelete) :
+           bool autoDelete,
+           AMQPConnectionHandler * connectionHandler ) :
+       RabbitMessageBase( connectionHandler ),
        _queueName( queueName ),
        _durable( durable ),
        _exclusive( exclusive ),
        _autoDelete( autoDelete )
     {}
 
-   virtual void handle( AMQPEventLoop * eventLoop ) override;
+   virtual void handle( ) override;
 
  protected:
    std::string     _queueName;

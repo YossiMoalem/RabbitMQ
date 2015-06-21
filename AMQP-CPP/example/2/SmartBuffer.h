@@ -13,17 +13,17 @@ class SmartBuffer : boost::noncopyable
  public:
     friend std::ostream& operator <<(std::ostream& stream, const SmartBuffer& sb);
 
-    size_t empty()
+    size_t empty() const
     {
         return ( _buffer.size() == 0 );
     }
 
-    size_t size()
+    size_t size() const
     {
         return ( _buffer.size() );
     }
 
-    size_t capacity()
+    size_t capacity() const
     {
         return _buffer.capacity();
     }

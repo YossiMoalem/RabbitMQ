@@ -7,21 +7,24 @@
 #include <amqpcpp.h>
 #include "AMQPSocket.h"
 #include "RabbitOperation.h"
+#include "BlockingQueue.h"
 
 
 namespace AMQP {
 class AMQPConnectionDetails;
 class Heartbeat;
+class AMQPEventLoop;
 
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
     friend class Heartbeat;
  public:
 
-   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, AMQPEventLoop * eventloop );
+   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB, 
+           BlockingQueue<RabbitMessageBase * > & jobQueue );
+
    virtual ~AMQPConnectionHandler ();
 
-   bool handleTimeout() const;
 
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
@@ -56,9 +59,13 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
+   bool handleTimeout() const;
+   void stop( bool immediate );
 
 
 // protected:
+
+   void startEventLoop( );
 
    virtual void onConnected( AMQP::Connection *connection ) override ;
 
@@ -70,9 +77,10 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
    int getReadFD() const;
    int getWriteFD() const;
+   bool canHandle() const;
 
     void closeSocket();
-    bool openConnection(const AMQPConnectionDetails & connectionParams );
+    bool connect(const AMQPConnectionDetails & connectionParams );
 
  private:
    AMQPSocket                       _socket;
@@ -84,10 +92,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    SmartBuffer                      _outgoingBuffer;
    std::unique_ptr< Heartbeat >     _heartbeat;
    RabbitMessageBase::DeferedResultSetter _loginValueSetter;
-   //TODO: this is a temporary WA. 
-   //Till login will be moved to the eventloop thread, we need to release it
-   //if event loop is terminated.
-   //for this we want oto ask the event lop if it is still running
+   BlockingQueue<RabbitMessageBase * > &  _jobQueue;
    AMQPEventLoop *                  _eventLoop;
 };
 

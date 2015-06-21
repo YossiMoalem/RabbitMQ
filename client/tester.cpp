@@ -117,7 +117,7 @@ class MeasureTester
        firstSendTime ( ),
        lastSendTime ( ),
        numOfReceived ( 0 ),
-       numOfMessagesToSend ( 1000 )
+       numOfMessagesToSend ( 1000000 )
     { }
    int operator ()()
    {

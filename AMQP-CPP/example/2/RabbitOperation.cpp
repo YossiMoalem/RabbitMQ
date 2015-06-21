@@ -5,48 +5,48 @@
 
 namespace AMQP {
 
-void PostMessage::handle( AMQPEventLoop * eventLoop )
+void PostMessage::handle( )
 {
-    eventLoop->publish( exchangeName(), 
-            routingKey(), 
-            message(), 
-            resultSetter() );
+    _connectionHandler->doPublish(_exchangeName,
+            _routingKey,
+            _message,
+            _returnValueSetter);
 }
 
-void BindMessage::handle( AMQPEventLoop * eventLoop )
+void BindMessage::handle( )
 {
-    eventLoop->bindQueue(exchangeName(), 
-            queueName(), 
-            routingKey(), 
-            resultSetter() ); 
+    _connectionHandler->doBindQueue(_exchangeName,
+            _queueName,
+            _routingKey,
+            _returnValueSetter);
 }
 
-void UnBindMessage::handle( AMQPEventLoop * eventLoop )
+void UnBindMessage::handle( )
 {
-    eventLoop->unBindQueue(exchangeName(), 
-            queueName(), 
-            routingKey(), 
-            resultSetter() ); 
+    _connectionHandler->doUnBindQueue( _exchangeName,
+            _queueName,
+            _routingKey,
+            _returnValueSetter );
 }
 
-void StopMessage::handle( AMQPEventLoop * eventLoop )
+void StopMessage::handle( )
 {
-    eventLoop->stop( immediate ); 
+    _connectionHandler->stop( _immediate );
 }
 
-void LoginMessage::handle( AMQPEventLoop * eventLoop )
+void LoginMessage::handle( )
 {
-    eventLoop->login( _userName, _password, resultSetter() );
+    _connectionHandler->login( _userName, _password, _returnValueSetter );
 }
 
-void DeclareExchangeMessage::handle( AMQPEventLoop * eventLoop )
+void DeclareExchangeMessage::handle( )
 {
-    eventLoop->declareExchange( _exchangeName, _exchangeType, _durable, resultSetter() );
+    _connectionHandler->declareExchange( _exchangeName, _exchangeType, _durable, _returnValueSetter );
 }
 
-void DeclareQueueMessage::handle( AMQPEventLoop * eventLoop )
+void DeclareQueueMessage::handle( )
 {
-    eventLoop->declareQueue( _queueName, _durable, _exclusive, _autoDelete, resultSetter() ); 
+    _connectionHandler->declareQueue( _queueName, _durable, _exclusive, _autoDelete, _returnValueSetter ); 
 }
 
 } //namespace AMQP

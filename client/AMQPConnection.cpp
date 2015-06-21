@@ -37,7 +37,7 @@ ReturnStatus AMQPConnection::connectLoop()
         std::cout << "started AMQPConnection::connectLoop() " << std::endl;
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
         std::thread eventLoopThread = std::thread( std::bind( 
-                    &AMQP::AMQPClient::startEventLoop, 
+                    &AMQP::AMQPClient::connect, 
                     &_connectionHandler, 
                     connectionDetails ) );
         //TODO: wait on some condition till we are either connected or failed to connect...

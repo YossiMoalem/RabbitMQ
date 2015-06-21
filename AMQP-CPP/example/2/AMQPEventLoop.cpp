@@ -1,15 +1,16 @@
 #include "AMQPEventLoop.h"
 #include "BlockingQueue.h"
-#include "RabbitOperation.h"
 #include "AMQPConnectionHandler.h"
+#include "RabbitOperation.h"
 #include <algorithm>
 #include <amqpcpp.h>
 
 namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop(  std::function<int( const AMQP::Message& )> onMsgReceivedCB,
-        BlockingQueue<RabbitMessageBase * >  * jobQueue ) :
-    _connectionHandlers( new AMQPConnectionHandler ( onMsgReceivedCB, this ) ),
+        BlockingQueue<RabbitMessageBase * >  * jobQueue,
+        AMQPConnectionHandler * connectionHandler ) :
+    _connectionHandler( connectionHandler),
     _jobQueue( jobQueue )
 { }
 
@@ -21,8 +22,8 @@ int AMQPEventLoop::start()
     fd_set readFdSet;
     fd_set writeFdSet;
     int queueEventFd = _jobQueue->getFD();
-    int brokerWriteFD = _connectionHandlers->getWriteFD();
-    int brokerReadFD = _connectionHandlers->getReadFD();
+    int brokerWriteFD = _connectionHandler->getWriteFD();
+    int brokerReadFD = _connectionHandler->getReadFD();
     int maxReadFd =  std::max( queueEventFd, 
             std::max( brokerWriteFD, brokerReadFD ) ) +1;
 
@@ -39,7 +40,7 @@ int AMQPEventLoop::start()
         FD_SET ( brokerReadFD, & readFdSet );
 
         FD_ZERO( & writeFdSet );
-        if( _connectionHandlers->pendingSend() )
+        if( _connectionHandler->pendingSend() )
         {
             FD_SET ( brokerWriteFD, & writeFdSet );
         }
@@ -51,7 +52,7 @@ int AMQPEventLoop::start()
             {
                 try
                 {
-                    _connectionHandlers->handleInput();
+                    _connectionHandler->handleInput();
                 }
 
                 catch(...)
@@ -69,10 +70,10 @@ int AMQPEventLoop::start()
 
             if( FD_ISSET( brokerWriteFD, & writeFdSet ) )
             {
-                assert ( _connectionHandlers->pendingSend() );
+                assert ( _connectionHandler->pendingSend() );
                 try
                 {
-                    _connectionHandlers->handleOutput();
+                    _connectionHandler->handleOutput();
                 }
                 catch(...)
                 {
@@ -83,14 +84,14 @@ int AMQPEventLoop::start()
         }
         else if ( res == 0 ){
             //TODO: hide impl.
-            assert (! _connectionHandlers->pendingSend() );
+            assert (! _connectionHandler->pendingSend() );
             if (  lastCallWasTimeOut )
             {
                 std::cout <<"Did not receive anythiong even after sending hertbeat. disconnect!" <<std::endl;
-                _connectionHandlers->closeSocket();
+                _connectionHandler->closeSocket();
                 return 2;
             } else {
-                if( _connectionHandlers->handleTimeout() )
+                if( _connectionHandler->handleTimeout() )
                 {
                     lastCallWasTimeOut = true;
                 }
@@ -103,7 +104,7 @@ int AMQPEventLoop::start()
         }
     }
     std::cout <<"EventLoop stoped 0 "<< std::endl;
-    _connectionHandlers->closeSocket();
+    _connectionHandler->closeSocket();
     return 0;
 }
 
@@ -112,81 +113,20 @@ void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
     timeoutTimeval.tv_sec = 7;
     timeoutTimeval.tv_usec = 0;
 } 
+
 void AMQPEventLoop::handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
-    while ( _jobQueue->try_pop( msg ) )
+    while ( _connectionHandler->canHandle() && _jobQueue->try_pop( msg ) )
     {
-        msg->handle( this );
+        msg->handle( );
         delete msg;
     }
 }
 
-void AMQPEventLoop::stop( bool terminateNow )
+void AMQPEventLoop::stop()
 {
-    if( terminateNow )
-    {
-        _stop = true;
-    } else {
-        StopMessage * stopMessage = new StopMessage( true );
-        _jobQueue->push( stopMessage );
-    }
+    _stop = true;
 }
 
-void AMQPEventLoop::publish( const std::string & exchangeName, 
-        const std::string & routingKey, 
-        const std::string & message, 
-        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers->doPublish(exchangeName,
-            routingKey,
-            message,
-            operationSucceeded);
-}
-
-void AMQPEventLoop::bindQueue( const std::string & exchangeName, 
-        const std::string & queueName, 
-        const std::string & routingKey,  
-        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers->doBindQueue(exchangeName,
-            queueName,
-            routingKey,
-            operationSucceeded);
-}
-
-void AMQPEventLoop::unBindQueue( const std::string & exchangeName, 
-        const std::string & queueName, 
-        const std::string & routingKey, 
-        RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers->doUnBindQueue( exchangeName,
-            queueName,
-            routingKey,
-            operationSucceeded );
-}
-
-void AMQPEventLoop::login( const std::string & userName,
-           const std::string & password, 
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers->login( userName, password, operationSucceeded );
-}
-
-void AMQPEventLoop::declareExchange( const std::string & exchangeName, 
-           ExchangeType exchangetype,
-           bool durable,
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers-> declareExchange( exchangeName, exchangetype, durable, operationSucceeded );
-}
-
-void AMQPEventLoop::declareQueue( const std::string & queueName, 
-            bool durable, 
-            bool exclusive, 
-            bool autoDelete,
-            RabbitMessageBase::DeferedResultSetter operationSucceeded ) const
-{
-    _connectionHandlers-> declareQueue( queueName, durable, exclusive, autoDelete, operationSucceeded );
-}
 }//namespace AMQP
