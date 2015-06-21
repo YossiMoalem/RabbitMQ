@@ -3,6 +3,8 @@
 
 #include "RabbitOperation.h"
 #include "BlockingQueue.h"
+#include "AMQPConnectionHandler.h"
+#include "Heartbeat.h"
 
 namespace AMQP {
 
@@ -18,13 +20,23 @@ class RabbitJobManager
    DeferedResult addJob ( RabbitMessageBase * job );
    void startEventLoop( );
    void stopEventLoop( bool immediate );
+   void stopEventLoop( bool immediate,
+           RabbitMessageBase::DeferedResultSetter returnValueSetter );
    bool connect(const AMQPConnectionDetails & connectionParams );
+   bool canHandleMessage() const;
+   void handleTimeout();
+   bool handleInput()       { return _connectionHandler->handleInput();  }
+   bool handleOutput()      { return _connectionHandler->handleOutput(); }
+   bool pendingSend()       { return _connectionHandler->pendingSend();  }
+   AMQPConnectionHandler * connectionHandler(){ return _connectionHandler; }
 
  private:
-   std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    BlockingQueue<RabbitMessageBase * >  _jobQueue;
-   AMQPEventLoop *                  _eventLoop;
+   AMQPEventLoop *                      _eventLoop;
    AMQPConnectionHandler *              _connectionHandler;
+   Heartbeat                            _heartbeat;
+
+   static const int  _outgoingBufferHighWatermark = 4096;
 };
 
 } //namespace AMQP

@@ -1,6 +1,6 @@
 #include "AMQPEventLoop.h"
 #include "BlockingQueue.h"
-#include "AMQPConnectionHandler.h"
+#include "RabbitJobManager.h"
 #include "RabbitOperation.h"
 #include <algorithm>
 #include <amqpcpp.h>
@@ -8,9 +8,15 @@
 namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop( BlockingQueue<RabbitMessageBase * >  * jobQueue,
-        AMQPConnectionHandler * connectionHandler ) :
-    _connectionHandler( connectionHandler),
-    _jobQueue( jobQueue )
+        RabbitJobManager * handler,
+        int queueEventFD,
+        int brokerReadFD,
+        int brokerWriteFD ):
+    _handler( handler),
+    _jobQueue( jobQueue ),
+    _queueEventFD( queueEventFD ),
+    _brokerReadFD( brokerReadFD ),
+    _brokerWriteFD( brokerWriteFD )
 { }
 
 int AMQPEventLoop::start()
@@ -20,49 +26,47 @@ int AMQPEventLoop::start()
 
     fd_set readFdSet;
     fd_set writeFdSet;
-    int queueEventFd = _jobQueue->getFD();
-    int brokerWriteFD = _connectionHandler->getWriteFD();
-    int brokerReadFD = _connectionHandler->getReadFD();
-    int maxFD =  std::max( queueEventFd, 
-            std::max( brokerWriteFD, brokerReadFD ) ) +1;
+    int maxFD =  std::max( _queueEventFD, 
+            std::max( _brokerWriteFD, _brokerReadFD ) ) + 1;
 
     timeval heartbeatIdenInterval;
-    _resetTimeout( heartbeatIdenInterval );
+    heartbeatIdenInterval.tv_sec = 15;
+    heartbeatIdenInterval.tv_usec = 0;
 
     while( ! _stop )
     {
         FD_ZERO( & readFdSet );
         FD_ZERO( & writeFdSet );
-        FD_SET( brokerReadFD, & readFdSet );
-        if( _connectionHandler->canHandle() )
+        FD_SET( _brokerReadFD, & readFdSet );
+        if( _handler->canHandleMessage() )
         {
-            FD_SET( queueEventFd, & readFdSet );
+            FD_SET( _queueEventFD, & readFdSet );
         }
-        if( _connectionHandler->pendingSend() )
+        if( _handler->pendingSend() )
         {
-            FD_SET( brokerWriteFD, & writeFdSet );
+            FD_SET( _brokerWriteFD, & writeFdSet );
         }
 
         int res = select( maxFD, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
         if( res > 0 )
         {
-            if( FD_ISSET( brokerReadFD, & readFdSet ) )
+            if( FD_ISSET( _brokerReadFD, & readFdSet ) )
             {
                 _handleInput();
                 _resetTimeout( heartbeatIdenInterval );
             }
-            if( FD_ISSET( queueEventFd, & readFdSet ) )
+            if( FD_ISSET( _queueEventFD, & readFdSet ) )
             {
                 _handleQueue();
             }
 
-            if( FD_ISSET( brokerWriteFD, & writeFdSet ) )
+            if( FD_ISSET( _brokerWriteFD, & writeFdSet ) )
             {
                 _handleOutput();
             }
         }
         else if ( res == 0 ){
-            _connectionHandler->handleTimeout();
+            _handler->handleTimeout();
             _resetTimeout( heartbeatIdenInterval );
         }
         else
@@ -71,7 +75,7 @@ int AMQPEventLoop::start()
         }
     }
     std::cout <<"EventLoop stoped 0 "<< std::endl;
-    _connectionHandler->closeSocket();
+    _handler->stopEventLoop( true );
     return 0;
 }
 
@@ -89,7 +93,7 @@ void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
 void AMQPEventLoop::_handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
-    while ( _connectionHandler->canHandle() && _jobQueue->try_pop( msg ) )
+    while ( _handler->canHandleMessage() && _jobQueue->try_pop( msg ) )
     {
         msg->handle( );
         delete msg;
@@ -98,10 +102,9 @@ void AMQPEventLoop::_handleQueue( )
 
 void AMQPEventLoop::_handleOutput()
 {
-    assert ( _connectionHandler->pendingSend() );
     try
     {
-        _connectionHandler->handleOutput();
+        _handler->handleOutput();
     }
     catch(...)
     {
@@ -114,7 +117,7 @@ void AMQPEventLoop::_handleInput()
 {
     try
     {
-        _connectionHandler->handleInput();
+        _handler->handleInput();
     }
 
     catch(...)

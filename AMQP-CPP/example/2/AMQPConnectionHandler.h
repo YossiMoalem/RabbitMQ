@@ -11,7 +11,6 @@
 
 namespace AMQP {
 class AMQPConnectionDetails;
-class Heartbeat;
 
 class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyable 
 {
@@ -22,7 +21,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
    virtual ~AMQPConnectionHandler ();
 
-
+   //TODO: Need to prevent caling, or, trying to execute those function before we have a valid channed.
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
            const std::string & message, 
@@ -56,7 +55,6 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    bool handleInput( );
    bool handleOutput( );
    bool pendingSend();
-   void handleTimeout();
 
 
 // protected:
@@ -70,22 +68,20 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
 
    virtual void onClosed(AMQP::Connection *connection) override;
 
-   int getReadFD() const;
-   int getWriteFD() const;
-   bool canHandle() const;
+   int getReadFD() const { return _socket.readFD(); }
+   int getWriteFD() const { return _socket.writeFD(); }
 
     void closeSocket();
     bool connect(const AMQPConnectionDetails & connectionParams );
+    unsigned int outgoingBufferSize() const;
 
  private:
    AMQPSocket                       _socket;
    AMQP::Connection*                _connection;
    AMQP::Channel *                  _channel = nullptr;
-   volatile bool                             _connected = false;
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingBuffer;
-   std::unique_ptr< Heartbeat >     _heartbeat;
    RabbitMessageBase::DeferedResultSetter _loginValueSetter;
 };
 

@@ -6,7 +6,7 @@
 #include <amqpcpp.h>
 
 namespace AMQP {
-class AMQPConnectionHandler;
+class RabbitJobManager;
 
 typedef std::future< bool > DeferedResult;
 
@@ -37,7 +37,7 @@ class RabbitMessageBase
         return _returnValueSetter->get_future();
     }
 
-    void setHandler( AMQPConnectionHandler* handler )
+    void setHandler( RabbitJobManager * handler )
     {
         _handler = handler;
     }
@@ -45,8 +45,8 @@ class RabbitMessageBase
     virtual void handle( ) = 0;
 
  protected:
-    DeferedResultSetter    _returnValueSetter;
-    AMQPConnectionHandler * _handler;
+    DeferedResultSetter     _returnValueSetter;
+    RabbitJobManager *      _handler;
 };
 
 /********************************************************************************\

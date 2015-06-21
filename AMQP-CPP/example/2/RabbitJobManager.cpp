@@ -1,12 +1,12 @@
 #include "RabbitJobManager.h"
 #include "AMQPConnectionDetails.h"
 #include "AMQPEventLoop.h"
-#include "AMQPConnectionHandler.h"
 
 namespace AMQP {
 
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB ) ) 
+    _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB ) ),
+    _heartbeat( _connectionHandler )
     {}
 
 RabbitJobManager::~RabbitJobManager( )
@@ -16,30 +16,59 @@ RabbitJobManager::~RabbitJobManager( )
 
 DeferedResult RabbitJobManager::addJob ( RabbitMessageBase * job )
 {
-    job->setHandler( _connectionHandler );
+    job->setHandler( this );
     auto result = job->deferedResult();
     _jobQueue.push( job );
     return result;
 }
 bool RabbitJobManager::connect(const AMQPConnectionDetails & connectionParams )
 {
-    return _connectionHandler->connect( connectionParams );
+    bool connected =_connectionHandler->connect( connectionParams );
+    return connected;
 }
 
 void RabbitJobManager::startEventLoop()
 {
-    _eventLoop = new AMQPEventLoop( &_jobQueue, _connectionHandler);
+    _eventLoop = new AMQPEventLoop( &_jobQueue,
+            this,
+            _jobQueue.getFD(),
+            _connectionHandler->getReadFD(),
+            _connectionHandler->getWriteFD() );
     _eventLoop->start();
 }
 
 void RabbitJobManager::stopEventLoop( bool immediate )
 {
+    RabbitMessageBase::DeferedResultSetter returnValueSetter;
+    stopEventLoop( true, returnValueSetter );
+}
+
+void RabbitJobManager::stopEventLoop( bool immediate,
+    RabbitMessageBase::DeferedResultSetter returnValueSetter )
+{
     if( immediate )
     {
         _eventLoop->stop();
+        _connectionHandler->closeSocket();
+        returnValueSetter->set_value( true );
+        _heartbeat.invalidate();
     } else {
-        //TODO:
-        _eventLoop->stop();
+        StopMessage * stopMessage = new StopMessage( immediate );
+        //TODO: Copy the deferedResultSetter to the new message
+        addJob( stopMessage );
+    }
+}
+
+bool RabbitJobManager::canHandleMessage() const
+{
+    return _connectionHandler->outgoingBufferSize() < _outgoingBufferHighWatermark;
+}
+
+void RabbitJobManager::handleTimeout()
+{
+    if( _heartbeat.send() == false )
+    {
+        stopEventLoop( true );
     }
 }
 

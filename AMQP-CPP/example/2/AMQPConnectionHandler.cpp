@@ -9,8 +9,7 @@
 namespace AMQP {
 
 AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _onMsgReceivedBC( onMsgReceivedCB ),
-    _heartbeat( new Heartbeat( this ) )
+    _onMsgReceivedBC( onMsgReceivedCB )
 { }
 
 AMQPConnectionHandler::~AMQPConnectionHandler()
@@ -34,11 +33,8 @@ bool AMQPConnectionHandler::handleInput( )
 
 bool AMQPConnectionHandler::handleOutput()
 {
-    if( ! _outgoingBuffer.empty() )
-    {
-        return _socket.send( _outgoingBuffer);
-    }
-    return false;
+    assert( pendingSend() );
+    return _socket.send( _outgoingBuffer);
 }
 
 bool AMQPConnectionHandler::pendingSend()
@@ -121,8 +117,6 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
     //At the minimum we should filter out the second call (based on _connected )
     _channel->onReady([ this ]() {
             std::cout <<"channel ready "<<std::endl;
-            _connected = true;
-            _heartbeat->initialize();
     });
     if( _loginValueSetter )
     {
@@ -161,23 +155,6 @@ void AMQPConnectionHandler::login( const std::string & userName,
     _loginValueSetter = operationSucceeded;
 }
 
-void AMQPConnectionHandler::handleTimeout()
-{
-    //TODO: What if we hace socket (so _connected == trye)
-    //but we failed to login, still waiting for something for example??
-    if( _connected )
-    {
-        if( _heartbeat->send() == false )
-        {
-            //TODO!!!
-            //stop( true );
-            closeSocket();
-        }
-    } else {
-        std::cout <<"TO when we are NOT connected. Ignoring " <<std::endl;
-    }
-}
-
 void AMQPConnectionHandler::declareQueue( const std::string & queueName, 
         bool isDurable, 
         bool isExclusive, 
@@ -198,7 +175,7 @@ void AMQPConnectionHandler::declareQueue( const std::string & queueName,
                     bool redelivered ) {
                 if( _onMsgReceivedBC )
                 {
-                _onMsgReceivedBC( message );
+                    _onMsgReceivedBC( message );
                 }
                 _channel->ack( deliveryTag );
                 } ) ;
@@ -229,19 +206,8 @@ void AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
                 } ) ;
 }
 
-int AMQPConnectionHandler::getReadFD() const
-{
-    return _socket.readFD();
-}
-
-int AMQPConnectionHandler::getWriteFD() const
-{
-    return _socket.writeFD();
-}
-
 bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionParams )
 {
-    assert (! _connected );
     _incomingMessages.clear();
     _outgoingBuffer.clear();
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
@@ -253,17 +219,14 @@ bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionPara
     }
 }
 
-
 void AMQPConnectionHandler::closeSocket()
 {
-    _connected = false;
-    _heartbeat->invalidate();
     _socket.close();
 }
 
-bool AMQPConnectionHandler::canHandle() const
+unsigned int AMQPConnectionHandler::outgoingBufferSize() const
 {
-    return _outgoingBuffer.size() < 4096;
+    return _outgoingBuffer.size();
 }
-} //namespace AMQP
 
+} //namespace AMQP
