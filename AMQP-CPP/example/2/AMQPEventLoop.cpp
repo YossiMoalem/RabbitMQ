@@ -75,7 +75,7 @@ int AMQPEventLoop::start()
         }
     }
     std::cout <<"EventLoop stoped 0 "<< std::endl;
-    _handler->stopEventLoop( true );
+    _handler->stopEventLoop( true, dummyResultSetter );
     return 0;
 }
 

@@ -20,7 +20,6 @@ class RabbitJobManager
 
    DeferedResult addJob ( RabbitMessageBase * job );
    void startEventLoop( );
-   void stopEventLoop( bool immediate );
    void stopEventLoop( bool immediate,
            DeferedResultSetter returnValueSetter );
    bool connect(const AMQPConnectionDetails & connectionParams );
@@ -30,6 +29,9 @@ class RabbitJobManager
    bool handleOutput()      { return _connectionHandler->handleOutput(); }
    bool pendingSend()       { return _connectionHandler->pendingSend();  }
    AMQPConnectionHandler * connectionHandler(){ return _connectionHandler; }
+
+ protected:
+   void terminate( );
 
  private:
    ConnectionState                      _connectionState;

@@ -22,6 +22,12 @@ class ConnectionState : boost::noncopyable
            _loginResultSetter->set_value( false );
            _loginResultSetter.reset();
        }
+       if( _currentConnectionState == CurrentConnectionState::Disconnecting &&
+               _disconnectResultSetter != dummyResultSetter )
+       {
+           _disconnectResultSetter->set_value( true );
+           _disconnectResultSetter.reset();
+       }
        _onDisconnectCB();
        _currentConnectionState = CurrentConnectionState::SocketConnecting;
    }
@@ -52,6 +58,16 @@ class ConnectionState : boost::noncopyable
        _currentConnectionState = CurrentConnectionState::LoggedIn;
    }
 
+   void disconnecting( DeferedResultSetter disconnectResultSetter )
+   {
+       
+       if( _currentConnectionState != CurrentConnectionState::Disconnecting )
+       {
+           _disconnectResultSetter = disconnectResultSetter;
+           _currentConnectionState = CurrentConnectionState::Disconnecting;
+       }
+   }
+
  private:
    enum class CurrentConnectionState
    {
@@ -59,11 +75,13 @@ class ConnectionState : boost::noncopyable
        SocketConnecting     = 1,
        SocketConnected      = 2,
        LoggingIn            = 3,
-       LoggedIn             = 4
+       LoggedIn             = 4,
+       Disconnecting        = 5,
    };
 
    CurrentConnectionState   _currentConnectionState;
    DeferedResultSetter      _loginResultSetter;
+   DeferedResultSetter      _disconnectResultSetter;
    std::function< void() >  _onDisconnectCB;
 };
 

@@ -92,15 +92,9 @@ class AMQPSocket : boost::noncopyable
         return true;
     }
 
-    //TODO: IF we read full buffer, and the socket is still ready
-    //the event loop will not schedual another read!
-    //we need to make sure we either:
-    //read untill the socket has nothing to read from, or
-    //we schedual another read manually in teh event loop.
-    //the event loop will NOT take care of this!
     bool read( SmartBuffer & sbuffer)
     {
-        const int buffSize = 2048;
+        const int buffSize = 4096;
         char buff[buffSize];
         bzero( buff, buffSize );
         ssize_t bytesRead = ::read( _socketFd, buff, buffSize);

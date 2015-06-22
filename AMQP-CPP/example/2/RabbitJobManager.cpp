@@ -5,7 +5,7 @@
 namespace AMQP {
 
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _connectionState( [ this] () { stopEventLoop( true ); } ),
+    _connectionState( [ this] () { terminate( ); } ),
     _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB, _connectionState ) ),
     _heartbeat( _connectionHandler )
     {}
@@ -38,27 +38,16 @@ void RabbitJobManager::startEventLoop()
     _eventLoop->start();
 }
 
-void RabbitJobManager::stopEventLoop( bool immediate )
-{
-    DeferedResultSetter emptySetter;
-    stopEventLoop( immediate, emptySetter );
-}
-
 void RabbitJobManager::stopEventLoop( bool immediate,
     DeferedResultSetter returnValueSetter )
 {
     if( immediate )
     {
-        _eventLoop->stop();
-        _connectionHandler->closeSocket();
-        if( returnValueSetter )
-        {
-            returnValueSetter->set_value( true );
-        }
-        _heartbeat.invalidate();
+        _connectionState.disconnecting( returnValueSetter );
+        _connectionState.disconnected();
     } else {
+        _connectionState.disconnecting( returnValueSetter );
         StopMessage * stopMessage = new StopMessage( true );
-        //TODO: Copy the deferedResultSetter to the new message
         addJob( stopMessage );
     }
 }
@@ -72,8 +61,15 @@ void RabbitJobManager::handleTimeout()
 {
     if( _heartbeat.send() == false )
     {
-        stopEventLoop( true );
+        stopEventLoop( true, dummyResultSetter );
     }
+}
+
+void RabbitJobManager::terminate()
+{
+    _heartbeat.invalidate();
+    _eventLoop->stop();
+    _connectionHandler->closeSocket();
 }
 
 } //namespace AMQP
