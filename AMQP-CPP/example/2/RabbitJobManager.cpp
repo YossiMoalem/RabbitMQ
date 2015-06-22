@@ -39,8 +39,8 @@ void RabbitJobManager::startEventLoop()
 
 void RabbitJobManager::stopEventLoop( bool immediate )
 {
-    RabbitMessageBase::DeferedResultSetter returnValueSetter;
-    stopEventLoop( true, returnValueSetter );
+    RabbitMessageBase::DeferedResultSetter emptySetter;
+    stopEventLoop( immediate, emptySetter );
 }
 
 void RabbitJobManager::stopEventLoop( bool immediate,
@@ -50,10 +50,13 @@ void RabbitJobManager::stopEventLoop( bool immediate,
     {
         _eventLoop->stop();
         _connectionHandler->closeSocket();
-        returnValueSetter->set_value( true );
+        if( returnValueSetter )
+        {
+            returnValueSetter->set_value( true );
+        }
         _heartbeat.invalidate();
     } else {
-        StopMessage * stopMessage = new StopMessage( immediate );
+        StopMessage * stopMessage = new StopMessage( true );
         //TODO: Copy the deferedResultSetter to the new message
         addJob( stopMessage );
     }

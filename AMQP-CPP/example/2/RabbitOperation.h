@@ -63,21 +63,6 @@ class PostMessage : public RabbitMessageBase
         _message( message )
     {}
 
-    const std::string & message() const
-    {
-        return _message;
-    }
-
-    const std::string & routingKey() const
-    {
-        return _routingKey;
-    }
-
-    const std::string & exchangeName() const
-    {
-        return _exchangeName;
-    }
-
     virtual void handle( ) override;
 
  protected:
@@ -100,21 +85,6 @@ class BindMessage : public RabbitMessageBase
         _routingKey( routingKey )
     { }
 
-    const std::string & routingKey() const
-    {
-        return _routingKey;
-    }
-
-    const std::string & exchangeName() const
-    {
-        return _exchangeName;
-    }
-
-    const std::string & queueName() const
-    {
-        return _queueName;
-    }
-
     virtual void handle( ) override;
 
  protected:
@@ -136,21 +106,6 @@ class UnBindMessage : public RabbitMessageBase
         _queueName( queueName ),
         _routingKey( routingKey )
     { }
-
-    const std::string & routingKey() const
-    {
-        return _routingKey;
-    }
-
-    const std::string & exchangeName() const
-    {
-        return _exchangeName;
-    }
-
-    const std::string & queueName() const
-    {
-        return _queueName;
-    }
 
     virtual void handle( ) override;
 
