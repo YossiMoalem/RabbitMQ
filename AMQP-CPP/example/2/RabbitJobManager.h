@@ -5,6 +5,7 @@
 #include "BlockingQueue.h"
 #include "AMQPConnectionHandler.h"
 #include "Heartbeat.h"
+#include "ConnectionState.h"
 
 namespace AMQP {
 
@@ -21,7 +22,7 @@ class RabbitJobManager
    void startEventLoop( );
    void stopEventLoop( bool immediate );
    void stopEventLoop( bool immediate,
-           RabbitMessageBase::DeferedResultSetter returnValueSetter );
+           DeferedResultSetter returnValueSetter );
    bool connect(const AMQPConnectionDetails & connectionParams );
    bool canHandleMessage() const;
    void handleTimeout();
@@ -31,6 +32,7 @@ class RabbitJobManager
    AMQPConnectionHandler * connectionHandler(){ return _connectionHandler; }
 
  private:
+   ConnectionState                      _connectionState;
    BlockingQueue<RabbitMessageBase * >  _jobQueue;
    AMQPEventLoop *                      _eventLoop;
    AMQPConnectionHandler *              _connectionHandler;

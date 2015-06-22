@@ -10,8 +10,8 @@
 #define QUEUE "YossiQueue"
 
 #define RABBIT_PORT 5672
-#define RABBIT_IP1 "184.73.205.221"
-#define RABBIT_IP2 "184.169.148.90"
+#define RABBIT_IP2 "184.73.205.221"
+#define RABBIT_IP1 "184.169.148.90"
 #define USER "yossi"
 #define PASSWORD "yossipassword"
 
@@ -62,10 +62,10 @@ void runConsumer()
             std::cout <<"Error binding queue" <<std::endl;
             exit( 1 );
         }
-//        sleep( 5 );
+        //        sleep( 5 );
         //amqpClient.stop( false );
-        eventLoop.join();
     }
+    eventLoop.join();
 }
 
 void runProducer()
@@ -100,8 +100,8 @@ void runProducer()
         std::cout <<"Calling stop" <<std::endl;
         amqpClient.stop(false);
         std::cout <<"stoped" <<std::endl;
-        eventLoop.join();
     }
+    eventLoop.join();
 }
 
 #define showUsage \

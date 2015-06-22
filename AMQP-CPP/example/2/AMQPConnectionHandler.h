@@ -8,6 +8,7 @@
 #include "AMQPSocket.h"
 
 #include "RabbitOperation.h"
+#include "ConnectionState.h"
 
 namespace AMQP {
 class AMQPConnectionDetails;
@@ -17,7 +18,8 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
     friend class Heartbeat;
  public:
 
-   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) ;
+   AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB,
+           ConnectionState & connectionState ) ;
 
    virtual ~AMQPConnectionHandler ();
 
@@ -25,32 +27,32 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
            const std::string & message, 
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+           DeferedResultSetter operationSucceeded ) const;
 
    void doBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey,  
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+           DeferedResultSetter operationSucceeded ) const;
 
    void doUnBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey, 
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+           DeferedResultSetter operationSucceeded ) const;
 
    void declareExchange( const std::string & exchangeName, 
            ExchangeType type, 
            bool durable,
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+           DeferedResultSetter operationSucceeded ) const;
 
    void declareQueue( const std::string & queueName, 
            bool durable, 
            bool exclusive, 
            bool autoDelete,
-           RabbitMessageBase::DeferedResultSetter operationSucceeded ) const;
+           DeferedResultSetter operationSucceeded ) const;
 
    void login( const std::string & userName, 
            const std::string & password,
-           RabbitMessageBase::DeferedResultSetter operationSucceeded );
+           DeferedResultSetter operationSucceeded );
 
    bool handleInput( );
    bool handleOutput( );
@@ -82,7 +84,7 @@ class AMQPConnectionHandler : private AMQP::ConnectionHandler, boost::noncopyabl
    std::function<int( const AMQP::Message& )> _onMsgReceivedBC;
    SmartBuffer                      _incomingMessages;
    SmartBuffer                      _outgoingBuffer;
-   RabbitMessageBase::DeferedResultSetter _loginValueSetter;
+   ConnectionState &                _connectionState;
 };
 
 } //namespace AMQP

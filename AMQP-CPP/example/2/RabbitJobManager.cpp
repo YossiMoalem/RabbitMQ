@@ -5,7 +5,8 @@
 namespace AMQP {
 
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB ) ),
+    _connectionState( [ this] () { stopEventLoop( true ); } ),
+    _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB, _connectionState ) ),
     _heartbeat( _connectionHandler )
     {}
 
@@ -39,12 +40,12 @@ void RabbitJobManager::startEventLoop()
 
 void RabbitJobManager::stopEventLoop( bool immediate )
 {
-    RabbitMessageBase::DeferedResultSetter emptySetter;
+    DeferedResultSetter emptySetter;
     stopEventLoop( immediate, emptySetter );
 }
 
 void RabbitJobManager::stopEventLoop( bool immediate,
-    RabbitMessageBase::DeferedResultSetter returnValueSetter )
+    DeferedResultSetter returnValueSetter )
 {
     if( immediate )
     {

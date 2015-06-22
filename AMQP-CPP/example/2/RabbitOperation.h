@@ -9,6 +9,7 @@ namespace AMQP {
 class RabbitJobManager;
 
 typedef std::future< bool > DeferedResult;
+typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
 
 /********************************************************************************\
  * RabbitMessageBase
@@ -16,7 +17,6 @@ typedef std::future< bool > DeferedResult;
 class RabbitMessageBase
 {
  public:
-   typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
 
     RabbitMessageBase( ):
         _returnValueSetter( new std::promise< bool > )
