@@ -19,6 +19,7 @@ class Heartbeat : boost::noncopyable
  private:
    AMQPConnectionHandler *  _connectionHandler;
    bool                     _initialized = false;
+   bool                     _initializeCalled = false;
    bool                     _heartbeatSent = false;
 
 };

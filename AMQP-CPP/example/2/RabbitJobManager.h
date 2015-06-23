@@ -25,7 +25,7 @@ class RabbitJobManager
    bool connect(const AMQPConnectionDetails & connectionParams );
    bool canHandleMessage() const;
    void handleTimeout();
-   bool handleInput()       { return _connectionHandler->handleInput();  }
+   bool handleInput()       { _heartbeat.reset(); return _connectionHandler->handleInput();  }
    bool handleOutput()      { return _connectionHandler->handleOutput(); }
    bool pendingSend()       { return _connectionHandler->pendingSend();  }
    AMQPConnectionHandler * connectionHandler(){ return _connectionHandler; }

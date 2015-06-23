@@ -15,7 +15,7 @@ class ConnectionState : boost::noncopyable
        _onDisconnectCB( onDisconnectCB )
     {}
 
-   void disconnected()
+   bool disconnected()
    {
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
@@ -28,27 +28,42 @@ class ConnectionState : boost::noncopyable
            _disconnectResultSetter->set_value( true );
            _disconnectResultSetter.reset();
        }
-       _onDisconnectCB();
-       _currentConnectionState = CurrentConnectionState::SocketConnecting;
+       if( _currentConnectionState != CurrentConnectionState::Disconnected && 
+               _currentConnectionState != CurrentConnectionState::SocketConnecting )
+       {
+           _onDisconnectCB();
+           _currentConnectionState = CurrentConnectionState::Disconnected;
+           return true;
+       } else {
+           return false;
+       }
    }
 
-   void socketConnecting()
+   bool socketConnecting()
    {
        _currentConnectionState = CurrentConnectionState::SocketConnecting;
+       return true;
    }
 
-   void socketConnected()
+   bool socketConnected()
    {
        _currentConnectionState = CurrentConnectionState::SocketConnected;
+       return true;
    }
 
-   void loggingIn( DeferedResultSetter loginResultSetter )
+   bool loggingIn( DeferedResultSetter loginResultSetter )
    {
-       _currentConnectionState = CurrentConnectionState::LoggingIn;
-       _loginResultSetter = loginResultSetter;
+       if( _currentConnectionState != CurrentConnectionState::LoggingIn )
+       {
+           _currentConnectionState = CurrentConnectionState::LoggingIn;
+           _loginResultSetter = loginResultSetter;
+           return true;
+       } else {
+           return false;
+       }
    }
 
-   void loggedIn()
+   bool loggedIn()
    {
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
@@ -56,16 +71,25 @@ class ConnectionState : boost::noncopyable
            _loginResultSetter.reset();
        }
        _currentConnectionState = CurrentConnectionState::LoggedIn;
+       return true;
    }
 
-   void disconnecting( DeferedResultSetter disconnectResultSetter )
+   bool disconnecting( DeferedResultSetter disconnectResultSetter )
    {
        
        if( _currentConnectionState != CurrentConnectionState::Disconnecting )
        {
            _disconnectResultSetter = disconnectResultSetter;
-           _currentConnectionState = CurrentConnectionState::Disconnecting;
        }
+       _currentConnectionState = CurrentConnectionState::Disconnecting;
+       return true;
+   }
+
+   bool isConnected()
+   { 
+       return ( _currentConnectionState != CurrentConnectionState::Disconnecting &&
+               _currentConnectionState != CurrentConnectionState::Disconnected &&
+               _currentConnectionState != CurrentConnectionState::SocketConnecting );
    }
 
  private:

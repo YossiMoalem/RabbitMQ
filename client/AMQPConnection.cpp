@@ -42,7 +42,7 @@ ReturnStatus AMQPConnection::connectLoop()
                     connectionDetails ) );
         //TODO: wait on some condition till we are either connected or failed to connect...
         //Or, better, move the bellow into CB
-        sleep(1);
+        sleep(3);
         std::future< bool > loginStatus = _connectionHandler.login( connectionDetails );
         loginStatus.wait();
         //TODO: currently the login returns false if it cant create socket (e.g internet down)

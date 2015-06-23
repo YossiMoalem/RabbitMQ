@@ -5,7 +5,7 @@
 namespace AMQP {
 
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
-    _connectionState( [ this] () { terminate( ); } ),
+    _connectionState( [ this ] () { terminate( ); } ),
     _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB, _connectionState ) ),
     _heartbeat( _connectionHandler )
     {}
@@ -17,9 +17,19 @@ RabbitJobManager::~RabbitJobManager( )
 
 DeferedResult RabbitJobManager::addJob ( RabbitMessageBase * job )
 {
-    job->setHandler( this );
+    //This is a sort of way to check if the event loop has started.
+    //Need a nicer way. 
+    //e.g. from connected to start the EL
+    //which also answer my question, who should start the EL, the client or the manager.
+    //The answer is, two are fighting, the third gets it.
     auto result = job->deferedResult();
+    if( _connectionState.isConnected() )
+    {
+    job->setHandler( this );
     _jobQueue.push( job );
+    } else {
+        job->resultSetter()->set_value( false );
+    }
     return result;
 }
 bool RabbitJobManager::connect(const AMQPConnectionDetails & connectionParams )

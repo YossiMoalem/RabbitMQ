@@ -94,8 +94,9 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
         delete _channel;
     _channel = new AMQP::Channel( _connection );
 
-    _channel->onError([](const char *message) {
+    _channel->onError([ this ](const char *message) {
             std::cout << "channel error " << message << std::endl;
+            _connectionState.disconnected();
             });
 
     //TODO: 
@@ -134,22 +135,27 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
     //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
     std::cout <<"(onError)Error: "<< message <<std::endl;
-    //TODO: terminate eveything
     _connectionState.disconnected();
 }
 
 void AMQPConnectionHandler::onClosed(AMQP::Connection *connection) 
 {
     std::cout <<"Info: Connection Closed"<< std::endl;
+    _connectionState.disconnected();
 }
 
 void AMQPConnectionHandler::login( const std::string & userName,
         const std::string & password,
         DeferedResultSetter operationSucceeded )
 {
-    Login login( userName, password );
-    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
-    _connectionState.loggingIn( operationSucceeded );
+    bool canStartLoggingIn = _connectionState.loggingIn( operationSucceeded );
+    if( canStartLoggingIn )
+    {
+        Login login( userName, password );
+        _connection = new AMQP::Connection(this, login, std::string( "/" ) );
+    } else {
+        operationSucceeded->set_value( false );
+    }
 }
 
 void AMQPConnectionHandler::declareQueue( const std::string & queueName, 
@@ -205,13 +211,16 @@ void AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
 
 bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionParams )
 {
+    _connectionState.socketConnecting();
     _incomingMessages.clear();
     _outgoingBuffer.clear();
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
+        _connectionState.disconnected();
         std::cout <<"Error creating socket" <<std::endl;
         return false;
     } else {
+        _connectionState.socketConnected();
         return true;
     }
 }

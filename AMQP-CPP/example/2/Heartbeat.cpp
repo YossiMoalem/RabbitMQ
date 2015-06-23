@@ -36,20 +36,29 @@ void Heartbeat::initialize()
 
 bool Heartbeat::send( )
 {
-    if ( _heartbeatSent )
+    if ( ! _initialized )
     {
-        return false;
+        if( ! _initializeCalled )
+        {
+            _initializeCalled = true;
+            initialize();
+            return true;
+        } else {
+            return false;
+        }
     }
-    if ( _initialized )
+    if ( ! _heartbeatSent )
     {
         _connectionHandler->_channel->publish( AdminExchangeName, AdminQueueName, AdminRoutingKey );
-    } else {
-        initialize() ;
-    }
-    return true;
+        _heartbeatSent = true;
+        return true;
+    } 
+    return false;
 }
 void Heartbeat::invalidate()
 {
+    _heartbeatSent = false;
+    _initializeCalled = false;
     _initialized = false;
 }
 
