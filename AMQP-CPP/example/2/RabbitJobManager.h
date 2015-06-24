@@ -1,7 +1,7 @@
 #ifndef RABBIT_JOB_MANAGER
 #define RABBIT_JOB_MANAGER
 
-#include "RabbitOperation.h"
+#include "ResultCodes.h"
 #include "BlockingQueue.h"
 #include "AMQPConnectionHandler.h"
 #include "Heartbeat.h"
@@ -12,6 +12,7 @@
 namespace AMQP {
 
 class AMQPConnectionDetails;
+class RabbitMessageBase;
 class AMQPEventLoop;
 
 class RabbitJobManager

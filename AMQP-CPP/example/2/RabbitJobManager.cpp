@@ -1,6 +1,7 @@
 #include "RabbitJobManager.h"
 #include "AMQPConnectionDetails.h"
 #include "AMQPEventLoop.h"
+#include "RabbitOperation.h"
 
 namespace AMQP {
 

@@ -1,5 +1,6 @@
 #include "AMQPClient.h"
 #include "AMQPConnectionHandler.h"
+#include "RabbitOperation.h"
 
 namespace AMQP {
 

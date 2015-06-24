@@ -15,9 +15,6 @@
 #define USER "yossi"
 #define PASSWORD "yossipassword"
 
-//TODO: remove
-#include "RabbitOperation.h"
-
 using namespace AMQP;
 
 void runConsumer()

@@ -4,12 +4,10 @@
 #include <amqpcpp.h>
 #include "RabbitJobManager.h"
 #include "AMQPConnectionDetails.h"
+#include "ResultCodes.h"
 
 #include <boost/noncopyable.hpp>
 #include <future>
-
-//TODO: 
-#include "RabbitOperation.h"
 
 namespace AMQP {
 

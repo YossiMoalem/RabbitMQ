@@ -1,16 +1,13 @@
 #ifndef RABBIT_MESSAGE_H
 #define RABBIT_MESSAGE_H
 
-#include <memory>
-#include <future>
 #include <amqpcpp.h>
+
+#include "ResultCodes.h"
 
 namespace AMQP {
 class RabbitJobManager;
 
-typedef std::future< bool >                     DeferedResult;
-typedef std::shared_ptr< std::promise< bool > > DeferedResultSetter;
-#define dummyResultSetter nullptr
 
 /********************************************************************************\
  * RabbitMessageBase

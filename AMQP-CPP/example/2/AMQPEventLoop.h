@@ -4,13 +4,12 @@
 #include <functional>
 #include <memory>
 
-#include "RabbitOperation.h"
-
 namespace AMQP {
 
 template < typename T >
     class BlockingQueue;
 class RabbitMessageBase;
+class RabbitJobManager;
 
 class Message;
 

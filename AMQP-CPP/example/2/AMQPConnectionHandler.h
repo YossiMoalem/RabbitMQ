@@ -7,7 +7,7 @@
 #include <amqpcpp.h>
 #include "AMQPSocket.h"
 
-#include "RabbitOperation.h"
+#include "ResultCodes.h"
 #include "ConnectionState.h"
 
 namespace AMQP {

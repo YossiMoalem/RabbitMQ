@@ -1,7 +1,7 @@
 #ifndef CONNECTION_STATE_H
 #define CONNECTION_STATE_H
 
-#include "RabbitOperation.h"
+#include "ResultCodes.h"
 
 #include <assert.h>
 #include <boost/noncopyable.hpp>
