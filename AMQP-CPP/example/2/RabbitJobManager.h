@@ -7,6 +7,8 @@
 #include "Heartbeat.h"
 #include "ConnectionState.h"
 
+#include <thread>
+
 namespace AMQP {
 
 class AMQPConnectionDetails;
@@ -19,26 +21,28 @@ class RabbitJobManager
    ~RabbitJobManager( );
 
    DeferedResult addJob ( RabbitMessageBase * job );
-   void startEventLoop( );
+   bool start( const AMQPConnectionDetails & connectionParams );
    void stopEventLoop( bool immediate,
            DeferedResultSetter returnValueSetter );
-   bool connect(const AMQPConnectionDetails & connectionParams );
    bool canHandleMessage() const;
    void handleTimeout();
    bool handleInput()       { _heartbeat.reset(); return _connectionHandler->handleInput();  }
    bool handleOutput()      { return _connectionHandler->handleOutput(); }
    bool pendingSend()       { return _connectionHandler->pendingSend();  }
    AMQPConnectionHandler * connectionHandler(){ return _connectionHandler; }
+   void waitForDisconnection();
 
  protected:
    void terminate( );
+   void startEventLoop( const AMQPConnectionDetails & connectionParamsm, DeferedResultSetter connectedReturnValueSetter );
 
  private:
    ConnectionState                      _connectionState;
    BlockingQueue<RabbitMessageBase * >  _jobQueue;
-   AMQPEventLoop *                      _eventLoop;
    AMQPConnectionHandler *              _connectionHandler;
    Heartbeat                            _heartbeat;
+   AMQPEventLoop *                      _eventLoop;
+   std::thread                          _eventLoopThread;
 
    static const int  _outgoingBufferHighWatermark = 4096;
 };

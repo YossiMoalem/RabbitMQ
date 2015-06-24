@@ -8,6 +8,9 @@ namespace AMQP {
 struct AMQPConnectionDetails
 {
  public:
+   AMQPConnectionDetails()
+   {}
+
    AMQPConnectionDetails(const std::string& i_userName,
            const std::string& i_password,
            const std::string& i_host,

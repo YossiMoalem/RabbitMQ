@@ -8,26 +8,22 @@
 namespace AMQP {
 
 AMQPEventLoop::AMQPEventLoop( BlockingQueue<RabbitMessageBase * >  * jobQueue,
-        RabbitJobManager * handler,
-        int queueEventFD,
-        int brokerReadFD,
-        int brokerWriteFD ):
+        RabbitJobManager * handler ) :
     _handler( handler),
-    _jobQueue( jobQueue ),
-    _queueEventFD( queueEventFD ),
-    _brokerReadFD( brokerReadFD ),
-    _brokerWriteFD( brokerWriteFD )
+    _jobQueue( jobQueue )
 { }
 
-int AMQPEventLoop::start()
+int AMQPEventLoop::start( int queueEventFD,
+        int  brokerReadFD ,
+        int  brokerWriteFD )
 {
     _stop = false;
     std::cout <<"Eventloop unleashed! "<<std::endl;
 
     fd_set readFdSet;
     fd_set writeFdSet;
-    int maxFD =  std::max( _queueEventFD, 
-            std::max( _brokerWriteFD, _brokerReadFD ) ) + 1;
+    int maxFD =  std::max( queueEventFD, 
+            std::max( brokerWriteFD, brokerReadFD ) ) + 1;
 
     timeval heartbeatIdenInterval;
     heartbeatIdenInterval.tv_sec = 15;
@@ -37,30 +33,30 @@ int AMQPEventLoop::start()
     {
         FD_ZERO( & readFdSet );
         FD_ZERO( & writeFdSet );
-        FD_SET( _brokerReadFD, & readFdSet );
+        FD_SET( brokerReadFD, & readFdSet );
         if( _handler->canHandleMessage() )
         {
-            FD_SET( _queueEventFD, & readFdSet );
+            FD_SET( queueEventFD, & readFdSet );
         }
         if( _handler->pendingSend() )
         {
-            FD_SET( _brokerWriteFD, & writeFdSet );
+            FD_SET( brokerWriteFD, & writeFdSet );
         }
 
         int res = select( maxFD, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
         if( res > 0 )
         {
-            if( FD_ISSET( _brokerReadFD, & readFdSet ) )
+            if( FD_ISSET( brokerReadFD, & readFdSet ) )
             {
                 _handleInput();
                 _resetTimeout( heartbeatIdenInterval );
             }
-            if( FD_ISSET( _queueEventFD, & readFdSet ) )
+            if( FD_ISSET( queueEventFD, & readFdSet ) )
             {
                 _handleQueue();
             }
 
-            if( FD_ISSET( _brokerWriteFD, & writeFdSet ) )
+            if( FD_ISSET( brokerWriteFD, & writeFdSet ) )
             {
                 _handleOutput();
             }

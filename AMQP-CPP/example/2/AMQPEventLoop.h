@@ -18,11 +18,11 @@ class AMQPEventLoop
 {
  public:
    AMQPEventLoop( BlockingQueue< RabbitMessageBase * > * jobQueue, 
-           RabbitJobManager *   connectionHandler,
-           int                  queueEventFD,
-           int                  brokerReadFD,
-           int                  brokerWriteFD );
-   int start();
+           RabbitJobManager *   connectionHandler );
+
+   int start( int queueEventFD,
+           int  brokerReadFD,
+           int  brokerWriteFD );
    void stop();
 
  private:
@@ -35,9 +35,6 @@ class AMQPEventLoop
    volatile bool                            _stop = false;
    RabbitJobManager *                       _handler;
    BlockingQueue<RabbitMessageBase * > *    _jobQueue;
-   int                                      _queueEventFD;
-   int                                      _brokerReadFD ;
-   int                                      _brokerWriteFD;
 };
 
 } //namespace AMQP

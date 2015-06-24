@@ -3,6 +3,7 @@
 
 #include "RabbitOperation.h"
 
+#include <assert.h>
 #include <boost/noncopyable.hpp>
 
 namespace AMQP{
@@ -32,11 +33,9 @@ class ConnectionState : boost::noncopyable
                _currentConnectionState != CurrentConnectionState::SocketConnecting )
        {
            _onDisconnectCB();
-           _currentConnectionState = CurrentConnectionState::Disconnected;
-           return true;
-       } else {
-           return false;
        }
+       _currentConnectionState = CurrentConnectionState::Disconnected;
+       return true;
    }
 
    bool socketConnecting()
@@ -76,20 +75,17 @@ class ConnectionState : boost::noncopyable
 
    bool disconnecting( DeferedResultSetter disconnectResultSetter )
    {
-       
+       if( _currentConnectionState == CurrentConnectionState::LoggingIn )
+       {
+           assert( disconnectResultSetter == dummyResultSetter);
+           return true;
+       }
        if( _currentConnectionState != CurrentConnectionState::Disconnecting )
        {
            _disconnectResultSetter = disconnectResultSetter;
        }
        _currentConnectionState = CurrentConnectionState::Disconnecting;
        return true;
-   }
-
-   bool isConnected()
-   { 
-       return ( _currentConnectionState != CurrentConnectionState::Disconnecting &&
-               _currentConnectionState != CurrentConnectionState::Disconnected &&
-               _currentConnectionState != CurrentConnectionState::SocketConnecting );
    }
 
  private:

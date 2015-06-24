@@ -79,7 +79,7 @@ class AMQPSocket : boost::noncopyable
         ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
-//            return false;
+            std::cout <<"Send failed with errno: " <<errno <<std::endl;
             //TODO: throw a real AMQPException
             throw "Socket down?";
         }

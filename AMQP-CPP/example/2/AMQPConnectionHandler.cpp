@@ -148,14 +148,9 @@ void AMQPConnectionHandler::login( const std::string & userName,
         const std::string & password,
         DeferedResultSetter operationSucceeded )
 {
-    bool canStartLoggingIn = _connectionState.loggingIn( operationSucceeded );
-    if( canStartLoggingIn )
-    {
-        Login login( userName, password );
-        _connection = new AMQP::Connection(this, login, std::string( "/" ) );
-    } else {
-        operationSucceeded->set_value( false );
-    }
+    _connectionState.loggingIn( operationSucceeded );
+    Login login( userName, password );
+    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
 }
 
 void AMQPConnectionHandler::declareQueue( const std::string & queueName, 

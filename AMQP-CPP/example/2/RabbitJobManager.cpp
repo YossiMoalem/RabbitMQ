@@ -7,45 +7,53 @@ namespace AMQP {
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
     _connectionState( [ this ] () { terminate( ); } ),
     _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB, _connectionState ) ),
-    _heartbeat( _connectionHandler )
+    _heartbeat( _connectionHandler ),
+    _eventLoop( new AMQPEventLoop( &_jobQueue,
+            this ) )
     {}
 
 RabbitJobManager::~RabbitJobManager( )
 {
     delete _connectionHandler;
+    delete _eventLoop;
 }
 
 DeferedResult RabbitJobManager::addJob ( RabbitMessageBase * job )
 {
-    //This is a sort of way to check if the event loop has started.
-    //Need a nicer way. 
-    //e.g. from connected to start the EL
-    //which also answer my question, who should start the EL, the client or the manager.
-    //The answer is, two are fighting, the third gets it.
     auto result = job->deferedResult();
-    if( _connectionState.isConnected() )
-    {
     job->setHandler( this );
     _jobQueue.push( job );
-    } else {
-        job->resultSetter()->set_value( false );
-    }
     return result;
 }
-bool RabbitJobManager::connect(const AMQPConnectionDetails & connectionParams )
+
+bool RabbitJobManager::start( const AMQPConnectionDetails & connectionParams )
 {
-    bool connected =_connectionHandler->connect( connectionParams );
+    DeferedResultSetter connectedReturnValueSetter( new std::promise< bool > );
+    auto connectedReturnValue =  connectedReturnValueSetter->get_future();
+    _eventLoopThread = std::thread( std::bind( &RabbitJobManager::startEventLoop, this, 
+                connectionParams, connectedReturnValueSetter ) );
+    connectedReturnValue.wait();
+    bool connected = connectedReturnValue.get();
+    if ( !connected )
+    {
+        _eventLoopThread.detach();
+    }
+    connectedReturnValueSetter.reset();
     return connected;
 }
 
-void RabbitJobManager::startEventLoop()
+void RabbitJobManager::startEventLoop( const AMQPConnectionDetails & connectionParams, 
+        DeferedResultSetter connectedReturnValueSetter )
 {
-    _eventLoop = new AMQPEventLoop( &_jobQueue,
-            this,
-            _jobQueue.getFD(),
-            _connectionHandler->getReadFD(),
-            _connectionHandler->getWriteFD() );
-    _eventLoop->start();
+    bool connected =_connectionHandler->connect( connectionParams );
+    connectedReturnValueSetter->set_value( connected );
+    if( connected )
+    {
+        _eventLoop->start(
+                _jobQueue.getFD(),
+                _connectionHandler->getReadFD(),
+                _connectionHandler->getWriteFD() );
+    }
 }
 
 void RabbitJobManager::stopEventLoop( bool immediate,
@@ -64,7 +72,7 @@ void RabbitJobManager::stopEventLoop( bool immediate,
 
 bool RabbitJobManager::canHandleMessage() const
 {
-    return _connectionHandler->outgoingBufferSize() < _outgoingBufferHighWatermark;
+    return _connectionHandler->outgoingBufferSize() < _outgoingBufferHighWatermark; 
 }
 
 void RabbitJobManager::handleTimeout()
@@ -82,4 +90,9 @@ void RabbitJobManager::terminate()
     _connectionHandler->closeSocket();
 }
 
+
+void RabbitJobManager::waitForDisconnection()
+{
+    _eventLoopThread.join();
+}
 } //namespace AMQP

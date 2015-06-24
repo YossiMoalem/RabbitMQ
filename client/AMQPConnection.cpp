@@ -24,7 +24,6 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
 
 ReturnStatus AMQPConnection::start()
 {
-//    _startLoopThread = std::thread( std::bind( &AMQP::AMQPClient::connectLoop, this ) );
     _startLoopThread = std::thread( std::bind( &AMQPConnection::connectLoop, this ) );
     return ReturnStatus::Ok;
 }
@@ -36,69 +35,67 @@ ReturnStatus AMQPConnection::connectLoop()
     {
         std::cout << "started AMQPConnection::connectLoop() " << std::endl;
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
-        std::thread eventLoopThread = std::thread( std::bind( 
-                    &AMQP::AMQPClient::connect, 
-                    &_connectionHandler, 
-                    connectionDetails ) );
-        //TODO: wait on some condition till we are either connected or failed to connect...
-        //Or, better, move the bellow into CB
-        sleep(3);
-        std::future< bool > loginStatus = _connectionHandler.login( connectionDetails );
-        loginStatus.wait();
-        //TODO: currently the login returns false if it cant create socket (e.g internet down)
-        //but it will not return false if the credentials are wrong. we should catch it somehow
-        if (! loginStatus.get() )
-        {
-            std::cout <<"Login failed. Disconnecting..."<<std::endl;
-        } else {
-            std::future_status status;
-            std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
-                    _exchangeName, 
-                    AMQP::topic, 
-                    false );
-            status = declareExchangeResult.wait_for(std::chrono::seconds(10));
-            if( ! ( status == std::future_status::ready && declareExchangeResult.get() ) )
-            {
-                _connectionHandler.stop( true );
-                std::cout << "error declaring exchange" <<std::endl;
-            } else {
-                std::cout << "exchange declared" <<std::endl;
 
-                // TODO: change to exclusive (_queueName, false, true, false)
-                std::future< bool > declareQueueResult = _connectionHandler.declareQueue(
-                        _queueName, 
-                        false, 
-                        false,
-                        true );
-                status = declareQueueResult.wait_for(std::chrono::seconds(10));
-                if( ! ( status == std::future_status::ready && declareQueueResult.get() ) )
+        bool connected = _connectionHandler.init( connectionDetails );
+        if ( connected )
+        {
+            std::future< bool > loginStatus = _connectionHandler.login();
+            loginStatus.wait();
+            //TODO: currently the login returns false if it cant create socket (e.g internet down)
+            //but it will not return false if the credentials are wrong. we should catch it somehow
+            if (! loginStatus.get() )
+            {
+                std::cout <<"Login failed. Disconnecting..."<<std::endl;
+            } else {
+                std::future_status status;
+                std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
+                        _exchangeName, 
+                        AMQP::topic, 
+                        false );
+                status = declareExchangeResult.wait_for(std::chrono::seconds(10));
+                if( ! ( status == std::future_status::ready && declareExchangeResult.get() ) )
                 {
                     _connectionHandler.stop( true );
-                    std::cout << "error declaring queue" <<std::endl;
+                    std::cout << "error declaring exchange" <<std::endl;
                 } else {
-                    std::cout << "queue declared" <<std::endl;
-                    //            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-                    //            status = bindResult.wait_for(std::chrono::seconds(5));
-                    //            if( status == std::future_status::ready && bindResult.get() )
-                    //            {
-                    //                std::cout << "queue binded" <<std::endl;
-                    //            } else {
-                    //                std::cout << "error binding queue" <<std::endl;
-                    //                sleep( 3 );
-                    //                continue;
-                    //            }
-                    _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-                    rebind();
-                    _isConnected = true;
-                    std::cout << "CONNECTED" << std::endl;
-                    _connectionDetails.reset();
+                    std::cout << "exchange declared" <<std::endl;
+
+                    // TODO: change to exclusive (_queueName, false, true, false)
+                    std::future< bool > declareQueueResult = _connectionHandler.declareQueue(
+                            _queueName, 
+                            false, 
+                            false,
+                            true );
+                    status = declareQueueResult.wait_for(std::chrono::seconds(10));
+                    if( ! ( status == std::future_status::ready && declareQueueResult.get() ) )
+                    {
+                        _connectionHandler.stop( true );
+                        std::cout << "error declaring queue" <<std::endl;
+                    } else {
+                        std::cout << "queue declared" <<std::endl;
+                        //            std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+                        //            status = bindResult.wait_for(std::chrono::seconds(5));
+                        //            if( status == std::future_status::ready && bindResult.get() )
+                        //            {
+                        //                std::cout << "queue binded" <<std::endl;
+                        //            } else {
+                        //                std::cout << "error binding queue" <<std::endl;
+                        //                sleep( 3 );
+                        //                continue;
+                        //            }
+                        _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+                        rebind();
+                        _isConnected = true;
+                        std::cout << "CONNECTED" << std::endl;
+                        _connectionDetails.reset();
+                    }
                 }
             }
+            _connectionHandler.waitForDisconnection(); 
         }
-        eventLoopThread.join();
         _isConnected = false;
         std::cout << "DISCONNECTED" << std::endl;
-        sleep(1);
+        sleep(2);
     }
     return ReturnStatus::Ok;
 }

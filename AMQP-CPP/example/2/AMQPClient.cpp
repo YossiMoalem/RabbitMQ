@@ -1,5 +1,4 @@
 #include "AMQPClient.h"
-#include "AMQPConnectionDetails.h"
 #include "AMQPConnectionHandler.h"
 
 namespace AMQP {
@@ -8,15 +7,10 @@ AMQPClient::AMQPClient( OnMessageReveivedCB onMsgReceivedCB ):
     _jobManager( onMsgReceivedCB )
 {}
 
-int AMQPClient::connect( const AMQPConnectionDetails & connectionParams )
+bool AMQPClient::init( const AMQPConnectionDetails & connectionParams )
 {
-    bool connected = _jobManager.connect( connectionParams );
-    if ( connected )
-    {
-        _jobManager.startEventLoop();
-        return 0;
-    }
-    return 3;
+    _connectionParams = connectionParams;
+    return _jobManager.start( connectionParams );
 }
 
 DeferedResult AMQPClient::publish( const std::string & exchangeName, 
@@ -55,11 +49,10 @@ DeferedResult AMQPClient::stop( bool immediate )
     return _jobManager.addJob( stopMessage );
 }
 
-DeferedResult AMQPClient::login( const AMQPConnectionDetails & connectionParams )
+DeferedResult AMQPClient::login()
 {
-    //TODO: wait (?) for event loop to start, or indicate it is not started in some way
-    LoginMessage * loginMessage = new LoginMessage( connectionParams._userName, 
-            connectionParams._password );
+    LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
+            _connectionParams._password );
     return _jobManager.addJob( loginMessage);
 }
 
@@ -84,5 +77,11 @@ DeferedResult AMQPClient::declareQueue( const std::string & queueName,
             autoDelete );
     return _jobManager.addJob( declareQueueMessage );
 }
+
+void AMQPClient::waitForDisconnection()
+{
+    _jobManager.waitForDisconnection();
+}
+
 } //namespace AMQP
 

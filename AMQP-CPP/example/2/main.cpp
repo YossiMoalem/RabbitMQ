@@ -26,9 +26,8 @@ void runConsumer()
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
-    std::thread eventLoop = std::thread( std::bind( &AMQPClient::connect, &amqpClient, connectionDetails) );
-    sleep(1);
-    DeferedResult loginStatus = amqpClient.login( connectionDetails );
+    amqpClient.init( connectionDetails );
+    DeferedResult loginStatus = amqpClient.login();
     loginStatus.wait();
     if ( loginStatus.get() )
     {
@@ -65,16 +64,15 @@ void runConsumer()
         //        sleep( 5 );
         //amqpClient.stop( false );
     }
-    eventLoop.join();
+    amqpClient.waitForDisconnection();
 }
 
 void runProducer()
 {
     AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
     AMQPClient amqpClient( nullptr );
-    std::thread eventLoop = std::thread( std::bind( &AMQPClient::connect, &amqpClient, connectionDetails ) );
-    sleep(1);
-    DeferedResult loginStatus = amqpClient.login( connectionDetails );
+    amqpClient.init( connectionDetails );
+    DeferedResult loginStatus = amqpClient.login();
     loginStatus.wait();
     if ( loginStatus.get() )
     {
@@ -101,7 +99,7 @@ void runProducer()
         amqpClient.stop(false);
         std::cout <<"stoped" <<std::endl;
     }
-    eventLoop.join();
+    amqpClient.waitForDisconnection();
 }
 
 #define showUsage \

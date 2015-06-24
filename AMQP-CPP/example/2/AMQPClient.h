@@ -3,6 +3,7 @@
 
 #include <amqpcpp.h>
 #include "RabbitJobManager.h"
+#include "AMQPConnectionDetails.h"
 
 #include <boost/noncopyable.hpp>
 #include <future>
@@ -13,7 +14,6 @@
 namespace AMQP {
 
 class RabbitMessageBase;
-class AMQPConnectionDetails;
 class AMQPConnectionHandler;
 
 class AMQPClient : private boost::noncopyable
@@ -23,12 +23,9 @@ class AMQPClient : private boost::noncopyable
 
    AMQPClient( OnMessageReveivedCB onMsgReceivedCB );
 
-   //TODO: should keep the connection details from start!
-   //TODO: what if event loop is not started (say, did not manage to connect?)
-   //wait for it, or, better indicate upstream that it is not connected.
-   DeferedResult login( const AMQPConnectionDetails & connectionParams );
+   DeferedResult login();
 
-   int connect( const AMQPConnectionDetails & connectionParams );
+   bool init( const AMQPConnectionDetails & connectionParams );
 
    DeferedResult stop( bool immediate );
 
@@ -57,10 +54,12 @@ class AMQPClient : private boost::noncopyable
            const std::string & message ) const;
 
    bool connected() const;
+   void waitForDisconnection();
 
 
  private:
    mutable RabbitJobManager                     _jobManager;
+   AMQPConnectionDetails                        _connectionParams;
 
 };
 } //namespace AMQP
