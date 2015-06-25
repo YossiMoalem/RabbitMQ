@@ -35,7 +35,8 @@ class RabbitJobManager
 
  protected:
    void terminate( );
-   void startEventLoop( const AMQPConnectionDetails & connectionParamsm, DeferedResultSetter connectedReturnValueSetter );
+   void doStart( const AMQPConnectionDetails & connectionParamsm, 
+           DeferedResultSetter connectedReturnValueSetter );
 
  private:
    ConnectionState                      _connectionState;

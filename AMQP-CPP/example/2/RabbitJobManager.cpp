@@ -31,7 +31,7 @@ bool RabbitJobManager::start( const AMQPConnectionDetails & connectionParams )
 {
     DeferedResultSetter connectedReturnValueSetter( new std::promise< bool > );
     auto connectedReturnValue =  connectedReturnValueSetter->get_future();
-    _eventLoopThread = std::thread( std::bind( &RabbitJobManager::startEventLoop, this, 
+    _eventLoopThread = std::thread( std::bind( &RabbitJobManager::doStart, this, 
                 connectionParams, connectedReturnValueSetter ) );
     connectedReturnValue.wait();
     bool connected = connectedReturnValue.get();
@@ -43,7 +43,7 @@ bool RabbitJobManager::start( const AMQPConnectionDetails & connectionParams )
     return connected;
 }
 
-void RabbitJobManager::startEventLoop( const AMQPConnectionDetails & connectionParams, 
+void RabbitJobManager::doStart( const AMQPConnectionDetails & connectionParams, 
         DeferedResultSetter connectedReturnValueSetter )
 {
     bool connected =_connectionHandler->connect( connectionParams );

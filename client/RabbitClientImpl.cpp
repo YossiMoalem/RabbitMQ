@@ -1,18 +1,22 @@
 #include "RabbitClientImpl.h"
+#include "CallbackHandler.h"
 
-RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & i_connectionDetails, 
-        const std::string& i_exchangeName, 
-        const std::string& i_consumerID,
-        CallbackType        i_onMessageCB ) :
-    _AMQPConnection( i_connectionDetails, 
-            i_exchangeName, 
-            i_consumerID, 
-            createRoutingKey( i_consumerID, i_consumerID, DeliveryType::Unicast ),
+RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
+        const std::string& _exchangeName, 
+        const std::string& _consumerID,
+        CallbackType        _onMessageCB ) :
+    _AMQPConnection( _connectionDetails, 
+            _exchangeName, 
+            _consumerID, 
+            createRoutingKey( _consumerID, _consumerID, DeliveryType::Unicast ),
             [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
-    _exchangeName(i_exchangeName),
-    _queueName(i_consumerID),
-    _onMessageReceivedCB( i_onMessageCB )
-{}
+    _exchangeName(_exchangeName),
+    _queueName(_consumerID),
+    _callbackHandler( _onMessageCB )
+    //_onMessageReceivedCB( _onMessageCB )
+{
+    _callbackHandler.start();
+}
 
 ReturnStatus RabbitClientImpl::start()
 {
@@ -24,31 +28,31 @@ ReturnStatus RabbitClientImpl::stop( bool immediate )
     return _AMQPConnection.stop( immediate );
 }
 
-ReturnStatus RabbitClientImpl::sendMessage(const std::string& i_message, 
-        const std::string& i_destination, 
-        const std::string& i_senderID, 
-        DeliveryType i_deliveryType) const
+ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message, 
+        const std::string& _destination, 
+        const std::string& _senderID, 
+        DeliveryType _deliveryType) const
 {
-    std::string routingKey = createRoutingKey( i_senderID, i_destination, i_deliveryType);
-    std::string serializedMessage = serializePostMessage( i_senderID, i_destination,i_deliveryType, i_message );
+    std::string routingKey = createRoutingKey( _senderID, _destination, _deliveryType);
+    std::string serializedMessage = serializePostMessage( _senderID, _destination,_deliveryType, _message );
     return _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
 }
 
-ReturnStatus RabbitClientImpl::bind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus RabbitClientImpl::bind(const std::string& _key, DeliveryType _deliveryType)
 { 
-    std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
+    std::string routingKey = createRoutingKey( _key, _key, _deliveryType );
     return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
 }
 
-ReturnStatus RabbitClientImpl::unbind(const std::string& i_key, DeliveryType i_deliveryType)
+ReturnStatus RabbitClientImpl::unbind(const std::string& _key, DeliveryType _deliveryType)
 { 
-    std::string routingKey = createRoutingKey( i_key, i_key, i_deliveryType );
-  return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
+    std::string routingKey = createRoutingKey( _key, _key, _deliveryType );
+    return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
 }
 
 bool RabbitClientImpl::connected() const
 {
-  return _AMQPConnection.connected();
+    return _AMQPConnection.connected();
 }
 
  int RabbitClientImpl::onMessageReceived( const AMQP::Message & message ) const
@@ -58,7 +62,9 @@ bool RabbitClientImpl::connected() const
     DeliveryType deliveryType;
     std::string  text;
     deserializePostMessage( message.message(), sender,destination,deliveryType, text );
-    return  _onMessageReceivedCB( sender, destination, deliveryType, text );
+    _callbackHandler.addMessage( sender, destination, deliveryType, text );
+    return 0;
+   // return  _onMessageReceivedCB( sender, destination, deliveryType, text );
 }
 
 std::string RabbitClientImpl::serializePostMessage( const std::string & sender,

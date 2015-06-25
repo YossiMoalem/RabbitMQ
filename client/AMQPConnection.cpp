@@ -41,8 +41,6 @@ ReturnStatus AMQPConnection::connectLoop()
         {
             std::future< bool > loginStatus = _connectionHandler.login();
             loginStatus.wait();
-            //TODO: currently the login returns false if it cant create socket (e.g internet down)
-            //but it will not return false if the credentials are wrong. we should catch it somehow
             if (! loginStatus.get() )
             {
                 std::cout <<"Login failed. Disconnecting..."<<std::endl;
