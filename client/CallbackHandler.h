@@ -12,7 +12,8 @@ class CallbackHandler
 {
  public:
    CallbackHandler( CallbackType onMessageReceivedCB ) :
-       _onMessageReceivedCB( onMessageReceivedCB )
+       _onMessageReceivedCB( onMessageReceivedCB ),
+       _messageQueue( []( MessageData * message ) { delete message; } )
     {}
    void start();
    void stop();
@@ -44,9 +45,9 @@ class CallbackHandler
    void doStart();
 
  private:
-   CallbackType                     _onMessageReceivedCB;
-   AMQP::BlockingQueue< MessageData * >   _messageQueue;
-   std::thread                      _callbackThread;
+   CallbackType                         _onMessageReceivedCB;
+   AMQP::BlockingQueue< MessageData * > _messageQueue;
+   std::thread                          _callbackThread;
 
 };
 

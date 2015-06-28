@@ -7,6 +7,7 @@ namespace AMQP {
 
 RabbitJobManager::RabbitJobManager( std::function<int( const AMQP::Message& )> onMsgReceivedCB ) :
     _connectionState( [ this ] () { terminate( ); } ),
+    _jobQueue( []( RabbitMessageBase* message ) { delete message; } ),
     _connectionHandler( new AMQPConnectionHandler( onMsgReceivedCB, _connectionState ) ),
     _heartbeat( _connectionHandler ),
     _eventLoop( new AMQPEventLoop( &_jobQueue,

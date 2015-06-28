@@ -5,145 +5,149 @@
 #include <condition_variable>
 #include <mutex>
 #include <boost/noncopyable.hpp>
-#include <assert.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>             /* Definition of uint64_t */
 
 
-namespace{
-template< typename T >
-    void dispose( T t ) {}
-template< typename T >
-    void dispose( T * t )
-    {
-        delete t;
-    }
-}//namespace
-
 namespace AMQP
 {
+
+template< typename DataType >
+using DisposeMethod = std::function< void ( DataType d )> ;
+
+template< typename DataType >
+    class QueueImpl : public boost::noncopyable
+{
+ public:
+   QueueImpl() :
+       _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
+    {}
+
+   bool push( DataType & data, bool first )
+   {
+       if ( first )
+       {
+           _queue.push_front( data );
+       } else {
+           _queue.push_back( data );
+       }
+       uint64_t dummy = 1;
+       write( _eventFD, &dummy, sizeof( dummy ) );
+       return true;
+   }
+
+   bool pop( DataType & data )
+   {
+       if( _queue.empty() )
+       {
+           return false;
+       }
+
+       ssize_t dummy;
+       read( _eventFD, & dummy, sizeof( dummy ) );
+       data = _queue.front();
+       _queue.pop_front();
+       return true;
+   }
+
+   int getFD() const
+   {
+       return _eventFD;
+   }
+
+   bool empty() const
+   {
+       return _queue.empty();
+   }
+
+ private:
+   std::deque<DataType>         _queue;
+   int                          _eventFD;
+};
+
 template< typename DataType >
 class BlockingQueue : public boost::noncopyable
 {
  public:
-
-   BlockingQueue () : 
-       _eventFD( eventfd( 0, EFD_SEMAPHORE ) )
+   BlockingQueue( DisposeMethod< DataType > disposeMethod ):
+       _queue( new QueueImpl< DataType > ),
+       _disposeMethod( disposeMethod )
     {}
 
    ~BlockingQueue()
    {
        this->flush();
+       delete _queue;
    }
 
-   bool pushFront( DataType const& i_data )
+   bool pushFront( DataType & data )
    { 
-       return doPush ( i_data, true ); 
+       return doPush ( data, true ); 
    }
 
-   bool push( DataType const& i_data )
+   bool push( DataType data )
    { 
-       return doPush ( i_data, false ); 
+       return doPush ( data, false ); 
    }
 
    int getFD() const
    {
-        return _eventFD;
+       return _queue->getFD();
    }
 
-   bool empty() const;
-   void flush( );
-   bool try_pop( DataType & data );
-   void pop( DataType & data );
+   bool empty() const
+   {
+       std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+       return _queue->empty();
+   }
+
+   void flush()
+   {
+       std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+       while( ! _queue->empty() )
+       {
+           DataType d;
+           pop( d );
+           _disposeMethod( d );
+       }
+       _queueEmptyCondition.notify_all();
+   }
+
+   bool try_pop( DataType & data )
+   {
+       std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+       return _queue->pop( data );
+   }
+
+   void pop( DataType & data )
+   {
+       std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+       while( _queue->empty() )
+       {
+           _queueEmptyCondition.wait( _queueMutex );
+       }
+       _queue->pop( data );
+   }
 
  private:
-   bool doPush( DataType const& i_data, bool forceFirst ) ;
+   bool doPush( DataType & data, bool first )
+   {
+       {
+           std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+           _queue->push( data, first );
+       }
+       _queueEmptyCondition.notify_all();
+       return true;
+   }
 
  private:
-   std::deque<DataType>         _queue;
-	//TODO: try to re-replace with non-recursive mutex.
-   std::recursive_mutex           _queueMutex;
+   std::recursive_mutex             _queueMutex;
    std::condition_variable_any      _queueEmptyCondition;
-   int                          _eventFD;
+   QueueImpl< DataType > *          _queue;
+   DisposeMethod< DataType >        _disposeMethod;
 };
-
-    template<typename DataType>
-void BlockingQueue< DataType >::pop( DataType & data )
-{
-    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    while( _queue.empty() )
-    {
-        _queueEmptyCondition.wait( _queueMutex );
-    }
-
-    if( ! _queue.empty() )
-    {
-        ssize_t dummy;
-        read( _eventFD, & dummy, sizeof( dummy ) );
-        data = _queue.front();
-        _queue.pop_front();
-    }
-}
-
-    template<typename DataType>
-bool BlockingQueue< DataType >::try_pop( DataType & data )
-{
-    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    if( _queue.empty() )
-    {
-        return false;
-    }
-
-    ssize_t dummy;
-    read( _eventFD, & dummy, sizeof( dummy ) );
-    data=_queue.front();
-    _queue.pop_front();
-    return true;
-}
-
-    template<typename DataType >
-void BlockingQueue<DataType>::flush()
-{
-    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    while( ! _queue.empty() )
-    {
-        //TODO: Not nice.
-        DataType d;
-        pop( d );//for updating the eventFD
-        dispose( d );
-    }
-    //If there is any client still waiting.
-    _queueEmptyCondition.notify_all();
-}
-
-template<typename DataType>
-bool BlockingQueue<DataType>::empty() const
-{
-    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    return _queue.empty();
-}
-
-template<typename DataType>
-bool BlockingQueue<DataType>::doPush(DataType const& i_data, bool forceFirst ) 
-{
-    std::unique_lock< std::recursive_mutex > lock(_queueMutex);
-    if (forceFirst)
-    {
-        _queue.push_front(i_data);
-    } else {
-        _queue.push_back(i_data);
-    }
-    uint64_t dummy = 1;
-    write( _eventFD, &dummy, sizeof( dummy ) );
-
-    lock.unlock();
-    _queueEmptyCondition.notify_all();
-    return true;
-}
-
 
 } //namespace AMQP
 #endif
