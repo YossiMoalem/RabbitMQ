@@ -40,7 +40,7 @@ ReturnStatus AMQPConnection::connectLoop()
         if ( connected )
         {
             std::future< bool > loginStatus = _connectionHandler.login();
-            loginStatus.wait();
+            loginStatus.wait_for(std::chrono::seconds(10));
             if (! loginStatus.get() )
             {
                 std::cout <<"Login failed. Disconnecting..."<<std::endl;
@@ -82,8 +82,8 @@ ReturnStatus AMQPConnection::connectLoop()
                         //                continue;
                         //            }
                         _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
-                        rebind();
                         _isConnected = true;
+                        rebind();
                         std::cout << "CONNECTED" << std::endl;
                         _connectionDetails.reset();
                     }
@@ -135,6 +135,7 @@ ReturnStatus AMQPConnection::_bind( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
+//TODO: uncomment next line
     _connectionHandler.bindQueue( exchangeName, queueName, routingKey ); //.get();
     return ReturnStatus::Ok;
 }
@@ -156,6 +157,7 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
+    //TODO: uncomment next line
     _connectionHandler.unBindQueue( exchangeName, queueName, routingKey );
     return ReturnStatus::Ok;
 }
@@ -163,8 +165,10 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
 ReturnStatus AMQPConnection::rebind()
 {
     std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
+//    std::cout << "REBINDING: - amount: " << _bindingsSet.size() << std::endl;
     for ( const std::string& routingKey: _bindingsSet )
         AMQPConnection::_bind( _exchangeName, _queueName, routingKey );
+//    std::cout << "FINISHED REBINDING" << std::endl;
     return ReturnStatus::Ok;
 }
 

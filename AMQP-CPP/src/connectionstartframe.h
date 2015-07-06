@@ -193,6 +193,8 @@ public:
         Table properties;
         
         // fill the peer properties
+// TODO: add handling for connection blocked frame from rabbit
+//        properties["connection.blocked"] = true;
         properties["product"] = "Copernica AMQP library";
         properties["version"] = "Unknown";
         properties["platform"] = "Unknown";

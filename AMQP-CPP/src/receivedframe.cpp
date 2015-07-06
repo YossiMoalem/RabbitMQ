@@ -305,7 +305,9 @@ bool ReceivedFrame::process(ConnectionImpl *connection)
         case 4:     return HeartbeatFrame(*this).process(connection);
         case 8:     return HeartbeatFrame(*this).process(connection);
     }
-    
+
+// TODO: add handling for connection blocked frame from rabbit
+//    std::cout << "got special frame type: " << std::to_string(_type) << std::endl;
     // this is a problem
     throw ProtocolException("unrecognized frame type " + std::to_string(_type));
 }
