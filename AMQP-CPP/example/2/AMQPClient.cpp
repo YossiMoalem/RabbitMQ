@@ -14,6 +14,13 @@ bool AMQPClient::init( const AMQPConnectionDetails & connectionParams )
     return _jobManager.start( connectionParams );
 }
 
+DeferedResult AMQPClient::login()
+{
+    LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
+            _connectionParams._password );
+    return _jobManager.addJob( loginMessage);
+}
+
 DeferedResult AMQPClient::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message ) const
@@ -48,13 +55,6 @@ DeferedResult AMQPClient::stop( bool immediate )
 {
     StopMessage * stopMessage = new StopMessage( immediate );
     return _jobManager.addJob( stopMessage );
-}
-
-DeferedResult AMQPClient::login()
-{
-    LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
-            _connectionParams._password );
-    return _jobManager.addJob( loginMessage);
 }
 
 DeferedResult AMQPClient::declareExchange( const std::string & exchangeName, 
