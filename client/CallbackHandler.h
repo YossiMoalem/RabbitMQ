@@ -7,6 +7,7 @@
 
 #include <string>
 #include <thread>
+#include <boost/noncopyable.hpp>
 
 class CallbackHandler
 {
@@ -23,7 +24,7 @@ class CallbackHandler
            const std::string &  text );
 
  private:
-   struct MessageData
+   struct MessageData : boost::noncopyable
    {
        MessageData( const std::string  & sender,
                const std::string  & destination,

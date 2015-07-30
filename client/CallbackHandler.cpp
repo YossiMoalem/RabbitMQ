@@ -25,6 +25,6 @@ void CallbackHandler::doStart()
                 messageToHandle->_destination, 
                 messageToHandle->_deliveryType, 
                 messageToHandle->_text );
-        //delete messageToHandle;
+        delete messageToHandle;
     }
 }
