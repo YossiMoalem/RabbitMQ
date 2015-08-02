@@ -30,6 +30,7 @@ ReturnStatus AMQPConnection::start()
 
 ReturnStatus AMQPConnection::connectLoop()
 {
+    std::cout << "started connectLoop thread " << std::endl;
     _stop = false;
     while ( _stop == false )
     {
@@ -48,12 +49,14 @@ ReturnStatus AMQPConnection::connectLoop()
                 std::future_status status;
                 std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
                         _exchangeName, 
-                        AMQP::topic, 
+                        //TODO: return to topic
+                        AMQP::fanout,
+//                        AMQP::topic,
                         false );
                 status = declareExchangeResult.wait_for(std::chrono::seconds(10));
                 if( ! ( status == std::future_status::ready && declareExchangeResult.get() ) )
                 {
-                    _connectionHandler.stop( true );
+                    //_connectionHandler.stop( true );
                     std::cout << "error declaring exchange" <<std::endl;
                 } else {
                     std::cout << "exchange declared" <<std::endl;
@@ -67,7 +70,7 @@ ReturnStatus AMQPConnection::connectLoop()
                     status = declareQueueResult.wait_for(std::chrono::seconds(10));
                     if( ! ( status == std::future_status::ready && declareQueueResult.get() ) )
                     {
-                        _connectionHandler.stop( true );
+                        //_connectionHandler.stop( true );
                         std::cout << "error declaring queue" <<std::endl;
                     } else {
                         std::cout << "queue declared" <<std::endl;
@@ -95,6 +98,7 @@ ReturnStatus AMQPConnection::connectLoop()
         std::cout << "DISCONNECTED" << std::endl;
         sleep(2);
     }
+    std::cout << "exit connectLoop thread " << std::endl;
     return ReturnStatus::Ok;
 }
 

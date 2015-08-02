@@ -70,7 +70,7 @@ int AMQPEventLoop::start( int queueEventFD,
             std::cout << "select returned : " << res << "Errno = " << errno << std::endl;
         }
     }
-    std::cout <<"EventLoop stoped 0 "<< std::endl;
+    std::cout <<"EventLoop stopped 0 "<< std::endl;
     _handler->stopEventLoop( true, dummyResultSetter );
     return 0;
 }

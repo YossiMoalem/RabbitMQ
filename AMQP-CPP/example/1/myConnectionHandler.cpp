@@ -119,7 +119,9 @@ void MyConnectionHandler::declareExchange( const char * exchangeName )
         std::cout <<"ERROR!!" <<std::endl;
     }
     _exchangeName = std::string( exchangeName );
-    _channel->declareExchange( exchangeName, AMQP::topic).onSuccess([]() { 
+    //TODO: return to topic
+    _channel->declareExchange( exchangeName, AMQP::fanout).onSuccess([]() {
+//    _channel->declareExchange( exchangeName, AMQP::topic).onSuccess([]() {
             std::cout << "exchange declared" << std::endl; 
             });
     handleResponse(); //AMQP::ExchangeDeclareOKFrame::ExchangeDeclareOKFrame

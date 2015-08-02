@@ -30,7 +30,9 @@ void runConsumer()
     {
         std::string exchangeName( EXC );
         DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
-                AMQP::topic );
+                //TODO: return to topic
+                AMQP::fanout );
+//                AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
@@ -76,7 +78,9 @@ void runProducer()
 
         std::string exchangeName( EXC );
         DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
-                AMQP::topic );
+                //TODO: return to topic
+                AMQP::fanout );
+//                AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {

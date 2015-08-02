@@ -60,14 +60,16 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
 {
     std::cout << "binding: " << routingKey << std::endl;
     _channel->bindQueue( exchangeName, queueName, routingKey );
-    operationSucceeded->set_value( true );
-//    auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
-//    bindHndl.onSuccess( [ exchangeName, queueName, routingKey, operationSucceeded ]() {
-//            operationSucceeded->set_value( true );
-//            });
-//    bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
-//            operationSucceeded->set_value( false );
-//            } ) ;
+
+//    slow binding
+//    operationSucceeded->set_value( true );
+    auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
+    bindHndl.onSuccess( [ exchangeName, queueName, routingKey, operationSucceeded ]() {
+            operationSucceeded->set_value( true );
+            });
+    bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+            operationSucceeded->set_value( false );
+            } ) ;
 }
 
 void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
@@ -77,15 +79,16 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
 {
     std::cout << "unbinding: " << routingKey << std::endl;
     _channel->unbindQueue( exchangeName, queueName, routingKey );
-    operationSucceeded->set_value( true );
-//    auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
-//    unBindHndl.onSuccess([ operationSucceeded ]() {
-//            operationSucceeded->set_value( true );
-//            });
-//    unBindHndl.onError( [ operationSucceeded ] ( const char* message ) {
-//             operationSucceeded->set_value( false );
-//             std::cout <<"failed binding" <<std::endl;
-//             } ) ;
+//    slow binding
+//    operationSucceeded->set_value( true );
+    auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
+    unBindHndl.onSuccess([ operationSucceeded ]() {
+            operationSucceeded->set_value( true );
+            });
+    unBindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+             operationSucceeded->set_value( false );
+             std::cout <<"failed binding" <<std::endl;
+             } ) ;
 }
 
 void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )

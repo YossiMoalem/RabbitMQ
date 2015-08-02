@@ -322,13 +322,14 @@ DeferredQueue &ChannelImpl::declareQueue(const std::string &name, int flags, con
  *  This function returns a deferred handler. Callbacks can be installed
  *  using onSuccess(), onError() and onFinalize() methods.
  */
-void ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
-//Deferred &ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
+//todo: change to void otherwise it will have slow binding.
+//void ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
+Deferred &ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &queueName, const std::string &routingkey, const Table &arguments)
 {
     // send the bind queue frame
     //todo: change to true? otherwise it will have slow binding.
-    //return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, false, arguments));
-    send(QueueBindFrame(_id, queueName, exchangeName, routingkey, true, arguments));
+    return push(QueueBindFrame(_id, queueName, exchangeName, routingkey, false, arguments));
+//    send(QueueBindFrame(_id, queueName, exchangeName, routingkey, true, arguments));
 
 }
 
@@ -343,12 +344,15 @@ void ChannelImpl::bindQueue(const std::string &exchangeName, const std::string &
  *  This function returns a deferred handler. Callbacks can be installed
  *  using onSuccess(), onError() and onFinalize() methods.
  */
-void ChannelImpl::unbindQueue(const std::string &exchange, const std::string &queue, const std::string &routingkey, const Table &arguments)
-//Deferred &ChannelImpl::unbindQueue(const std::string &exchange, const std::string &queue, const std::string &routingkey, const Table &arguments)
+//todo: change to void otherwise it will have slow binding.
+//void ChannelImpl::unbindQueue(const std::string &exchange, const std::string &queue, const std::string &routingkey, const Table &arguments)
+Deferred &ChannelImpl::unbindQueue(const std::string &exchange, const std::string &queue, const std::string &routingkey, const Table &arguments)
 {
     // send the unbind queue frame
-    // return push(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
-    send(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
+    //todo: change to true? otherwise it will have slow unbinding.
+    return push(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
+//    send(QueueUnbindFrame(_id, queue, exchange, routingkey, arguments));
+    // send(QueueUnbindFrame(_id, queue, exchange, routingkey, true, arguments));
 }
 
 /**

@@ -18,6 +18,7 @@ class ConnectionState : boost::noncopyable
 
    bool disconnected()
    {
+       std::cout <<"entered ConnectionState::disconnected" <<std::endl;
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
            _loginResultSetter->set_value( false );
@@ -40,18 +41,21 @@ class ConnectionState : boost::noncopyable
 
    bool socketConnecting()
    {
+       std::cout <<"entered ConnectionState::socketConnecting" <<std::endl;
        _currentConnectionState = CurrentConnectionState::SocketConnecting;
        return true;
    }
 
    bool socketConnected()
    {
+       std::cout <<"entered ConnectionState::socketConnected" <<std::endl;
        _currentConnectionState = CurrentConnectionState::SocketConnected;
        return true;
    }
 
    bool loggingIn( DeferedResultSetter loginResultSetter )
    {
+       std::cout <<"entered ConnectionState::loggingIn" <<std::endl;
        if( _currentConnectionState != CurrentConnectionState::LoggingIn )
        {
            _currentConnectionState = CurrentConnectionState::LoggingIn;
@@ -66,15 +70,22 @@ class ConnectionState : boost::noncopyable
    {
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
+           std::cout <<"entered ConnectionState::loggedIn" <<std::endl;
            _loginResultSetter->set_value( true );
            _loginResultSetter.reset();
+           _currentConnectionState = CurrentConnectionState::LoggedIn;
        }
-       _currentConnectionState = CurrentConnectionState::LoggedIn;
+       // TODO: remove this else
+       else
+       {
+           std::cout <<"loggedIn() was called at least twice. ignoring" <<std::endl;
+       }
        return true;
    }
 
    bool disconnecting( DeferedResultSetter disconnectResultSetter )
    {
+       std::cout <<"entered ConnectionState::disconnecting" <<std::endl;
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
            assert( disconnectResultSetter == dummyResultSetter);
