@@ -1,5 +1,6 @@
 #include "AMQPClient.h"
 #include "AMQPConnectionDetails.h"
+#include "Debug.h"
 
 #include <thread>
 #include <unistd.h>
@@ -21,7 +22,7 @@ void runConsumer()
 {
     AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
-            std::cout <<"Consumer: Received: " << message.message() << std::endl ;
+            PRINT_DEBUG(DEBUG, "Consumer: Received: " << message.message() );
             return 0; } );
     amqpClient.init( connectionDetails );
     DeferedResult loginStatus = amqpClient.login();
@@ -34,18 +35,18 @@ void runConsumer()
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
-            std::cout <<"Exchange Declared!" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Exchange Declared!");
         } else {
-            std::cout <<"Error declaring exchange" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Error declaring exchange");
             exit( 1 );
         }
         DeferedResult declareQueueResult = amqpClient.declareQueue( QUEUE );
         declareQueueResult.wait();
         if( declareQueueResult.get() )
         {
-            std::cout <<"Queue Declared!" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Queue Declared!");
         } else {
-            std::cout <<"Error declaring queue" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Error declaring queue");
             exit( 1 );
         }
         DeferedResult bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
@@ -53,9 +54,9 @@ void runConsumer()
 
         if( bindResult.get() )
         {
-            std::cout <<"Queue Binded!" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Queue Binded!");
         } else {
-            std::cout <<"Error binding queue" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Error binding queue");
             exit( 1 );
         }
         //        sleep( 5 );
@@ -80,9 +81,9 @@ void runProducer()
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
-            std::cout <<"Exchange Declared!" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Exchange Declared!");
         } else {
-            std::cout <<"Error declaring exchange" <<std::endl;
+            PRINT_DEBUG(DEBUG, "Error declaring exchange");
             exit( 1 );
         }
         for( int i = 0; i < 10; ++i)
@@ -92,16 +93,16 @@ void runProducer()
             amqpClient.publish(exchangeName, KEY1, message );
         }
         sleep(5);
-        std::cout <<"Calling stop" <<std::endl;
+        PRINT_DEBUG(DEBUG, "Calling stop");
         amqpClient.stop(false);
-        std::cout <<"stoped" <<std::endl;
+        PRINT_DEBUG(DEBUG, "stoped");
     }
     amqpClient.waitForDisconnection();
 }
 
 #define showUsage \
 do { \
-    std::cerr <<"Usage: " << argv[0] <<" <Client type (c/p) > " <<std::endl; \
+    PRINT_DEBUG(DEBUG, "Usage: " << argv[0] <<" <Client type (c/p) > "); \
     exit(0); \
 } while( 0 );
 

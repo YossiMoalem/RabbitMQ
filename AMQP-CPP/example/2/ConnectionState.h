@@ -1,6 +1,7 @@
 #ifndef CONNECTION_STATE_H
 #define CONNECTION_STATE_H
 
+#include "Debug.h"
 #include "ResultCodes.h"
 
 #include <assert.h>
@@ -18,7 +19,7 @@ class ConnectionState : boost::noncopyable
 
    bool disconnected()
    {
-       std::cout <<"entered ConnectionState::disconnected" <<std::endl;
+       PRINT_DEBUG(DEBUG, "entered ConnectionState::disconnected");
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
            _loginResultSetter->set_value( false );
@@ -42,21 +43,21 @@ class ConnectionState : boost::noncopyable
 
    bool socketConnecting()
    {
-       std::cout <<"entered ConnectionState::socketConnecting" <<std::endl;
+       PRINT_DEBUG(DEBUG, "entered ConnectionState::socketConnecting");
        _currentConnectionState = CurrentConnectionState::SocketConnecting;
        return true;
    }
 
    bool socketConnected()
    {
-       std::cout <<"entered ConnectionState::socketConnected" <<std::endl;
+       PRINT_DEBUG(DEBUG, "entered ConnectionState::socketConnected");
        _currentConnectionState = CurrentConnectionState::SocketConnected;
        return true;
    }
 
    bool loggingIn( DeferedResultSetter loginResultSetter )
    {
-       std::cout <<"entered ConnectionState::loggingIn" <<std::endl;
+       PRINT_DEBUG(DEBUG, "entered ConnectionState::loggingIn");
        if( _currentConnectionState != CurrentConnectionState::LoggingIn )
        {
            _currentConnectionState = CurrentConnectionState::LoggingIn;
@@ -71,7 +72,7 @@ class ConnectionState : boost::noncopyable
    {
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
-           std::cout <<"entered ConnectionState::loggedIn" <<std::endl;
+           PRINT_DEBUG(DEBUG, "entered ConnectionState::loggedIn");
            _loginResultSetter->set_value( true );
            _loginResultSetter.reset();
            _currentConnectionState = CurrentConnectionState::LoggedIn;
@@ -79,14 +80,14 @@ class ConnectionState : boost::noncopyable
        // TODO: remove this else
        else
        {
-           std::cout <<"loggedIn() was called at least twice. ignoring" <<std::endl;
+           PRINT_DEBUG(DEBUG, "loggedIn() was called at least twice. ignoring");
        }
        return true;
    }
 
    bool disconnecting( DeferedResultSetter disconnectResultSetter )
    {
-       std::cout <<"entered ConnectionState::disconnecting" <<std::endl;
+       PRINT_DEBUG(DEBUG, "entered ConnectionState::disconnecting");
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
            _loginResultSetter->set_value( false );

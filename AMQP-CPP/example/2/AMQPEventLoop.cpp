@@ -2,6 +2,7 @@
 #include "BlockingQueue.h"
 #include "RabbitJobManager.h"
 #include "RabbitOperation.h"
+#include "Debug.h"
 #include <algorithm>
 #include <amqpcpp.h>
 
@@ -18,7 +19,7 @@ int AMQPEventLoop::start( int queueEventFD,
         int  brokerWriteFD )
 {
     _stop = false;
-    std::cout <<"Eventloop unleashed! "<<std::endl;
+    PRINT_DEBUG(DEBUG, "Eventloop unleashed! ");
 
     fd_set readFdSet;
     fd_set writeFdSet;
@@ -67,10 +68,10 @@ int AMQPEventLoop::start( int queueEventFD,
         }
         else
         {
-            std::cout << "select returned : " << res << "Errno = " << errno << std::endl;
+            PRINT_DEBUG(DEBUG,  "select returned : " << res << "Errno = " << errno);
         }
     }
-    std::cout <<"EventLoop stopped 0 "<< std::endl;
+    PRINT_DEBUG(DEBUG, "EventLoop stopped 0 ");
     _handler->stopEventLoop( true, dummyResultSetter );
     return 0;
 }
@@ -84,7 +85,7 @@ void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
 {
     timeoutTimeval.tv_sec = 7;
     timeoutTimeval.tv_usec = 0;
-} 
+}
 
 void AMQPEventLoop::_handleQueue( )
 {
@@ -104,9 +105,9 @@ void AMQPEventLoop::_handleOutput()
     }
     catch(...)
     {
-        std::cout << "send failedclosing event loop" <<std::endl;
+        PRINT_DEBUG(DEBUG,  "send failedclosing event loop");
         stop();
-    } 
+    }
 }
 
 void AMQPEventLoop::_handleInput()
@@ -118,7 +119,7 @@ void AMQPEventLoop::_handleInput()
 
     catch(...)
     {
-        std::cout << "read failed. closing event loop" <<std::endl;
+        PRINT_DEBUG(DEBUG,  "read failed. closing event loop");
         stop();
     }
 }

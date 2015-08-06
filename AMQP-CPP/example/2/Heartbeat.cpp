@@ -1,3 +1,4 @@
+#include "Debug.h"
 #include "Heartbeat.h"
 #include "AMQPConnectionHandler.h"
 
@@ -18,7 +19,7 @@ void Heartbeat::initialize()
 
     auto & queueHndl = _connectionHandler->_channel->declareQueue( AdminQueueName, 0);
     queueHndl.onSuccess([ this ]() { 
-            std::cout <<"Admin queue declared OK \n";
+            PRINT_DEBUG(DEBUG, "Admin queue declared OK");
             _connectionHandler->_channel->consume( "admin" ).onReceived([ this ](const AMQP::Message &message,
                     uint64_t deliveryTag, 
                     bool redelivered ) {
@@ -27,7 +28,7 @@ void Heartbeat::initialize()
             _initialized = true;
             } );
     queueHndl.onError( [ this ] ( const char* message ) {
-            std::cout <<"Failed declaring admin. error: " << message << std::endl;
+            PRINT_DEBUG(DEBUG, "Failed declaring admin. error: " << message );
             _initialized = false;
             } );
 

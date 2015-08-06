@@ -1,5 +1,6 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
+#include "Debug.h"
 #include <AMQPConnectionDetails.h>
 #include <thread>
 #include <unistd.h>
@@ -32,11 +33,11 @@ ReturnStatus AMQPConnection::start()
 
 ReturnStatus AMQPConnection::connectLoop()
 {
-    std::cout << "started connectLoop thread " << std::endl;
+    PRINT_DEBUG(DEBUG, "started connectLoop thread");
     _stop = false;
     while ( _stop == false )
     {
-        std::cout << "started AMQPConnection::connectLoop() " << std::endl;
+        PRINT_DEBUG(DEBUG, "started AMQPConnection::connectLoop() ");
         AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
 
         bool connected = _connectionHandler.init( connectionDetails );
@@ -45,30 +46,30 @@ ReturnStatus AMQPConnection::connectLoop()
             bool logginSucceeded = _login();
             if ( ! logginSucceeded )
             {
-                std::cout <<"Login failed. Disconnecting..."<<std::endl;
+                PRINT_DEBUG(DEBUG, "Login failed. Disconnecting...");
                 _connectionHandler.stop( true );
             } else {
                 bool declareExchangeSucceeded = _declareExchange();
                 if ( ! declareExchangeSucceeded )
                 {
-                    std::cout << "error declaring exchange" <<std::endl;
+                    PRINT_DEBUG(DEBUG, "error declaring exchange");
                     _connectionHandler.stop( true );
                 } else {
                     bool declareQueueSucceeded = _declareQueue();
                     if ( ! declareQueueSucceeded )
                     {
                         _connectionHandler.stop( true );
-                        std::cout << "error declaring queue" <<std::endl;
+                        PRINT_DEBUG(DEBUG, "error declaring queue");
                     } else {
                         bool bindQueueSucceeded = _bindQueue();
                         if ( ! bindQueueSucceeded )
                         {
-                            std::cout << "error binding queue" <<std::endl;
+                            PRINT_DEBUG(DEBUG, "error binding queue");
                             _connectionHandler.stop( true );
                         } else {
                             _isConnected = true;
                             rebind();
-                            std::cout << "CONNECTED" << std::endl;
+                            PRINT_DEBUG(DEBUG, "CONNECTED");
                             _connectionDetails.reset();
                         }
                     }
@@ -77,10 +78,10 @@ ReturnStatus AMQPConnection::connectLoop()
             _connectionHandler.waitForDisconnection(); 
         }
         _isConnected = false;
-        std::cout << "DISCONNECTED" << std::endl;
+        PRINT_DEBUG(DEBUG, "DISCONNECTED");
         sleep(2);
     }
-    std::cout << "exit connectLoop thread " << std::endl;
+    PRINT_DEBUG(DEBUG, "exit connectLoop thread");
     return ReturnStatus::Ok;
 }
 
@@ -90,7 +91,7 @@ bool AMQPConnection::_login() const
     std::future_status status = loginStatus.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
     {
-        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && loginStatus.get() );
 }
@@ -104,7 +105,7 @@ bool AMQPConnection::_declareExchange() const
     std::future_status status = declareExchangeResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
     {
-        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && declareExchangeResult.get() );
 }
@@ -120,7 +121,7 @@ bool AMQPConnection::_declareQueue() const
     std::future_status status = declareQueueResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
     {
-        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && declareQueueResult.get() );
 }
@@ -131,7 +132,7 @@ bool AMQPConnection::_bindQueue() const
     std::future_status status = bindResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
     {
-        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && bindResult.get() );
 }
@@ -202,10 +203,10 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
 ReturnStatus AMQPConnection::rebind()
 {
     std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
-//    std::cout << "REBINDING: - amount: " << _bindingsSet.size() << std::endl;
+//    PRINT_DEBUG(DEBUG, "REBINDING: - amount: " << _bindingsSet.size());
     for ( const std::string& routingKey: _bindingsSet )
         AMQPConnection::_bind( _exchangeName, _queueName, routingKey );
-//    std::cout << "FINISHED REBINDING" << std::endl;
+//    PRINT_DEBUG(DEBUG, "FINISHED REBINDING");
     return ReturnStatus::Ok;
 }
 

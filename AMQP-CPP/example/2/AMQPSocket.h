@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
-
+#include "Debug.h"
 #include "SmartBuffer.h"
 
 namespace AMQP{
@@ -42,7 +42,7 @@ class AMQPSocket : boost::noncopyable
         int addrinfiResult = getaddrinfo( address.c_str(), port.c_str(), &hints, & resolvedAddr );
         if( addrinfiResult != 0 )
         {
-            std::cout <<"Faild getaddrinfo. Result was" << addrinfiResult <<std::endl;
+            PRINT_DEBUG(DEBUG, "Failed getaddrinfo. Result was" << addrinfiResult);
             return false;
         }
 
@@ -57,13 +57,13 @@ class AMQPSocket : boost::noncopyable
 
             if( _socketFd < 0 )
             {
-                std::cerr<<"Error creating Socket " <<std::endl;
+                PRINT_DEBUG(DEBUG, "Error creating Socket");
             } else {
                 if( ::connect(_socketFd, 
                             currentAddress->ai_addr, 
                             currentAddress->ai_addrlen) < 0 )
                 {
-                    std::cerr <<"Error : Connect Failed "<< std::endl;
+                    PRINT_DEBUG(DEBUG, "Error : Connect Failed");
                     ::close( _socketFd );
                 }  else {
                     connected = true;
@@ -79,7 +79,7 @@ class AMQPSocket : boost::noncopyable
         ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
-            std::cout <<"Send failed with errno: " <<errno <<std::endl;
+            PRINT_DEBUG(DEBUG, "Send failed with errno: " <<errno);
             //TODO: throw a real AMQPException
             throw "Socket down?";
         }
@@ -101,13 +101,13 @@ class AMQPSocket : boost::noncopyable
         if( bytesRead < 0 )
         {
             if( errno != 11 /* not EWOULDBLOCK, EAGAIN */)
-              std::cout << "ERROR RECEIVING!: errno = " <<errno <<std::endl;
+              PRINT_DEBUG(DEBUG, "ERROR RECEIVING!: errno = " <<errno);
           throw "Socket down?";
             return false;
         }
         if( bytesRead == 0 )
         {
-          std::cout << "read 0 bytes." <<std::endl;
+          PRINT_DEBUG(DEBUG, "read 0 bytes.");
 //          return false;
           //TODO: throw a real AMQPException
           throw "Socket down?";
