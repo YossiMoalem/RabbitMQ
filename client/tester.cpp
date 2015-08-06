@@ -180,10 +180,12 @@ class RepeatedBindTester
 
    int operator ()()
    {
-     ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+       ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+       cnd.addAlternateHost("10.10.10.10");
+       cnd.addAlternatePort(25);
        RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
-                        <<" From : "<< o_sender << std::endl;
+               <<" From : "<< o_sender << std::endl;
                return 0;
                } );
        client.start();

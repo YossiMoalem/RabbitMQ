@@ -89,8 +89,8 @@ class ConnectionState : boost::noncopyable
        std::cout <<"entered ConnectionState::disconnecting" <<std::endl;
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {
-           assert( disconnectResultSetter == dummyResultSetter);
-           return true;
+           _loginResultSetter->set_value( false );
+           _loginResultSetter.reset();
        }
        if( _currentConnectionState != CurrentConnectionState::Disconnecting )
        {

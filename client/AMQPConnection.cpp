@@ -7,6 +7,7 @@
 #include <chrono>
 
 #define MAX_WAIT_TIME_FOR_ANSWER_IN_SEC 10
+
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
         const std::string & exchangeName ,
         const std::string & queueName,
@@ -87,6 +88,10 @@ bool AMQPConnection::_login() const
 {
     std::future< bool > loginStatus = _connectionHandler.login();
     std::future_status status = loginStatus.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
+    if( status != std::future_status::ready )
+    {
+        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+    }
     return ( status == std::future_status::ready && loginStatus.get() );
 }
 
@@ -97,6 +102,10 @@ bool AMQPConnection::_declareExchange() const
             AMQP::fanout,
             false );
     std::future_status status = declareExchangeResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
+    if( status != std::future_status::ready )
+    {
+        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+    }
     return ( status == std::future_status::ready && declareExchangeResult.get() );
 }
 
@@ -109,6 +118,10 @@ bool AMQPConnection::_declareQueue() const
             false,
             true );
     std::future_status status = declareQueueResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
+    if( status != std::future_status::ready )
+    {
+        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+    }
     return ( status == std::future_status::ready && declareQueueResult.get() );
 }
 
@@ -116,6 +129,10 @@ bool AMQPConnection::_bindQueue() const
 {
     std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
     std::future_status status = bindResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
+    if( status != std::future_status::ready )
+    {
+        std::cout <<"Did not get answer in time. Considerint as failure" <<std::endl;
+    }
     return ( status == std::future_status::ready && bindResult.get() );
 }
 ReturnStatus AMQPConnection::stop( bool immediate )

@@ -212,6 +212,7 @@ bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionPara
     _connectionState.socketConnecting();
     _incomingMessages.clear();
     _outgoingBuffer.clear();
+    std::cout <<"Connecting to : "<<connectionParams._host<<":"<<connectionParams._port <<std::endl;
     if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
     {
         _connectionState.disconnected();
