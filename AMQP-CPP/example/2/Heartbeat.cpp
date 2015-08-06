@@ -36,9 +36,6 @@ void Heartbeat::initialize()
 
 bool Heartbeat::send( )
 {
-    //TODO: remove this return true. it simply disables the heartbeat
-    return true;
-
     if ( ! _initialized )
     {
         if( ! _initializeCalled )
