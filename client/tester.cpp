@@ -288,9 +288,9 @@ int main ()
     ( void ) continousTester;
     ( void ) manyBindTester;
 
-    std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
+    //std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
     //std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
-    //std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
+    std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
     //std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester ) );
     //std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );
 

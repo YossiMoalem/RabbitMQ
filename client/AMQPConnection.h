@@ -46,6 +46,11 @@ class AMQPConnection : boost::noncopyable
            const std::string & queueName,
            const std::string routingKey) const;
 
+   bool _login() const;
+   bool _declareExchange() const;
+   bool _declareQueue() const;
+   bool _bindQueue() const;
+
  private:
    AMQP::AMQPClient                 _connectionHandler;
    ConnectionDetails                _connectionDetails;
