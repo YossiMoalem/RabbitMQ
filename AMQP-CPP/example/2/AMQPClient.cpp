@@ -14,7 +14,7 @@ bool AMQPClient::init( const AMQPConnectionDetails & connectionParams )
     return _jobManager.start( connectionParams );
 }
 
-DeferedResult AMQPClient::login()
+DeferedResult AMQPClient::login() const
 {
     LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
             _connectionParams._password );

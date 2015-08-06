@@ -31,7 +31,8 @@ class ConnectionState : boost::noncopyable
            _disconnectResultSetter.reset();
        }
        if( _currentConnectionState != CurrentConnectionState::Disconnected && 
-               _currentConnectionState != CurrentConnectionState::SocketConnecting )
+               _currentConnectionState != CurrentConnectionState::SocketConnecting &&
+               _currentConnectionState != CurrentConnectionState::Disconnected )
        {
            _onDisconnectCB();
        }

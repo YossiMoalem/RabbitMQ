@@ -21,9 +21,17 @@ class AMQPClient : private boost::noncopyable
 
    AMQPClient( OnMessageReveivedCB onMsgReceivedCB );
 
-   DeferedResult login();
 
+   /**
+    * Establish connection to the server, no login yet
+    * Initiate event loop
+    *
+    * If it failes, leaves the system unchanged
+    * If it secceeds, need to call stop() to terminate the service
+    **/
    bool init( const AMQPConnectionDetails & connectionParams );
+
+   DeferedResult login() const;
 
    DeferedResult stop( bool immediate );
 

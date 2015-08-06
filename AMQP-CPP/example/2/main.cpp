@@ -19,7 +19,7 @@ using namespace AMQP;
 
 void runConsumer()
 {
-    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
             std::cout <<"Consumer: Received: " << message.message() << std::endl ;
             return 0; } );
@@ -30,9 +30,7 @@ void runConsumer()
     {
         std::string exchangeName( EXC );
         DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
-                //TODO: return to topic
-                AMQP::fanout );
-//                AMQP::topic );
+                AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
@@ -68,7 +66,7 @@ void runConsumer()
 
 void runProducer()
 {
-    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     AMQPClient amqpClient( nullptr );
     amqpClient.init( connectionDetails );
     DeferedResult loginStatus = amqpClient.login();
@@ -78,9 +76,7 @@ void runProducer()
 
         std::string exchangeName( EXC );
         DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
-                //TODO: return to topic
-                AMQP::fanout );
-//                AMQP::topic );
+                AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
         {
