@@ -168,8 +168,14 @@ void AMQPConnectionHandler::declareQueue( const std::string & queueName,
     if( isExclusive )     flags |= AMQP::exclusive;
     if( isAutoDelete )    flags |= AMQP::autodelete; 
 
-    auto & queueHndl = _channel->declareQueue( queueName, flags );
+    AMQP::Table arguments;
+//    arguments["x-dead-letter-exchange"] = "some-exchange";
+    arguments["x-message-ttl"] = 30 * 1000; //time in ms before message is discarded
+//    arguments["x-expires"] = 7200 * 1000; //time in ms before queue is automatically deleted if idle
+
+    auto & queueHndl = _channel->declareQueue( queueName, flags, arguments );
     queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
+            PRINT_DEBUG(DEBUG, "Queue declared successfully");
             operationSucceeded->set_value( true );
             _channel->consume( queueName.c_str() ).onReceived([ this ](const AMQP::Message &message, 
                     uint64_t deliveryTag, 
@@ -182,8 +188,8 @@ void AMQPConnectionHandler::declareQueue( const std::string & queueName,
                 } ) ;
             }); 
     queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
-            operationSucceeded->set_value( false );
             PRINT_DEBUG(DEBUG, "Failed declaring queue. error: " << message);
+            operationSucceeded->set_value( false );
             } );
 }
 
