@@ -87,6 +87,12 @@ class ConnectionState : boost::noncopyable
 
    bool disconnecting( DeferedResultSetter disconnectResultSetter )
    {
+       if( _currentConnectionState != CurrentConnectionState::Disconnected )
+       {
+           PRINT_DEBUG( DEBUG, "Disconnectin called while disconnected. Ignorring" );
+           disconnectResultSetter.set_value( true );
+           return false;
+       }
        PRINT_DEBUG(DEBUG, "entered ConnectionState::disconnecting");
        if( _currentConnectionState == CurrentConnectionState::LoggingIn )
        {

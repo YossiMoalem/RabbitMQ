@@ -63,12 +63,16 @@ void RabbitJobManager::stopEventLoop( bool immediate,
 {
     if( immediate )
     {
-        _connectionState.disconnecting( returnValueSetter );
-        _connectionState.disconnected();
+        if( _connectionState.disconnecting( returnValueSetter ) )
+        {
+            _connectionState.disconnected();
+        }
     } else {
-        _connectionState.disconnecting( returnValueSetter );
-        StopMessage * stopMessage = new StopMessage( true );
-        addJob( stopMessage );
+        if( _connectionState.disconnecting( returnValueSetter ) )
+        {
+            StopMessage * stopMessage = new StopMessage( true );
+            addJob( stopMessage );
+        }
     }
 }
 
