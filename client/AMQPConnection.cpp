@@ -58,8 +58,8 @@ ReturnStatus AMQPConnection::connectLoop()
                     bool declareQueueSucceeded = _declareQueue();
                     if ( ! declareQueueSucceeded )
                     {
-                        _connectionHandler.stop( true );
                         PRINT_DEBUG(DEBUG, "error declaring queue");
+                        _connectionHandler.stop( true );
                     } else {
                         bool bindQueueSucceeded = _bindQueue();
                         if ( ! bindQueueSucceeded )

@@ -1,6 +1,6 @@
 #include "RabbitOperation.h"
 #include "RabbitJobManager.h"
-
+#include "Debug.h"
 #include "AMQPEventLoop.h"
 
 namespace AMQP {
@@ -31,6 +31,7 @@ void UnBindMessage::handle( )
 
 void StopMessage::handle( )
 {
+    PRINT_DEBUG(DEBUG, "Handle stop message");
     _handler->stopEventLoop( _immediate,
             _returnValueSetter );
 }
