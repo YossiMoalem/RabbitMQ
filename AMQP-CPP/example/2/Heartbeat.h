@@ -21,6 +21,7 @@ class Heartbeat : boost::noncopyable
    bool                     _initialized = false;
    bool                     _initializeCalled = false;
    bool                     _heartbeatSent = false;
+   std::string              AdminQueueName = "admin";
 
 };
 
