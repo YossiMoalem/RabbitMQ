@@ -5,9 +5,11 @@
 #include <thread>
 #include <unistd.h>
 #include <string>
+#include <time.h>
 
-#define EXC "yossiExchange"
-#define KEY1 "YossiKey"
+#define EXC "exchange_name"
+//#define KEY1 "YossiKey"
+#define KEY1 "*"
 #define QUEUE "YossiQueue"
 
 #define RABBIT_PORT 5672
@@ -20,9 +22,13 @@ using namespace AMQP;
 
 void runConsumer()
 {
-    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
+    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
     AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
-            PRINT_DEBUG(DEBUG, "Consumer: Received: " << message.message() );
+            timespec tv;
+            clock_gettime( CLOCK_MONOTONIC, &tv );
+            long sentNSec = std::stol( message.message() );
+            long tripTime = (long) ( tv.tv_nsec - sentNSec ) / 1000;
+            PRINT_DEBUG(DEBUG, "Consumer: sent Time: " << sentNSec << " currentTime " << tv.tv_nsec <<":"<< tv.tv_sec << " TripTime (microSec) : " << tripTime );
             return 0; } );
     amqpClient.init( connectionDetails );
     DeferedResult loginStatus = amqpClient.login();
@@ -88,9 +94,12 @@ void runProducer()
         }
         for( int i = 0; i < 10; ++i)
         {
-            std::string message = std::string( "tananainai" );
-            message += ( std::to_string( i ) );
+            timespec tv;
+            clock_gettime( CLOCK_MONOTONIC, &tv );
+
+            std::string message = std::string( std::to_string( tv.tv_nsec ) );
             amqpClient.publish(exchangeName, KEY1, message );
+            PRINT_DEBUG (DEBUG, "Mesage time: "<< message <<"/ " <<tv.tv_nsec <<" Sec " << tv.tv_sec );
         }
         sleep(5);
         PRINT_DEBUG(DEBUG, "Calling stop");
