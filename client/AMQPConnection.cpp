@@ -100,7 +100,7 @@ bool AMQPConnection::_declareExchange() const
 {
     std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
             _exchangeName, 
-            AMQP::fanout,
+            AMQP::topic,
             false );
     std::future_status status = declareExchangeResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
