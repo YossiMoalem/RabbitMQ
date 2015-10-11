@@ -35,6 +35,7 @@ bool RabbitJobManager::start( const AMQPConnectionDetails & connectionParams )
     _eventLoopThread = std::thread( std::bind( &RabbitJobManager::doStart, this, 
                 connectionParams, connectedReturnValueSetter ) );
     connectedReturnValue.wait();
+    _jobQueue.clear();
     bool connected = connectedReturnValue.get();
     if ( !connected )
     {

@@ -63,6 +63,11 @@ template< typename DataType >
        return _queue.empty();
    }
 
+   void clear()
+   {
+       _queue.clear();
+   }
+
  private:
    std::deque<DataType>         _queue;
    int                          _eventFD;
@@ -102,6 +107,12 @@ class BlockingQueue : public boost::noncopyable
    {
        std::unique_lock< std::recursive_mutex > lock(_queueMutex);
        return _queue->empty();
+   }
+
+   void clear()
+   {
+       std::unique_lock< std::recursive_mutex > lock(_queueMutex);
+       _queue->clear();
    }
 
    void flush()
@@ -151,7 +162,7 @@ class BlockingQueue : public boost::noncopyable
    }
 
  private:
-   std::recursive_mutex             _queueMutex;
+   mutable std::recursive_mutex             _queueMutex;
    std::condition_variable_any      _queueEmptyCondition;
    QueueImpl< DataType > *          _queue;
    DisposeMethod< DataType >        _disposeMethod;
