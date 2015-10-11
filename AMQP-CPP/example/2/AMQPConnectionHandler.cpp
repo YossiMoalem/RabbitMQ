@@ -99,6 +99,7 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
 
     _channel->onError([ this ](const char *message) {
             PRINT_DEBUG(DEBUG, "channel error " << message);
+            _connectionState.disconnected();
             });
 
     //TODO: 
