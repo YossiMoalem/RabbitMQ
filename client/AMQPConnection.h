@@ -3,7 +3,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <unordered_set>
-#include "AMQPClient.h"
+#include <RabbitClient.h>
 #include "Types.h"
 #include "ConnectionDetails.h"
 
@@ -14,7 +14,7 @@ class AMQPConnection : boost::noncopyable
            const std::string & exchangeName ,
            const std::string & queueName,
            const std::string & routingKey,
-           AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB ) ;
+           AMQP::OnMessageReveivedCB i_onMessageReceiveCB ) ;
 
    ReturnStatus start();
 
@@ -52,7 +52,7 @@ class AMQPConnection : boost::noncopyable
    bool _bindQueue() const;
 
  private:
-   AMQP::AMQPClient                 _connectionHandler;
+   AMQP::RabbitClient                 _connectionHandler;
    ConnectionDetails                _connectionDetails;
    bool                             _stop;
    std::atomic_bool                 _isConnected;

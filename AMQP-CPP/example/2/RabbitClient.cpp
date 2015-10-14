@@ -1,73 +1,75 @@
-#include "AMQPClient.h"
-#include "AMQPConnectionHandler.h"
+#include "RabbitClient.h"
 #include "RabbitOperation.h"
 
 namespace AMQP {
 
-AMQPClient::AMQPClient( OnMessageReveivedCB onMsgReceivedCB ):
-    _jobManager( onMsgReceivedCB )
-{}
-
-bool AMQPClient::init( const AMQPConnectionDetails & connectionParams )
+RabbitClient::RabbitClient( OnMessageReveivedCB onMsgReceivedCB ):
+    _jobQueue(),
+    _jobHandler( onMsgReceivedCB, _jobQueue )
 {
-    _connectionParams = connectionParams;
-    return _jobManager.start( connectionParams );
+    _jobQueue.setHandler( &_jobHandler );
 }
 
-DeferedResult AMQPClient::login() const
+bool RabbitClient::init( const RabbitConnectionDetails & connectionParams )
+{
+    _connectionParams = connectionParams;
+    return _jobHandler.start( connectionParams );
+}
+
+DeferedResult RabbitClient::login() const
 {
     LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
             _connectionParams._password );
-    return _jobManager.addJob( loginMessage);
+    return _jobQueue.addJob( loginMessage);
 }
 
-DeferedResult AMQPClient::publish( const std::string & exchangeName, 
+DeferedResult RabbitClient::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message ) const
 {
     PostMessage * msg = new PostMessage( exchangeName, 
             routingKey, 
             message );
-    return _jobManager.addJob( msg );
+    return _jobQueue.addJob( msg );
 }
 
-DeferedResult AMQPClient::bindQueue( const std::string & exchangeName, 
+DeferedResult RabbitClient::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
     BindMessage * bindMessage = new BindMessage( exchangeName, 
             queueName, 
             routingKey );
-    return _jobManager.addJob( bindMessage );
+    return _jobQueue.addJob( bindMessage );
 }
 
-DeferedResult AMQPClient::unBindQueue( const std::string & exchangeName, 
+DeferedResult RabbitClient::unBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
     UnBindMessage * unBindMessage = new UnBindMessage( exchangeName, 
             queueName, 
             routingKey );
-    return _jobManager.addJob( unBindMessage );
+    return _jobQueue.addJob( unBindMessage );
 }
 
-DeferedResult AMQPClient::stop( bool immediate )
+DeferedResult RabbitClient::stop( bool immediate ) const
 {
     StopMessage * stopMessage = new StopMessage( immediate );
-    return _jobManager.addJob( stopMessage );
+    return _jobQueue.addJob( stopMessage );
 }
 
-DeferedResult AMQPClient::declareExchange( const std::string & exchangeName, 
+DeferedResult RabbitClient::declareExchange( const std::string & exchangeName, 
            ExchangeType exchangetype, 
            bool durable ) const 
 {
     DeclareExchangeMessage * declareExchangeMessage = new DeclareExchangeMessage( exchangeName, 
             exchangetype, 
             durable );
-    return _jobManager.addJob( declareExchangeMessage );
+    return _jobQueue.addJob( declareExchangeMessage );
 }
 
-DeferedResult AMQPClient::declareQueue( const std::string & queueName, 
+DeferedResult RabbitClient::declareQueue( const std::string & queueName, 
            bool durable,
            bool exclusive, 
            bool autoDelete) const
@@ -76,12 +78,12 @@ DeferedResult AMQPClient::declareQueue( const std::string & queueName,
             durable,
             exclusive,
             autoDelete );
-    return _jobManager.addJob( declareQueueMessage );
+    return _jobQueue.addJob( declareQueueMessage );
 }
 
-void AMQPClient::waitForDisconnection()
+void RabbitClient::waitForDisconnection() const
 {
-    _jobManager.waitForDisconnection();
+    _jobHandler.waitForDisconnection();
 }
 
 } //namespace AMQP

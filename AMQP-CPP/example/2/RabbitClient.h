@@ -1,26 +1,18 @@
 #ifndef AMQP_CLIENT_H
 #define AMQP_CLIENT_H
 
-#include <amqpcpp.h>
-#include "RabbitJobManager.h"
-#include "AMQPConnectionDetails.h"
-#include "ResultCodes.h"
+#include "RabbitJobHandler.h"
+#include "RabbitJobQueue.h"
+#include "Types.h"
 
 #include <boost/noncopyable.hpp>
-#include <future>
 
 namespace AMQP {
 
-class RabbitMessageBase;
-class AMQPConnectionHandler;
-
-class AMQPClient : private boost::noncopyable
+class RabbitClient : private boost::noncopyable
 {
  public:
-   typedef std::function<int( const AMQP::Message& )> OnMessageReveivedCB;
-
-   AMQPClient( OnMessageReveivedCB onMsgReceivedCB );
-
+   RabbitClient( OnMessageReveivedCB onMsgReceivedCB );
 
    /**
     * Establish connection to the server, no login yet
@@ -29,11 +21,11 @@ class AMQPClient : private boost::noncopyable
     * If it failes, leaves the system unchanged
     * If it secceeds, need to call stop() to terminate the service
     **/
-   bool init( const AMQPConnectionDetails & connectionParams );
+   bool init( const RabbitConnectionDetails & connectionParams );
 
    DeferedResult login() const;
 
-   DeferedResult stop( bool immediate );
+   DeferedResult stop( bool immediate ) const;
 
    DeferedResult declareQueue( const std::string & queueName, 
            bool durable = false, 
@@ -60,12 +52,12 @@ class AMQPClient : private boost::noncopyable
            const std::string & message ) const;
 
    bool connected() const;
-   void waitForDisconnection();
-
+   void waitForDisconnection() const;
 
  private:
-   mutable RabbitJobManager                     _jobManager;
-   AMQPConnectionDetails                        _connectionParams;
+   mutable RabbitJobQueue                       _jobQueue;
+   mutable RabbitJobHandler                     _jobHandler;
+   RabbitConnectionDetails                      _connectionParams;
 
 };
 } //namespace AMQP

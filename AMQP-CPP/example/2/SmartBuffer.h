@@ -1,12 +1,14 @@
 #ifndef SMART_BUFFER_H
 #define SMART_BUFFER_H
-#include <algorithm>
+
 #include <iostream>
 #include <vector>
 #include <stdint.h>             /* Definition of uint64_t */
 #include <sys/eventfd.h>
 #include <unistd.h>
 #include <boost/noncopyable.hpp>
+
+namespace AMQP {
 
 class SmartBuffer : boost::noncopyable
 {
@@ -53,16 +55,12 @@ class SmartBuffer : boost::noncopyable
 
     void clear()
     {
-        uint64_t i = _buffer.size();
-        if ( i > 0 )
-        {
-            _buffer.clear();
-        }
+        _buffer.clear();
     }
 
  private:
-    std::vector<char>   _buffer;
+    std::vector< char >   _buffer;
 
 };
-
+} //namespace AMQP
 #endif

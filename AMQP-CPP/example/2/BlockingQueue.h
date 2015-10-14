@@ -2,15 +2,12 @@
 #define BLOCKING_QUEUE
 
 #include <deque>
-#include <condition_variable>
 #include <mutex>
+#include <condition_variable>
 #include <boost/noncopyable.hpp>
 #include <sys/eventfd.h>
-#include <unistd.h>
-#include <iostream>
-#include <stdlib.h>
+#include <unistd.h>             /* read and write */
 #include <stdint.h>             /* Definition of uint64_t */
-
 
 namespace AMQP
 {
@@ -146,13 +143,6 @@ class BlockingQueue : public boost::noncopyable
  private:
    bool doPush( DataType & data, bool first )
    {
-//TODO: yossi removed _queue->size() ??
-//       int msgAmountToBeSent = _queue->size();
-//       if ( msgAmountToBeSent > 10000 )
-//       {
-//            std::cout << "Blocking queue size is too big! size:" << msgAmountToBeSent << std::endl;
-//       }
-       
        {
            std::unique_lock< std::recursive_mutex > lock(_queueMutex);
            _queue->push( data, first );

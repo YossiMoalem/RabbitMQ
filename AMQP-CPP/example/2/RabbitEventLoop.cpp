@@ -1,6 +1,5 @@
-#include "AMQPEventLoop.h"
-#include "BlockingQueue.h"
-#include "RabbitJobManager.h"
+#include "RabbitEventLoop.h"
+#include "RabbitJobHandler.h"
 #include "RabbitOperation.h"
 #include "Debug.h"
 #include <algorithm>
@@ -8,18 +7,19 @@
 
 namespace AMQP {
 
-AMQPEventLoop::AMQPEventLoop( BlockingQueue<RabbitMessageBase * >  * jobQueue,
-        RabbitJobManager * handler ) :
-    _handler( handler),
+RabbitEventLoop::RabbitEventLoop( RabbitJobQueue & jobQueue,
+        RabbitJobHandler* handler ) :
+    _jobHandler( handler),
     _jobQueue( jobQueue )
 { }
 
-int AMQPEventLoop::start( int queueEventFD,
-        int  brokerReadFD ,
+int RabbitEventLoop::start( int  brokerReadFD ,
         int  brokerWriteFD )
 {
     _stop = false;
     PRINT_DEBUG(DEBUG, "Eventloop unleashed! ");
+
+    int queueEventFD = _jobQueue.getFD();
 
     fd_set readFdSet;
     fd_set writeFdSet;
@@ -35,11 +35,11 @@ int AMQPEventLoop::start( int queueEventFD,
         FD_ZERO( & readFdSet );
         FD_ZERO( & writeFdSet );
         FD_SET( brokerReadFD, & readFdSet );
-        if( _handler->canHandleMessage() )
+        if( _jobHandler->canHandleMessage() )
         {
             FD_SET( queueEventFD, & readFdSet );
         }
-        if( _handler->pendingSend() )
+        if( _jobHandler->pendingSend() )
         {
             FD_SET( brokerWriteFD, & writeFdSet );
         }
@@ -63,7 +63,7 @@ int AMQPEventLoop::start( int queueEventFD,
             }
         }
         else if ( res == 0 ){
-            _handler->handleTimeout();
+            _jobHandler->handleTimeout();
             _resetTimeout( heartbeatIdenInterval );
         }
         else
@@ -72,54 +72,54 @@ int AMQPEventLoop::start( int queueEventFD,
         }
     }
     PRINT_DEBUG(DEBUG, "EventLoop stopped 0 ");
-    _handler->stopEventLoop( true, dummyResultSetter );
+    _jobHandler->stopEventLoop( true, dummyResultSetter );
     return 0;
 }
 
-void AMQPEventLoop::stop()
+void RabbitEventLoop::stop()
 {
     _stop = true;
 }
 
-void AMQPEventLoop::_resetTimeout( timeval & timeoutTimeval )
+void RabbitEventLoop::_resetTimeout( timeval & timeoutTimeval )
 {
     timeoutTimeval.tv_sec = 7;
     timeoutTimeval.tv_usec = 0;
 }
 
-void AMQPEventLoop::_handleQueue( )
+void RabbitEventLoop::_handleQueue( )
 {
     RabbitMessageBase * msg = nullptr;
-    while ( _handler->canHandleMessage() && _jobQueue->try_pop( msg ) )
+    while ( _jobHandler->canHandleMessage() && _jobQueue.tryPop( msg ) )
     {
         msg->handle( );
         delete msg;
     }
 }
 
-void AMQPEventLoop::_handleOutput()
+void RabbitEventLoop::_handleOutput()
 {
     try
     {
-        _handler->handleOutput();
+        _jobHandler->handleOutput();
     }
-    catch(...)
+    catch( const std::exception &  e )
     {
-        PRINT_DEBUG(DEBUG,  "send failedclosing event loop");
+        PRINT_DEBUG( DEBUG,  "send failedclosing event loop. exception: "<< e.what() );
         stop();
     }
 }
 
-void AMQPEventLoop::_handleInput()
+void RabbitEventLoop::_handleInput()
 {
     try
     {
-        _handler->handleInput();
+        _jobHandler->handleInput();
     }
 
-    catch(...)
+    catch( const std::exception & e )
     {
-        PRINT_DEBUG(DEBUG,  "read failed. closing event loop");
+        PRINT_DEBUG( DEBUG,  "read failed. closing event loop. exception: "<< e.what() );
         stop();
     }
 }

@@ -1,50 +1,20 @@
-#include "AMQPConnectionHandler.h"
-#include "AMQPConnectionDetails.h"
-
-#include <assert.h>
-#include <memory>
+#include "RabbitConnectionHandler.h"
 #include "Debug.h"
-#include "Heartbeat.h"
+#include "RabbitSocket.h"
+#include "ConnectionState.h"
+
+#include <memory>
 
 namespace AMQP {
 
-AMQPConnectionHandler::AMQPConnectionHandler( std::function<int( const AMQP::Message& )> onMsgReceivedCB,
-        ConnectionState & connectionState ) :
-    _onMsgReceivedBC( onMsgReceivedCB ),
+RabbitConnectionHandler::RabbitConnectionHandler( OnMessageReveivedCB onMsgReceivedCB,
+        ConnectionState & connectionState,
+        std::shared_ptr< RabbitSocket > socket ) :
+    _socket( socket ),
     _connectionState( connectionState )
 { }
 
-AMQPConnectionHandler::~AMQPConnectionHandler()
-{
-    if( _connection )
-        delete _connection;
-    if( _channel )
-        delete _channel;
-}
-
-bool AMQPConnectionHandler::handleInput( )
-{
-    if( _socket.read( _incomingMessages ) )
-    {
-        size_t processed = _connection->parse( _incomingMessages.data(), _incomingMessages.size() );
-        _incomingMessages.shrink( processed );
-        return true;
-    }
-    return false;
-}
-
-bool AMQPConnectionHandler::handleOutput()
-{
-    assert( pendingSend() );
-    return _socket.send( _outgoingBuffer);
-}
-
-bool AMQPConnectionHandler::pendingSend()
-{
-    return ! _outgoingBuffer.empty();
-}
-
-void AMQPConnectionHandler::doPublish( const std::string & exchangeName, 
+void RabbitConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
         DeferedResultSetter operationSucceeded ) const
@@ -53,7 +23,7 @@ void AMQPConnectionHandler::doPublish( const std::string & exchangeName,
     operationSucceeded->set_value( true );
 }
 
-void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName, 
+void RabbitConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
         DeferedResultSetter operationSucceeded ) const
@@ -61,10 +31,8 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
     PRINT_DEBUG(DEBUG, "binding: " << routingKey);
     _channel->bindQueue( exchangeName, queueName, routingKey );
 
-//    slow binding
-//    operationSucceeded->set_value( true );
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
-    bindHndl.onSuccess( [ exchangeName, queueName, routingKey, operationSucceeded ]() {
+    bindHndl.onSuccess( [ operationSucceeded ]() {
             operationSucceeded->set_value( true );
             });
     bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
@@ -72,15 +40,13 @@ void AMQPConnectionHandler::doBindQueue( const std::string & exchangeName,
             } ) ;
 }
 
-void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
+void RabbitConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
         DeferedResultSetter operationSucceeded ) const
 {
     PRINT_DEBUG(DEBUG, "unbinding: " << routingKey);
     _channel->unbindQueue( exchangeName, queueName, routingKey );
-//    slow binding
-//    operationSucceeded->set_value( true );
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
             operationSucceeded->set_value( true );
@@ -91,12 +57,11 @@ void AMQPConnectionHandler::doUnBindQueue( const std::string & exchangeName,
              } ) ;
 }
 
-void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
+void RabbitConnectionHandler::onConnected( AMQP::Connection * connection )
 {
-    if( _channel )
-        delete _channel;
-    _channel = new AMQP::Channel( _connection );
-
+    //_connection ptr will not dangle because we reset it after disconnection, so channel is invalid anyway...
+    //Nevertheless, maybe add channel ctor that takes shared_ptr.
+    _channel.reset( new AMQP::Channel( _connection.get() ) ); 
     _channel->onError([ this ](const char *message) {
             PRINT_DEBUG(DEBUG, "channel error " << message);
             _connectionState.disconnected();
@@ -106,7 +71,7 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
     //this CB is called twice: 
     //from AMQP::ConnectionOpenOKFrame::process ->  
     //          AMQP::ConnectionImpl::setConnected  ->
-    //               AMQP::AMQPConnectionHandler::onConnected ( this function, on exit )->
+    //               AMQP::RabbitConnectionHandler::onConnected ( this function, on exit )->
     //                   AMQP::Channel::onReady ->
     //                      AMQP::ChannelImpl::onReady
     // and: 
@@ -127,12 +92,12 @@ void AMQPConnectionHandler::onConnected( AMQP::Connection * connection )
     });
 }
 
-void AMQPConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
+void RabbitConnectionHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
-    _outgoingBuffer.append( data, size );
+    _socket->send( data, size );
 }
 
-void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *message)
+void RabbitConnectionHandler::onError(AMQP::Connection *connection, const char *message)
 {
     //todo: this function is being called when we get a formal close connection from the broker or when formally closing broker.
     //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
@@ -141,26 +106,27 @@ void AMQPConnectionHandler::onError(AMQP::Connection *connection, const char *me
     _connectionState.disconnected();
 }
 
-void AMQPConnectionHandler::onClosed(AMQP::Connection *connection) 
+void RabbitConnectionHandler::onClosed(AMQP::Connection *connection) 
 {
     PRINT_DEBUG(DEBUG, "Info: Connection Closed");
     _connectionState.disconnected();
 }
 
-void AMQPConnectionHandler::login( const std::string & userName,
+void RabbitConnectionHandler::login( const std::string & userName,
         const std::string & password,
         DeferedResultSetter operationSucceeded )
 {
     _connectionState.loggingIn( operationSucceeded );
     Login login( userName, password );
-    _connection = new AMQP::Connection(this, login, std::string( "/" ) );
+    _connection.reset( new AMQP::Connection(this, login, std::string( "/" ) ) );
 }
 
-void AMQPConnectionHandler::declareQueue( const std::string & queueName, 
+void RabbitConnectionHandler::declareQueue( const std::string & queueName, 
         bool isDurable, 
         bool isExclusive, 
         bool isAutoDelete,
-        DeferedResultSetter operationSucceeded ) const
+        DeferedResultSetter operationSucceeded,
+        OnMessageReveivedCB onMsgReceivedCB ) const
 {
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
@@ -174,16 +140,13 @@ void AMQPConnectionHandler::declareQueue( const std::string & queueName,
 //    arguments["x-expires"] = 7200 * 1000; //time in ms before queue is automatically deleted if idle
 
     auto & queueHndl = _channel->declareQueue( queueName, flags, arguments );
-    queueHndl.onSuccess([ this, queueName, operationSucceeded ]() { 
+    queueHndl.onSuccess([ this, queueName, operationSucceeded, onMsgReceivedCB ]() { 
             PRINT_DEBUG(DEBUG, "Queue declared successfully");
             operationSucceeded->set_value( true );
-            _channel->consume( queueName.c_str() ).onReceived([ this ](const AMQP::Message &message, 
+            _channel->consume( queueName.c_str() ).onReceived([ onMsgReceivedCB, this ](const AMQP::Message &message, 
                     uint64_t deliveryTag, 
                     bool redelivered ) {
-                if( _onMsgReceivedBC )
-                {
-                    _onMsgReceivedBC( message );
-                }
+                onMsgReceivedCB( message );
                 _channel->ack( deliveryTag );
                 } ) ;
             }); 
@@ -193,7 +156,7 @@ void AMQPConnectionHandler::declareQueue( const std::string & queueName,
             } );
 }
 
-void AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
+void RabbitConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
         bool isDurable,
         DeferedResultSetter operationSucceeded ) const
@@ -211,33 +174,6 @@ void AMQPConnectionHandler::declareExchange( const std::string & exchangeName,
                 operationSucceeded->set_value( false );
                 PRINT_DEBUG(DEBUG, "Failed declaring exchange. error: " << message);
                 } ) ;
-}
-
-bool AMQPConnectionHandler::connect(const AMQPConnectionDetails & connectionParams )
-{
-    _connectionState.socketConnecting();
-    _incomingMessages.clear();
-    _outgoingBuffer.clear();
-    PRINT_DEBUG(DEBUG, "Connecting to : "<<connectionParams._host<<":"<<connectionParams._port);
-    if( ! _socket.connect( connectionParams._host, connectionParams._port ) )
-    {
-        _connectionState.disconnected();
-        PRINT_DEBUG(DEBUG, "Error creating socket");
-        return false;
-    } else {
-        _connectionState.socketConnected();
-        return true;
-    }
-}
-
-void AMQPConnectionHandler::closeSocket()
-{
-    _socket.close();
-}
-
-unsigned int AMQPConnectionHandler::outgoingBufferSize() const
-{
-    return _outgoingBuffer.size();
 }
 
 } //namespace AMQP

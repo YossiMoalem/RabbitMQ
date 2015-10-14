@@ -1,91 +1,63 @@
-#include "Debug.h"
 #include "Heartbeat.h"
-#include "AMQPConnectionHandler.h"
+#include "RabbitConnection.h"
+#include "Debug.h"
 
-//#include <sys/types.h>
-//#include <unistd.h>
-//#include <iostream>
-//#include <string.h>
-//#include <sstream>
-//
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <iostream>
+#include <string.h>
+#include <sstream>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-
-#define AdminExchangeName "admin"
-#define AdminRoutingKey "admin"
 namespace AMQP {
-Heartbeat::Heartbeat( AMQPConnectionHandler * connectionHandler ):
-    _connectionHandler( connectionHandler )
+Heartbeat::Heartbeat( const RabbitConnection & dataConnection ):
+    _connection( [] (const AMQP::Message&) { return 0;},  dataConnection )
 {
-    //TODO: add to AdminQueueName the hostname and maybe other param as well and not just the hostname (hubname maybe?)
-    /* initialize random seed: */
-    srand (time(NULL));
-    /* generate secret number between 1 and 100000 : */
-    int iSecret = rand() % 100000 + 1;
-    AdminQueueName = "admin" + std::to_string(getpid()) + std::to_string(iSecret) ;
-
+    _adminQueueName = "admin_" + std::to_string(getpid()) + "_" + std::to_string( time( nullptr ) ) ;
 }
-
 
 void Heartbeat::initialize()
 {
-    //TODO:
-    //Should go to the place bad code goes
-
-
-    std::shared_ptr< std::promise< bool > > deferedResultSetter = std::make_shared< std::promise< bool > > ();
-    _connectionHandler->declareExchange(AdminExchangeName, fanout, false, deferedResultSetter );
-
-    int flags = 0;
-//    flags |= AMQP::durable;
-//    flags |= AMQP::exclusive;
-    flags |= AMQP::autodelete;
-
-    AMQP::Table arguments;
-//    arguments["x-dead-letter-exchange"] = "some-exchange";
-    arguments["x-message-ttl"] = 30 * 1000; //time in ms before message is discarded
-//    arguments["x-expires"] = 10 * 1000; //time in ms before queue is automatically deleted if idle
-
-    auto & queueHndl = _connectionHandler->_channel->declareQueue( AdminQueueName, flags, arguments );
-    queueHndl.onSuccess([ this ]() { 
-            PRINT_DEBUG(DEBUG, "Admin queue declared OK");
-            _connectionHandler->_channel->consume( AdminQueueName ).onReceived([ this ](const AMQP::Message &message,
-                    uint64_t deliveryTag, 
-                    bool redelivered ) {
-                _connectionHandler->_channel->ack( deliveryTag );
-                }); 
-            _initialized = true;
-            } );
-    queueHndl.onError( [ this ] ( const char* message ) {
-            PRINT_DEBUG(DEBUG, "Failed declaring admin. error: " << message );
-            _initialized = false;
-            } );
-
-    _connectionHandler->_channel->bindQueue( AdminExchangeName, AdminQueueName, AdminRoutingKey );
+    //TODO: initialize in a more civilized manar...
+    PRINT_DEBUG(DEBUG, "Initializing Heartbeat");
+    DeferedResultSetter deferedResultSetter1 = std::make_shared< std::promise< bool > > ();
+    DeferedResultSetter deferedResultSetter2 = std::make_shared< std::promise< bool > > ();
+    DeferedResultSetter deferedResultSetter3 = std::make_shared< std::promise< bool > > ();
+    _connection.declareExchange(_adminExchangeName, fanout, false, deferedResultSetter1 );
+    _connection.declareQueue( _adminQueueName, false, false, true, deferedResultSetter2 ); 
+    _connection.doBindQueue( _adminExchangeName, _adminQueueName, _adminRoutingKey, deferedResultSetter3);
+    _initialized = true;
+    PRINT_DEBUG(DEBUG, "Heartbeat Initialized ");
 }
 
 bool Heartbeat::send( )
 {
+    PRINT_DEBUG(DEBUG, "Chacking Heartbeat");
     if ( ! _initialized )
     {
         if( ! _initializeCalled )
         {
-            _initializeCalled = true;
             initialize();
+            _initializeCalled = true;
+            PRINT_DEBUG(DEBUG, "Trying to initialized Heartbeat");
             return true;
         } else {
+            PRINT_DEBUG(DEBUG, "Called initalize, but we are still not initialized, probably not connected");
             return false;
         }
     }
     if ( ! _heartbeatSent )
     {
-        _connectionHandler->_channel->publish( AdminExchangeName, AdminRoutingKey, AdminQueueName );
+        DeferedResultSetter deferedResultSetter = std::make_shared< std::promise< bool > > ();
+        _connection.doPublish( _adminExchangeName, _adminRoutingKey, _adminQueueName, deferedResultSetter );
         _heartbeatSent = true;
+        PRINT_DEBUG(DEBUG, "Sending HB message");
         return true;
     } 
+    PRINT_DEBUG(DEBUG, "Did not get HB response, probably disconnected");
     return false;
 }
 void Heartbeat::invalidate()
@@ -97,8 +69,8 @@ void Heartbeat::invalidate()
 
 void Heartbeat::reset()
 {
+    PRINT_DEBUG(DEBUG, "Reseting Heartbeat." );
     _heartbeatSent = false;
 }
-
 
 } //namespace AMQP

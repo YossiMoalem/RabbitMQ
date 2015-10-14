@@ -1,9 +1,7 @@
-#ifndef BASIC_SOCKET_H
-#define BASIC_SOCKET_H
+#ifndef RAW_SOCKET_H
+#define RAW_SOCKET_H
 
 #include <string>
-#include <string.h>
-#include <iostream>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -14,7 +12,7 @@
 
 namespace AMQP{
 
-class AMQPSocket : boost::noncopyable
+class RawSocket : boost::noncopyable
 {
  public:
 

@@ -1,6 +1,6 @@
-#include "AMQPClient.h"
-#include "AMQPConnectionDetails.h"
+#include "RabbitClient.h"
 #include "Debug.h"
+#include "Types.h"
 
 #include <thread>
 #include <unistd.h>
@@ -22,8 +22,8 @@ using namespace AMQP;
 
 void runConsumer()
 {
-    AMQPConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-    AMQPClient amqpClient( [] ( const AMQP::Message & message ) {
+    RabbitConnectionDetails connectionDetails( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
+    RabbitClient amqpClient( [] ( const AMQP::Message & message ) {
             timespec tv;
             clock_gettime( CLOCK_MONOTONIC, &tv );
             long sentNSec = std::stol( message.message() );
@@ -73,8 +73,8 @@ void runConsumer()
 
 void runProducer()
 {
-    AMQPConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
-    AMQPClient amqpClient( nullptr );
+    RabbitConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
+    RabbitClient amqpClient( nullptr );
     amqpClient.init( connectionDetails );
     DeferedResult loginStatus = amqpClient.login();
     loginStatus.wait();

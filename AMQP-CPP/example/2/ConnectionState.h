@@ -2,7 +2,7 @@
 #define CONNECTION_STATE_H
 
 #include "Debug.h"
-#include "ResultCodes.h"
+#include "Types.h"
 
 #include <assert.h>
 #include <boost/noncopyable.hpp>

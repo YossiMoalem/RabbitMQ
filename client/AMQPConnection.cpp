@@ -1,7 +1,7 @@
 #include "AMQPConnection.h"
 #include "ConnectionDetails.h"
 #include "Debug.h"
-#include <AMQPConnectionDetails.h>
+#include <Types.h>
 #include <thread>
 #include <unistd.h>
 #include <future>
@@ -13,7 +13,7 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
         const std::string & exchangeName ,
         const std::string & queueName,
         const std::string & routingKey,
-        AMQP::AMQPClient::OnMessageReveivedCB i_onMessageReceiveCB ) :
+        AMQP::OnMessageReveivedCB i_onMessageReceiveCB ) :
     _connectionHandler( [ i_onMessageReceiveCB ] 
             ( const AMQP::Message & message ) 
             { return i_onMessageReceiveCB( message ); } ),
@@ -38,7 +38,7 @@ ReturnStatus AMQPConnection::connectLoop()
     while ( _stop == false )
     {
         PRINT_DEBUG(DEBUG, "started AMQPConnection::connectLoop() ");
-        AMQP::AMQPConnectionDetails connectionDetails = _connectionDetails.getNextHost();
+        AMQP::RabbitConnectionDetails connectionDetails = _connectionDetails.getNextHost();
 
         bool connected = _connectionHandler.init( connectionDetails );
         if ( connected )

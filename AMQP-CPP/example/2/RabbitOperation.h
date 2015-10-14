@@ -1,13 +1,11 @@
 #ifndef RABBIT_MESSAGE_H
 #define RABBIT_MESSAGE_H
 
-#include <amqpcpp.h>
-
-#include "ResultCodes.h"
+#include "Types.h"
+#include "amqpcpp.h"
 
 namespace AMQP {
-class RabbitJobManager;
-
+class RabbitJobHandler;
 
 /********************************************************************************\
  * RabbitMessageBase
@@ -35,16 +33,16 @@ class RabbitMessageBase
         return _returnValueSetter->get_future();
     }
 
-    void setHandler( RabbitJobManager * handler )
+    void setHandler( RabbitJobHandler * handler )
     {
-        _handler = handler;
+        _jobHandler = handler;
     }
 
     virtual void handle( ) = 0;
 
  protected:
     DeferedResultSetter     _returnValueSetter;
-    RabbitJobManager *      _handler;
+    RabbitJobHandler*      _jobHandler;
 };
 
 /********************************************************************************\
