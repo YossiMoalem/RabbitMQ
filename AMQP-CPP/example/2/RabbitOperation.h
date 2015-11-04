@@ -117,7 +117,7 @@ class UnBindMessage : public RabbitMessageBase
 class StopMessage : public RabbitMessageBase
 {
  public:
-    StopMessage( bool immediate ) :
+    StopMessage( )
     { }
 
     virtual void handle( ) override;

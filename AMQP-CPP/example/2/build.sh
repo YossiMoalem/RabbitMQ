@@ -1,2 +1,2 @@
-rm AMQPEventLoop.o
+rm RabbitEventLoop.o
 scons
