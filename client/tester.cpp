@@ -48,6 +48,7 @@ class BindTester
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Send message to relevant/nonrelevane queue:");
        RABBIT_DEBUG ("Tester:: Going to send 6 lalalila messages to the relevant queue. Should be recieved");
+       client.bindToSelf (MY_NAME);
        while ( client.sendUnicast(std::string("lalalila1"), MY_NAME, MY_NAME ) != ReturnStatus::Ok ) sleep(1);
        client.sendUnicast(std::string("lalalila2"), MY_NAME, MY_NAME );
        client.sendUnicast(std::string("lalalila3"), MY_NAME, MY_NAME );
@@ -290,9 +291,9 @@ int main ()
     ( void ) continousTester;
     ( void ) manyBindTester;
 
-//    std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
+    std::thread testerThread( std::bind( & BindTester::operator(), & bindTester) );
 //    std::thread testerThread( std::bind( & MeasureTester::operator(), & measureTester ) );
-    std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
+//    std::thread testerThread( std::bind( & RepeatedBindTester::operator(), & repeatediBindTester ) );
 //    std::thread testerThread( std::bind( & ContinousSendTester::operator(), & continousTester ) );
 //    std::thread testerThread( std::bind( & ManyBindTester::operator(), & manyBindTester ) );
 

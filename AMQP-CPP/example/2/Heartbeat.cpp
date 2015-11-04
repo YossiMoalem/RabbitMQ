@@ -35,7 +35,7 @@ void Heartbeat::initialize()
 
 bool Heartbeat::send( )
 {
-    PRINT_DEBUG(DEBUG, "Chacking Heartbeat");
+    PRINT_DEBUG(DEBUG, "Checking Heartbeat");
     if ( ! _initialized )
     {
         if( ! _initializeCalled )
@@ -45,7 +45,7 @@ bool Heartbeat::send( )
             PRINT_DEBUG(DEBUG, "Trying to initialized Heartbeat");
             return true;
         } else {
-            PRINT_DEBUG(DEBUG, "Called initalize, but we are still not initialized, probably not connected");
+            PRINT_DEBUG(DEBUG, "Called initialize, but we are still not initialized, probably not connected");
             return false;
         }
     }
@@ -69,7 +69,7 @@ void Heartbeat::invalidate()
 
 void Heartbeat::reset()
 {
-    PRINT_DEBUG(DEBUG, "Reseting Heartbeat." );
+//    PRINT_DEBUG(DEBUG, "Resetting Heartbeat." );
     _heartbeatSent = false;
 }
 

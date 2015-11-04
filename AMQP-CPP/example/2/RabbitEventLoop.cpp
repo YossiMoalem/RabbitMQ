@@ -72,7 +72,7 @@ int RabbitEventLoop::start( int  brokerReadFD ,
         }
     }
     PRINT_DEBUG(DEBUG, "EventLoop stopped 0 ");
-    _jobHandler->stopEventLoop( true, dummyResultSetter );
+    _jobHandler->stopEventLoop( dummyResultSetter );
     return 0;
 }
 

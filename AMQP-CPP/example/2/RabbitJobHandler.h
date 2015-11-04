@@ -23,8 +23,7 @@ class RabbitJobHandler
    DeferedResult addJob ( RabbitMessageBase * job );
 
    bool start( const RabbitConnectionDetails & connectionParams );
-   void stopEventLoop( bool immediate,
-           DeferedResultSetter returnValueSetter );
+   void stopEventLoop( DeferedResultSetter returnValueSetter );
    bool canHandleMessage() const;
    void handleTimeout();
    bool handleInput() { _heartbeat.reset(); return _connection->handleInput();  }

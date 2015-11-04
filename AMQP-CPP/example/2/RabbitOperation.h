@@ -118,13 +118,9 @@ class StopMessage : public RabbitMessageBase
 {
  public:
     StopMessage( bool immediate ) :
-        _immediate( immediate )
     { }
 
     virtual void handle( ) override;
-
- protected:
-    bool _immediate;
 };
 
 /********************************************************************************\

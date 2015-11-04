@@ -16,6 +16,14 @@ DeferedResult RabbitJobQueue::addJob ( RabbitMessageBase * job )
     return result;
 }
 
+DeferedResult RabbitJobQueue::addJobToFront ( RabbitMessageBase * job )
+{
+    auto result = job->deferedResult();
+    job->setHandler( _jobHandler );
+    _jobQueue.pushFront( job );
+    return result;
+}
+
 bool RabbitJobQueue::tryPop( RabbitMessageBase *& message )
 {
     return _jobQueue.try_pop( message );

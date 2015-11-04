@@ -14,6 +14,7 @@ class RabbitJobQueue
  public:
    RabbitJobQueue( );
    DeferedResult addJob( RabbitMessageBase * job );
+   DeferedResult addJobToFront( RabbitMessageBase * job );
    bool tryPop( RabbitMessageBase *& message );
    void clear();
    int getFD() const;

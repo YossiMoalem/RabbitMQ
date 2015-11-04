@@ -1,6 +1,5 @@
 #include "RabbitJobHandler.h"
 #include "RabbitEventLoop.h"
-#include "RabbitOperation.h"
 #include "Types.h"
 
 namespace AMQP {
@@ -53,21 +52,11 @@ void RabbitJobHandler::doStart( const RabbitConnectionDetails & connectionParams
     }
 }
 
-void RabbitJobHandler::stopEventLoop( bool immediate,
-    DeferedResultSetter returnValueSetter )
+void RabbitJobHandler::stopEventLoop( DeferedResultSetter returnValueSetter )
 {
-    if( immediate )
+    if( _connectionState.disconnecting( returnValueSetter ) )
     {
-        if( _connectionState.disconnecting( returnValueSetter ) )
-        {
-            _connectionState.disconnected();
-        }
-    } else {
-        if( _connectionState.disconnecting( returnValueSetter ) )
-        {
-            StopMessage * stopMessage = new StopMessage( true );
-            _jobQueue.addJob( stopMessage );
-        }
+        _connectionState.disconnected();
     }
 }
 
@@ -80,7 +69,7 @@ void RabbitJobHandler::handleTimeout()
 {
     if( _heartbeat.send() == false )
     {
-        stopEventLoop( true, dummyResultSetter );
+        stopEventLoop( dummyResultSetter );
     }
 }
 

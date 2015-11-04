@@ -31,8 +31,7 @@ void UnBindMessage::handle( )
 void StopMessage::handle( )
 {
     PRINT_DEBUG(DEBUG, "Handle stop message");
-    _jobHandler->stopEventLoop( _immediate,
-            _returnValueSetter );
+    _jobHandler->stopEventLoop( _returnValueSetter );
 }
 
 void LoginMessage::handle( )

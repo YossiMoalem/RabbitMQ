@@ -55,8 +55,15 @@ DeferedResult RabbitClient::unBindQueue( const std::string & exchangeName,
 
 DeferedResult RabbitClient::stop( bool immediate ) const
 {
-    StopMessage * stopMessage = new StopMessage( immediate );
-    return _jobQueue.addJob( stopMessage );
+    StopMessage * stopMessage = new StopMessage( );
+    if (immediate)
+    {
+        return _jobQueue.addJobToFront( stopMessage );
+    }
+    else
+    {
+        return _jobQueue.addJob( stopMessage );
+    }
 }
 
 DeferedResult RabbitClient::declareExchange( const std::string & exchangeName, 
