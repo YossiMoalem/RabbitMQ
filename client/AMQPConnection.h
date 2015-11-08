@@ -14,7 +14,7 @@ class AMQPConnection : boost::noncopyable
            const std::string & exchangeName ,
            const std::string & queueName,
            const std::string & routingKey,
-           AMQP::OnMessageReveivedCB i_onMessageReceiveCB ) ;
+           AMQP::OnMessageReceivedCB i_onMessageReceiveCB ) ;
 
    ReturnStatus start();
 

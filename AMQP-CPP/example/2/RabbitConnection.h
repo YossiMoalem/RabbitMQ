@@ -11,7 +11,7 @@ class RabbitConnection
 {
  public:
 
-   RabbitConnection( OnMessageReveivedCB onMsgReceivedCB,
+   RabbitConnection( OnMessageReceivedCB onMsgReceivedCB,
            ConnectionState & connectionState ) :
        _socket( std::make_shared< RabbitSocket > () ),
        _connectionState( connectionState ),
@@ -19,7 +19,7 @@ class RabbitConnection
        _onMsgReceivedCB( onMsgReceivedCB )
     { }
 
-   RabbitConnection( OnMessageReveivedCB onMsgReceivedCB, const RabbitConnection & other ) :
+   RabbitConnection( OnMessageReceivedCB onMsgReceivedCB, const RabbitConnection & other ) :
        _socket( other._socket ),
        _connectionState( other._connectionState ),
        _connectionHandler( other._connectionHandler ),

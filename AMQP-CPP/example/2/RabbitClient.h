@@ -12,7 +12,7 @@ namespace AMQP {
 class RabbitClient : private boost::noncopyable
 {
  public:
-   RabbitClient( OnMessageReveivedCB onMsgReceivedCB );
+   RabbitClient( OnMessageReceivedCB onMsgReceivedCB );
 
    /**
     * Establish connection to the server, no login yet

@@ -45,7 +45,7 @@ class RabbitConnectionHandler : private AMQP::ConnectionHandler, boost::noncopya
             bool exclusive, 
             bool autoDelete,
             DeferedResultSetter operationSucceeded,
-            OnMessageReveivedCB onMsgReceivedCB ) const;
+            OnMessageReceivedCB onMsgReceivedCB ) const;
 
     void login( const std::string & userName, 
             const std::string & password,

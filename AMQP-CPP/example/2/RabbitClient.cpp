@@ -3,7 +3,7 @@
 
 namespace AMQP {
 
-RabbitClient::RabbitClient( OnMessageReveivedCB onMsgReceivedCB ):
+RabbitClient::RabbitClient( OnMessageReceivedCB onMsgReceivedCB ):
     _jobQueue(),
     _jobHandler( onMsgReceivedCB, _jobQueue )
 {

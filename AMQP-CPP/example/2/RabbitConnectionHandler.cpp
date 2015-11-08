@@ -7,7 +7,7 @@
 
 namespace AMQP {
 
-RabbitConnectionHandler::RabbitConnectionHandler( OnMessageReveivedCB onMsgReceivedCB,
+RabbitConnectionHandler::RabbitConnectionHandler( OnMessageReceivedCB onMsgReceivedCB,
         ConnectionState & connectionState,
         std::shared_ptr< RabbitSocket > socket ) :
     _socket( socket ),
@@ -126,7 +126,7 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
         bool isExclusive, 
         bool isAutoDelete,
         DeferedResultSetter operationSucceeded,
-        OnMessageReveivedCB onMsgReceivedCB ) const
+        OnMessageReceivedCB onMsgReceivedCB ) const
 {
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;

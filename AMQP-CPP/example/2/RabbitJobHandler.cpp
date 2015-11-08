@@ -4,7 +4,7 @@
 
 namespace AMQP {
 
-RabbitJobHandler::RabbitJobHandler( OnMessageReveivedCB onMsgReceivedCB, RabbitJobQueue & jobQueue ) :
+RabbitJobHandler::RabbitJobHandler( OnMessageReceivedCB onMsgReceivedCB, RabbitJobQueue & jobQueue ) :
     _connectionState( [ this ] () { 
         _heartbeat.invalidate();
         _eventLoop->stop();

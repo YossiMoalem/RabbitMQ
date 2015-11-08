@@ -9,7 +9,7 @@ class Message;
 
 using DeferedResult = std::future< bool >;
 using DeferedResultSetter = std::shared_ptr< std::promise< bool > >;
-using OnMessageReveivedCB = std::function<int( const AMQP::Message& )> ;
+using OnMessageReceivedCB = std::function<int( const AMQP::Message& )> ;
 #define dummyResultSetter nullptr
 
 struct RabbitConnectionDetails

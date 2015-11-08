@@ -13,9 +13,9 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
         const std::string & exchangeName ,
         const std::string & queueName,
         const std::string & routingKey,
-        AMQP::OnMessageReveivedCB i_onMessageReceiveCB ) :
-    _connectionHandler( [ i_onMessageReceiveCB ] 
-            ( const AMQP::Message & message ) 
+        AMQP::OnMessageReceivedCB i_onMessageReceiveCB ) :
+    _connectionHandler( [ i_onMessageReceiveCB ]
+            ( const AMQP::Message & message )
             { return i_onMessageReceiveCB( message ); } ),
     _connectionDetails( connectionDetails ),
     _stop( false ),
@@ -61,7 +61,8 @@ ReturnStatus AMQPConnection::connectLoop()
                         PRINT_DEBUG(DEBUG, "error declaring queue");
                         _connectionHandler.stop( true );
                     } else {
-                        bool bindQueueSucceeded = _bindQueue();
+//                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
+                        bool bindQueueSucceeded = true;
                         if ( ! bindQueueSucceeded )
                         {
                             PRINT_DEBUG(DEBUG, "error binding queue");
