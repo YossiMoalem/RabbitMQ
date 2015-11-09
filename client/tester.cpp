@@ -15,6 +15,7 @@
 #define RABBIT_PORT 5672
 #define USER "yossi"
 #define PASSWORD "yossipassword"
+#define EXCHANGE_NAME "EXC1"
 
 static const unsigned int timeToConnect = 2;
 static const unsigned int timeToBindUnbind = 3;
@@ -30,7 +31,7 @@ class BindTester
    int operator ()()
    {
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
                std::cout <<"Free CB:: Received: "<<message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -49,22 +50,22 @@ class BindTester
        RABBIT_DEBUG ("Tester::  + Send message to relevant/nonrelevane queue:");
        RABBIT_DEBUG ("Tester:: Going to send 6 lalalila messages to the relevant queue. Should be recieved");
        client.bindToSelf (MY_NAME);
-       while ( client.sendUnicast(std::string("lalalila1"), MY_NAME, MY_NAME ) != ReturnStatus::Ok ) sleep(1);
-       client.sendUnicast(std::string("lalalila2"), MY_NAME, MY_NAME );
-       client.sendUnicast(std::string("lalalila3"), MY_NAME, MY_NAME );
-       client.sendUnicast(std::string("lalalila4"), MY_NAME, MY_NAME );
-       client.sendUnicast(std::string("lalalila5"), MY_NAME, MY_NAME );
-       client.sendUnicast(std::string("lalalila6"), MY_NAME, MY_NAME );
+       while ( client.sendUnicast(std::string("lalalila1"), MY_NAME, MY_NAME, EXCHANGE_NAME ) != ReturnStatus::Ok ) sleep(1);
+       client.sendUnicast(std::string("lalalila2"), MY_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("lalalila3"), MY_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("lalalila4"), MY_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("lalalila5"), MY_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("lalalila6"), MY_NAME, MY_NAME, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
 
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester:: Going to send 6 kukuruku messages to NON relevant queue. Should NOT be recieved");
-       client.sendUnicast(std::string("kukuriku 1"), OTHER_NAME, MY_NAME );
-       client.sendUnicast(std::string("kukuriku 2"), OTHER_NAME, MY_NAME );
-       client.sendUnicast(std::string("kukuriku 3"), OTHER_NAME, MY_NAME );
-       client.sendUnicast(std::string("kukuriku 4"), OTHER_NAME, MY_NAME );
-       client.sendUnicast(std::string("kukuriku 5"), OTHER_NAME, MY_NAME );
-       client.sendUnicast(std::string("kukuriku 6"), OTHER_NAME, MY_NAME );
+       client.sendUnicast(std::string("kukuriku 1"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("kukuriku 2"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("kukuriku 3"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("kukuriku 4"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("kukuriku 5"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
+       client.sendUnicast(std::string("kukuriku 6"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
 
        RABBIT_DEBUG ("-------------------------------------------------------");
@@ -73,7 +74,7 @@ class BindTester
        client.bindToDestination (OTHER_NAME);
        RABBIT_DEBUG ("Tester:: Going to send mamamia to previous NON relevant queue, after binding to it. Should recieved");
        sleep (timeToBindUnbind);
-       client.sendMulticast(std::string("mamamia"), OTHER_NAME );
+       client.sendMulticast(std::string("mamamia"), OTHER_NAME, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
 
        RABBIT_DEBUG ("-------------------------------------------------------");
@@ -82,7 +83,7 @@ class BindTester
        client.unbindFromDestination (OTHER_NAME);
        RABBIT_DEBUG ("Tester:: Going to send kalamari to previously binded queue, after unbinding it. Should NOT recieved");
        sleep (timeToBindUnbind);
-       client.sendMulticast(std::string("Kalamari"), OTHER_NAME );
+       client.sendMulticast(std::string("Kalamari"), OTHER_NAME, EXCHANGE_NAME );
         
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester::  + Bind to the Non relevant queue * Unicast *");
@@ -90,7 +91,7 @@ class BindTester
        client.bindToSelf (OTHER_NAME);
        RABBIT_DEBUG ("Tester:: Going to send mamamia to previous NON relevant queue, after binding to it. Should recieved");
        sleep (timeToBindUnbind);
-       client.sendUnicast(std::string("mamamia"), OTHER_NAME, MY_NAME );
+       client.sendUnicast(std::string("mamamia"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
        RABBIT_DEBUG ("-------------------------------------------------------");
        RABBIT_DEBUG ("Tester:: + unbind from the Non relevant queue ");
@@ -98,7 +99,7 @@ class BindTester
        client.unbindFromSelf (OTHER_NAME);
        RABBIT_DEBUG ("Tester:: Going to send kalamari to previously binded queue, after unbinding it. Should NOT recieved");
        sleep (timeToBindUnbind);
-       client.sendUnicast(std::string("Kalamari"), OTHER_NAME, MY_NAME);
+       client.sendUnicast(std::string("Kalamari"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
        sleep (timeToFlushAllMessages);
        return 0;
@@ -124,7 +125,7 @@ class MeasureTester
    {
        RABBIT_DEBUG("Tester:: Tester Started");
        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, [ this ] ( std::string o_sender, 
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [ this ] ( std::string o_sender,
                    std::string destination, 
                    DeliveryType deliveryType , 
                    std::string message )->int {
@@ -137,7 +138,7 @@ class MeasureTester
                RABBIT_DEBUG("Going to send " << numOfMessagesToSend << " Messages");
                gettimeofday(&firstSendTime, nullptr);
                for (unsigned int leftToSend = numOfMessagesToSend; leftToSend > 0; --leftToSend)
-                   client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
+                   client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME, EXCHANGE_NAME );
                gettimeofday(&lastSendTime, nullptr);
                for( int iter = 0; iter <= 3600 ; ++iter )
                {
@@ -184,7 +185,7 @@ class RepeatedBindTester
        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        cnd.addAlternateHost("10.10.10.10");
        cnd.addAlternatePort(25);
-       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                <<" From : "<< o_sender << std::endl;
                return 0;
@@ -209,7 +210,7 @@ class ContinousSendTester
    {
        std::string myID ("MyId");
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -220,13 +221,13 @@ class ContinousSendTester
        RABBIT_DEBUG ("Tester::  + Bind to queue \"kuku\"");
        client.bindToDestination ("kuku");
        sleep (timeToBindUnbind);
-       client.sendUnicast(std::string("mamamia"), std::string("kuku"), myID);
+       client.sendUnicast(std::string("mamamia"), std::string("kuku"), myID, EXCHANGE_NAME );
        sleep (timeToFlushAllMessages);
        RABBIT_DEBUG("Tester:: Goint to send continous flow of messages to the 2 relevant queues");
        while (1)
        {
-           client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME );
-           client.sendUnicast(std::string("mamamia"), OTHER_NAME, MY_NAME);
+           client.sendUnicast(std::string("lalalila"), MY_NAME, MY_NAME, EXCHANGE_NAME );
+           client.sendUnicast(std::string("mamamia"), OTHER_NAME, MY_NAME, EXCHANGE_NAME );
            sleep (timeToFlushAllMessages);
            RABBIT_DEBUG ("-------------------------------------------------------");
        }
@@ -246,7 +247,7 @@ class ManyBindTester
         std::string myID ("MyId");
 
         ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-        RabbitClient client (cnd, "EXC1", MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+        RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                 std::cout <<"Free CB:: Received: "<< o_message 
                 <<" From : "<< o_sender << std::endl;
                 return 0;
@@ -265,7 +266,7 @@ class ManyBindTester
         for( int keyIndex = 0; keyIndex < 2000; ++keyIndex )
         {
             std::string key = std::string( "key" ) + boost::lexical_cast< std::string >( keyIndex );
-            client.sendMulticast(std::string("mamamia"), key );
+            client.sendMulticast(std::string("mamamia"), key, EXCHANGE_NAME );
         }
         sleep (timeToFlushAllMessages);
         sleep (timeToFlushAllMessages);

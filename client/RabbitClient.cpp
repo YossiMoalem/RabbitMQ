@@ -23,14 +23,15 @@ ReturnStatus RabbitClient::stop(bool immediate)
 
 ReturnStatus RabbitClient::sendUnicast(const std::string& i_message, 
         const std::string& i_destination, 
-        const std::string& i_senderID)
+        const std::string& i_senderID,
+        const std::string& i_excName)
 { 
-    return m_pRabbitClient->sendMessage(i_message,i_destination, i_senderID, DeliveryType::Unicast); 
+    return m_pRabbitClient->sendMessage(i_message,i_destination, i_senderID, i_excName,  DeliveryType::Unicast);
 }
 
-ReturnStatus RabbitClient::sendMulticast(const std::string& i_message, const std::string& i_senderID)
+ReturnStatus RabbitClient::sendMulticast(const std::string& i_message, const std::string& i_senderID, const std::string& i_excName)
 { 
-    return m_pRabbitClient->sendMessage(i_message, "", i_senderID, DeliveryType::Multicast); 
+    return m_pRabbitClient->sendMessage(i_message, "", i_senderID, i_excName, DeliveryType::Multicast);
 }
 
 ReturnStatus RabbitClient::bindToSelf(const std::string& i_key)

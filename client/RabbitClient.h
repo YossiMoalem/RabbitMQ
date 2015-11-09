@@ -22,8 +22,11 @@ class RabbitClient : public boost::noncopyable
 
    ReturnStatus sendUnicast      (	const std::string& i_message,
 							const std::string& i_destination,
-							const std::string& i_senderID );
-   ReturnStatus sendMulticast    (const std::string& i_message, const std::string& i_senderID);
+							const std::string& i_senderID,
+							const std::string& i_excName);
+   ReturnStatus sendMulticast    (const std::string& i_message,
+							const std::string& i_senderID,
+							const std::string& i_excName);
 
    ReturnStatus bindToSelf           (const std::string& i_key);
    ReturnStatus bindToDestination    (const std::string& i_key);

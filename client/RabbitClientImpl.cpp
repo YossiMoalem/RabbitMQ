@@ -29,14 +29,24 @@ ReturnStatus RabbitClientImpl::stop( bool immediate )
     return _AMQPConnection.stop( immediate );
 }
 
-ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message, 
+//use default exchange
+ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
+        const std::string& _destination,
+        const std::string& _senderID,
+        DeliveryType _deliveryType) const
+{
+    return sendMessage( _message, _destination, _senderID, _exchangeName, _deliveryType );
+}
+
+ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
         const std::string& _destination, 
-        const std::string& _senderID, 
+        const std::string& _senderID,
+        const std::string& _excName,
         DeliveryType _deliveryType) const
 {
     std::string routingKey = createRoutingKey( _senderID, _destination, _deliveryType);
     std::string serializedMessage = serializePostMessage( _senderID, _destination,_deliveryType, _message );
-    return _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
+    return _AMQPConnection.publish( _excName, routingKey, serializedMessage );
 }
 
 ReturnStatus RabbitClientImpl::bind(const std::string& _key, DeliveryType _deliveryType)

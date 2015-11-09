@@ -153,7 +153,7 @@ ReturnStatus AMQPConnection::publish( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
-    _connectionHandler.publish( _exchangeName, routingKey, message );
+    _connectionHandler.publish( exchangeName, routingKey, message );
     return ReturnStatus::Ok;
 }
 

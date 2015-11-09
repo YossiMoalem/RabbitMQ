@@ -24,9 +24,15 @@ class RabbitClientImpl : public boost::noncopyable
 
    ReturnStatus stop( bool immediate );
 
+   ReturnStatus sendMessage(const std::string& _message,
+       const std::string& _destination,
+       const std::string& _senderID,
+       DeliveryType _deliveryType) const;
+
    ReturnStatus sendMessage(const std::string& _message, 
        const std::string& _destination, 
-       const std::string& _senderID, 
+       const std::string& _senderID,
+       const std::string& _excName,
        DeliveryType _deliveryType) const;
 
    ReturnStatus bind(const std::string& _key, DeliveryType _deliveryType);
