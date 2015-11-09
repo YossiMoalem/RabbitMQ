@@ -13,7 +13,8 @@ class RabbitClient : public boost::noncopyable
 {
  public:
    RabbitClient(const ConnectionDetails & i_connectionDetails, 
-           const std::string& i_exchangeName, 
+           const std::string& i_exchangeName,
+           const std::string& i_lucExchangeName,
            const std::string& i_consumerID,
            CallbackType       i_onMessageCB );
 

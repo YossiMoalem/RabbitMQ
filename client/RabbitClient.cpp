@@ -2,11 +2,13 @@
 #include "RabbitClientImpl.h"
 
 RabbitClient::RabbitClient(const ConnectionDetails & i_connectionDetails, 
-    const std::string& i_exchangeName, 
+    const std::string& i_exchangeName,
+    const std::string& i_lucExchangeName,
     const std::string& i_consumerID,
     CallbackType        i_onMessageCB ) :
   m_pRabbitClient( new RabbitClientImpl (i_connectionDetails,
         i_exchangeName,
+        i_lucExchangeName,
         i_consumerID,
         i_onMessageCB ) )
 {}

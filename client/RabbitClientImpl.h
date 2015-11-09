@@ -16,7 +16,8 @@ class RabbitClientImpl : public boost::noncopyable
 {
  public:
    RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
-           const std::string& _exchangeName, 
+           const std::string& _exchangeName,
+           const std::string& _lucExchangeName,
            const std::string& _consumerID,
            CallbackType       _onMessageCB );
 
@@ -62,6 +63,7 @@ class RabbitClientImpl : public boost::noncopyable
  private:
    AMQPConnection           _AMQPConnection;
    const std::string        _exchangeName;
+   const std::string        _lucExchangeName;
    const std::string        _queueName;
    //CallbackType             _onMessageReceivedCB;
    mutable CallbackHandler          _callbackHandler;

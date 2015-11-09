@@ -3,15 +3,18 @@
 
 RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
         const std::string& _exchangeName, 
+        const std::string& _lucExchangeName,
         const std::string& _consumerID,
         CallbackType        _onMessageCB ) :
     _AMQPConnection( _connectionDetails, 
-            _exchangeName, 
+            _exchangeName,
+            _lucExchangeName,
             _consumerID, 
             "*",
             //createRoutingKey( _consumerID, _consumerID, DeliveryType::Unicast ),
             [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
     _exchangeName(_exchangeName),
+    _lucExchangeName(_lucExchangeName),
     _queueName(_consumerID),
     _callbackHandler( _onMessageCB )
     //_onMessageReceivedCB( _onMessageCB )
