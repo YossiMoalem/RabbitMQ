@@ -57,6 +57,10 @@ class RabbitConnection
            DeferedResultSetter operationSucceeded ) const
    { _connectionHandler->declareQueue( queueName, durable, exclusive, autoDelete, operationSucceeded, _onMsgReceivedCB ); }
 
+   void removeQueue( const std::string & queueName,
+           DeferedResultSetter operationSucceeded ) const
+   { _connectionHandler->removeQueue( queueName, operationSucceeded ); }
+
    void login( const std::string & userName, 
            const std::string & password,
            DeferedResultSetter operationSucceeded )

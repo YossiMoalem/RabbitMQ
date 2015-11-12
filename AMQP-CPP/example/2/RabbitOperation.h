@@ -189,5 +189,21 @@ class DeclareQueueMessage : public RabbitMessageBase
    bool            _autoDelete;
 };
 
+/********************************************************************************\
+ * RemoveQueue
+ ********************************************************************************/
+class RemoveQueueMessage : public RabbitMessageBase
+{
+ public:
+   RemoveQueueMessage( const std::string & queueName ):
+       _queueName( queueName )
+    {}
+
+   virtual void handle( ) override;
+
+ protected:
+   std::string     _queueName;
+};
+
 } //namespace AMQP
 #endif

@@ -47,6 +47,9 @@ class RabbitConnectionHandler : private AMQP::ConnectionHandler, boost::noncopya
             DeferedResultSetter operationSucceeded,
             OnMessageReceivedCB onMsgReceivedCB ) const;
 
+    void removeQueue( const std::string & queueName,
+            DeferedResultSetter operationSucceeded ) const;
+
     void login( const std::string & userName, 
             const std::string & password,
             DeferedResultSetter operationSucceeded );

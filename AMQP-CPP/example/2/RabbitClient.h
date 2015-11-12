@@ -32,6 +32,8 @@ class RabbitClient : private boost::noncopyable
            bool exclusive = false, 
            bool autoDelete = false ) const;
 
+   DeferedResult removeQueue( const std::string & queueName ) const;
+
    /**
     * ExchangeType: as defined at amqpcpp/exchangetype.h
     **/

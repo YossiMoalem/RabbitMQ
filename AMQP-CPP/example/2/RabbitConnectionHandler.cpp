@@ -128,6 +128,7 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
         DeferedResultSetter operationSucceeded,
         OnMessageReceivedCB onMsgReceivedCB ) const
 {
+    PRINT_DEBUG(DEBUG, "declaring queue: " << queueName);
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
     // TODO: why was it commented out?!
@@ -152,6 +153,23 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
             }); 
     queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
             PRINT_DEBUG(DEBUG, "Failed declaring queue. error: " << message);
+            operationSucceeded->set_value( false );
+            } );
+}
+
+void RabbitConnectionHandler::removeQueue( const std::string & queueName,
+        DeferedResultSetter operationSucceeded ) const
+{
+    PRINT_DEBUG(DEBUG, "removing queue: " << queueName);
+    int flags = 0;
+
+    auto & queueHndl = _channel->removeQueue( queueName, flags );
+    queueHndl.onSuccess([ this, queueName, operationSucceeded ]() {
+            PRINT_DEBUG(DEBUG, "Queue removed successfully");
+            operationSucceeded->set_value( true );
+            });
+    queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
+            PRINT_DEBUG(DEBUG, "Failed removing queue. error: " << message);
             operationSucceeded->set_value( false );
             } );
 }

@@ -88,6 +88,12 @@ DeferedResult RabbitClient::declareQueue( const std::string & queueName,
     return _jobQueue.addJob( declareQueueMessage );
 }
 
+DeferedResult RabbitClient::removeQueue( const std::string & queueName ) const
+{
+    RemoveQueueMessage * removeQueueMessage = new RemoveQueueMessage( queueName );
+    return _jobQueue.addJob( removeQueueMessage );
+}
+
 void RabbitClient::waitForDisconnection() const
 {
     _jobHandler.waitForDisconnection();

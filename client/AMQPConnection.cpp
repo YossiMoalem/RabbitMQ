@@ -65,23 +65,34 @@ ReturnStatus AMQPConnection::connectLoop()
                     }
                     else
                     {
-                        bool declareQueueSucceeded = _declareQueue();
-                        if ( ! declareQueueSucceeded )
+                        bool removeQueueSucceeded = _removeQueue();
+                        if ( ! removeQueueSucceeded )
                         {
-                            PRINT_DEBUG(DEBUG, "error declaring queue");
+                            PRINT_DEBUG(DEBUG, "error removing queue");
                             _connectionHandler.stop( true );
-                        } else {
-    //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
-                            bool bindQueueSucceeded = true;
-                            if ( ! bindQueueSucceeded )
+                        }
+                        else
+                        {
+                            bool declareQueueSucceeded = _declareQueue();
+                            if ( ! declareQueueSucceeded )
                             {
-                                PRINT_DEBUG(DEBUG, "error binding queue");
+                                PRINT_DEBUG(DEBUG, "error declaring queue");
                                 _connectionHandler.stop( true );
-                            } else {
-                                _isConnected = true;
-                                rebind();
-                                PRINT_DEBUG(DEBUG, "CONNECTED");
-                                _connectionDetails.reset();
+                            }
+                            else
+                            {
+        //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
+                                bool bindQueueSucceeded = true;
+                                if ( ! bindQueueSucceeded )
+                                {
+                                    PRINT_DEBUG(DEBUG, "error binding queue");
+                                    _connectionHandler.stop( true );
+                                } else {
+                                    _isConnected = true;
+                                    rebind();
+                                    PRINT_DEBUG(DEBUG, "CONNECTED");
+                                    _connectionDetails.reset();
+                                }
                             }
                         }
                     }
@@ -141,6 +152,19 @@ bool AMQPConnection::_declareQueue() const
         PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && declareQueueResult.get() );
+}
+
+bool AMQPConnection::_removeQueue() const
+{
+    // TODO: change to exclusive (_queueName, false, true, false)
+    std::future< bool > removeQueueResult = _connectionHandler.removeQueue(
+            _queueName );
+    std::future_status status = removeQueueResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
+    if( status != std::future_status::ready )
+    {
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
+    }
+    return ( status == std::future_status::ready && removeQueueResult.get() );
 }
 
 bool AMQPConnection::_bindQueue() const

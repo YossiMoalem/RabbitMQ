@@ -51,6 +51,7 @@ class AMQPConnection : boost::noncopyable
    bool _declareExchange( const std::string & exchangeName ) const;
    bool _login() const;
    bool _declareQueue() const;
+   bool _removeQueue() const;
    bool _bindQueue() const;
 
  private:

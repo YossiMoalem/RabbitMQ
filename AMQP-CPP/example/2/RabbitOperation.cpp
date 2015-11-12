@@ -56,4 +56,10 @@ void DeclareQueueMessage::handle( )
             _returnValueSetter ); 
 }
 
+void RemoveQueueMessage::handle( )
+{
+    _jobHandler->connectionHandler()->removeQueue( _queueName,
+            _returnValueSetter );
+}
+
 } //namespace AMQP
