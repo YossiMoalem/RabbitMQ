@@ -87,7 +87,7 @@ std::string RabbitClientImpl::serializePostMessage( const std::string & sender,
         const std::string & message)
 {
     std::stringstream ss;
-    ss << ( int ) deliveryType 
+    ss << ( int ) deliveryType << std::endl
         << sender << std::endl
         << destination << std::endl
         << message ;
@@ -100,13 +100,14 @@ void RabbitClientImpl::deserializePostMessage( const std::string serializedMessa
            DeliveryType & deliveryType,
            std::string & message)
 {
-    int deliveryTypeAsInt;
+    std::string deliveryTypeAsString;
     std::istringstream is( serializedMessage );
-    is >>deliveryTypeAsInt;
+    getline( is, deliveryTypeAsString );
     getline( is, sender );
     getline( is, destination );
     int messageStart = is.tellg();
     message = (is.str()).substr( messageStart );
+    int deliveryTypeAsInt = boost::lexical_cast<int>( deliveryTypeAsString );
     deliveryType = static_cast<DeliveryType>( deliveryTypeAsInt );
 }
 
