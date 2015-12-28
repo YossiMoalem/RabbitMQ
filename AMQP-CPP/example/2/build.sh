@@ -1,2 +1,2 @@
-rm RabbitEventLoop.o
+rm -f RabbitEventLoop.o
 scons
