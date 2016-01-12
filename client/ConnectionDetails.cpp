@@ -1,16 +1,26 @@
 #include "ConnectionDetails.h"
-
+#include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include <Types.h>
 
 ConnectionDetails::ConnectionDetailsData::ConnectionDetailsData( const std::string & userName,
         const std::string & password,
-        const std::string & host,
+        const std::string & hosts,
         int port) :
     _userName( userName ),
     _password( password )
 { 
-    _hosts.push_back( host );
+    std::vector<char> chars( hosts.c_str(), hosts.c_str() + hosts.size() + 1u );
+    char * singleHost;
+    char * delimiters = " ,|;";
+    singleHost = strtok( &chars[0], delimiters );
+    while ( singleHost != NULL )
+    {
+        fprintf( stderr, "Adding host: %s\n",singleHost );
+        _hosts.push_back( singleHost );
+        singleHost = strtok( NULL, delimiters );
+    }
     _ports.push_back( port );
 }
 

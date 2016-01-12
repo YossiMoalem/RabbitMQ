@@ -52,7 +52,7 @@ class ConnectionDetails
      private:
         ConnectionDetailsData( const std::string & userName,
             const std::string & password,
-            const std::string & host,
+            const std::string & hosts,
             int port);
 
         std::string _userName;
