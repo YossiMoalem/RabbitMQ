@@ -1,0 +1,23 @@
+env = Environment( CXX = "g++-4.8" )
+
+env.Append( CPPPATH = [ "/usr/local/include", "include/", "../AMQP-client", "../AMQP-CPP" ] )
+env.Append( CCFLAGS = [ "-Wall", "-pedantic", "-g", "-O0", "-std=c++11", "-gdwarf-2" ] )
+env.Append( LIBPATH = [ ".", "../.." ] )
+#librt.so is for clock_gettime, in the test program
+env.Append ( LIBS = [ "amqpcpp", "rt" ] )
+env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
+
+sources = Split ("""
+    RabbitClient.cpp
+    RabbitConnectionHandler.cpp
+    SmartBuffer.cpp
+    RabbitEventLoop.cpp
+    RabbitOperation.cpp
+    Heartbeat.cpp
+    RabbitJobHandler.cpp
+    RabbitJobQueue.cpp
+    """)
+
+appSourced = sources + [ "main.cpp" ]
+env.StaticLibrary( "RabbitClientL2", sources )
+env.Program( "tester", appSourced )

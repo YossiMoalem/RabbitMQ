@@ -1,5 +1,5 @@
 make clean
 make
-#TODO: after layer2 moves from example/2, we wont need the "ln -s" lines
+#TODO: remove the need for links
 ln -fs src/libamqpcpp.so .
 ln -fs src/libamqpcpp.a .
