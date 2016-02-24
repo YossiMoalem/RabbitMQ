@@ -28,7 +28,7 @@ void RabbitConnectionHandler::doBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         DeferedResultSetter operationSucceeded ) const
 {
-    PRINT_DEBUG(DEBUG, "binding: " << routingKey);
+//    PRINT_DEBUG(DEBUG, "binding: " << routingKey);
     _channel->bindQueue( exchangeName, queueName, routingKey );
 
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
@@ -45,7 +45,7 @@ void RabbitConnectionHandler::doUnBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         DeferedResultSetter operationSucceeded ) const
 {
-    PRINT_DEBUG(DEBUG, "unbinding: " << routingKey);
+//    PRINT_DEBUG(DEBUG, "unbinding: " << routingKey);
     _channel->unbindQueue( exchangeName, queueName, routingKey );
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
