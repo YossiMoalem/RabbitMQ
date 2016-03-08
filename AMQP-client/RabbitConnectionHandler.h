@@ -23,36 +23,36 @@ class RabbitConnectionHandler : private AMQP::ConnectionHandler, boost::noncopya
     void doPublish( const std::string & exchangeName,
             const std::string & routingKey, 
             const std::string & message, 
-            DeferedResultSetter operationSucceeded ) const;
+            DeferredResultSetter operationSucceeded ) const;
 
     void doBindQueue( const std::string & exchangeName, 
             const std::string & queueName, 
             const std::string & routingKey,  
-            DeferedResultSetter operationSucceeded ) const;
+            DeferredResultSetter operationSucceeded ) const;
 
     void doUnBindQueue( const std::string & exchangeName, 
             const std::string & queueName, 
             const std::string & routingKey, 
-            DeferedResultSetter operationSucceeded ) const;
+            DeferredResultSetter operationSucceeded ) const;
 
     void declareExchange( const std::string & exchangeName, 
             ExchangeType type, 
             bool durable,
-            DeferedResultSetter operationSucceeded ) const;
+            DeferredResultSetter operationSucceeded ) const;
 
     void declareQueue( const std::string & queueName, 
             bool durable, 
             bool exclusive, 
             bool autoDelete,
-            DeferedResultSetter operationSucceeded,
+            DeferredResultSetter operationSucceeded,
             OnMessageReceivedCB onMsgReceivedCB ) const;
 
     void removeQueue( const std::string & queueName,
-            DeferedResultSetter operationSucceeded ) const;
+            DeferredResultSetter operationSucceeded ) const;
 
     void login( const std::string & userName, 
             const std::string & password,
-            DeferedResultSetter operationSucceeded );
+            DeferredResultSetter operationSucceeded );
 
     int parse( const char *  data, size_t size )
     { return _connection->parse( data, size ) ; }

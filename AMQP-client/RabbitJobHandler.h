@@ -20,10 +20,10 @@ class RabbitJobHandler
    RabbitJobHandler( OnMessageReceivedCB onMsgReceivedCB, RabbitJobQueue& jobQueue ) ;
    ~RabbitJobHandler( );
 
-   DeferedResult addJob ( RabbitMessageBase * job );
+   DeferredResult addJob ( RabbitMessageBase * job );
 
    bool start( const RabbitConnectionDetails & connectionParams );
-   void stopEventLoop( DeferedResultSetter returnValueSetter );
+   void stopEventLoop( DeferredResultSetter returnValueSetter );
    bool canHandleMessage() const;
    void handleTimeout();
    bool handleInput() { _heartbeat.reset(); return _connection->handleInput();  }
@@ -34,10 +34,9 @@ class RabbitJobHandler
 
  protected:
    void doStart( const RabbitConnectionDetails & connectionParamsm, 
-           DeferedResultSetter connectedReturnValueSetter );
+           DeferredResultSetter connectedReturnValueSetter );
 
  private:
-   //TODO: to uniqu_ptr
    ConnectionState                      _connectionState;
    RabbitConnection *                   _connection;
    Heartbeat                            _heartbeat;

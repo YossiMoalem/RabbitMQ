@@ -3,21 +3,17 @@
 
 RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
         const std::string& _exchangeName, 
-        const std::string& _lucExchangeName,
         const std::string& _consumerID,
-        CallbackType        _onMessageCB ) :
+        CallbackType        _onMessageCallback ) :
     _AMQPConnection( _connectionDetails, 
             _exchangeName,
-            _lucExchangeName,
             _consumerID, 
             "*",
             //createRoutingKey( _consumerID, _consumerID, DeliveryType::Unicast ),
             [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
     _exchangeName(_exchangeName),
-    _lucExchangeName(_lucExchangeName),
     _queueName(_consumerID),
-    _callbackHandler( _onMessageCB )
-    //_onMessageReceivedCB( _onMessageCB )
+    _callbackHandler( _onMessageCallback )
 {
     _callbackHandler.start();
 }
@@ -44,12 +40,12 @@ ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
 ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
         const std::string& _destination, 
         const std::string& _senderID,
-        const std::string& _excName,
+        const std::string& _exchangeName,
         DeliveryType _deliveryType) const
 {
     std::string routingKey = createRoutingKey( _senderID, _destination, _deliveryType);
     std::string serializedMessage = serializePostMessage( _senderID, _destination,_deliveryType, _message );
-    return _AMQPConnection.publish( _excName, routingKey, serializedMessage );
+    return _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
 }
 
 ReturnStatus RabbitClientImpl::bind(const std::string& _key, DeliveryType _deliveryType)
@@ -78,7 +74,6 @@ bool RabbitClientImpl::connected() const
     deserializePostMessage( message.message(), sender,destination,deliveryType, text );
     _callbackHandler.addMessage( sender, destination, deliveryType, text );
     return 0;
-   // return  _onMessageReceivedCB( sender, destination, deliveryType, text );
 }
 
 std::string RabbitClientImpl::serializePostMessage( const std::string & sender,

@@ -29,41 +29,41 @@ class RabbitConnection
    void doPublish( const std::string & exchangeName,
            const std::string & routingKey, 
            const std::string & message, 
-           DeferedResultSetter operationSucceeded ) const 
+           DeferredResultSetter operationSucceeded ) const 
    { _connectionHandler->doPublish( exchangeName, routingKey, message, operationSucceeded ); }
 
    void doBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey,  
-           DeferedResultSetter operationSucceeded ) const
+           DeferredResultSetter operationSucceeded ) const
    { _connectionHandler->doBindQueue( exchangeName, queueName, routingKey, operationSucceeded ); }
 
    void doUnBindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey, 
-           DeferedResultSetter operationSucceeded ) const
+           DeferredResultSetter operationSucceeded ) const
    { _connectionHandler->doUnBindQueue( exchangeName, queueName, routingKey, operationSucceeded ); }
 
    void declareExchange( const std::string & exchangeName, 
            ExchangeType type, 
            bool durable,
-           DeferedResultSetter operationSucceeded ) const
+           DeferredResultSetter operationSucceeded ) const
    { _connectionHandler->declareExchange( exchangeName, type, durable, operationSucceeded ); }
 
    void declareQueue( const std::string & queueName, 
            bool durable, 
            bool exclusive, 
            bool autoDelete,
-           DeferedResultSetter operationSucceeded ) const
+           DeferredResultSetter operationSucceeded ) const
    { _connectionHandler->declareQueue( queueName, durable, exclusive, autoDelete, operationSucceeded, _onMsgReceivedCB ); }
 
    void removeQueue( const std::string & queueName,
-           DeferedResultSetter operationSucceeded ) const
+           DeferredResultSetter operationSucceeded ) const
    { _connectionHandler->removeQueue( queueName, operationSucceeded ); }
 
    void login( const std::string & userName, 
            const std::string & password,
-           DeferedResultSetter operationSucceeded )
+           DeferredResultSetter operationSucceeded )
    { _connectionHandler->login( userName, password, operationSucceeded ); }
 
    void closeSocket()

@@ -16,14 +16,14 @@ bool RabbitClient::init( const RabbitConnectionDetails & connectionParams )
     return _jobHandler.start( connectionParams );
 }
 
-DeferedResult RabbitClient::login() const
+DeferredResult RabbitClient::login() const
 {
     LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
             _connectionParams._password );
     return _jobQueue.addJob( loginMessage);
 }
 
-DeferedResult RabbitClient::publish( const std::string & exchangeName, 
+DeferredResult RabbitClient::publish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message ) const
 {
@@ -33,7 +33,7 @@ DeferedResult RabbitClient::publish( const std::string & exchangeName,
     return _jobQueue.addJob( msg );
 }
 
-DeferedResult RabbitClient::bindQueue( const std::string & exchangeName, 
+DeferredResult RabbitClient::bindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
@@ -43,7 +43,7 @@ DeferedResult RabbitClient::bindQueue( const std::string & exchangeName,
     return _jobQueue.addJob( bindMessage );
 }
 
-DeferedResult RabbitClient::unBindQueue( const std::string & exchangeName, 
+DeferredResult RabbitClient::unBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey) const
 {
@@ -53,7 +53,7 @@ DeferedResult RabbitClient::unBindQueue( const std::string & exchangeName,
     return _jobQueue.addJob( unBindMessage );
 }
 
-DeferedResult RabbitClient::stop( bool immediate ) const
+DeferredResult RabbitClient::stop( bool immediate ) const
 {
     StopMessage * stopMessage = new StopMessage( );
     if (immediate)
@@ -66,7 +66,7 @@ DeferedResult RabbitClient::stop( bool immediate ) const
     }
 }
 
-DeferedResult RabbitClient::declareExchange( const std::string & exchangeName, 
+DeferredResult RabbitClient::declareExchange( const std::string & exchangeName, 
            ExchangeType exchangetype, 
            bool durable ) const 
 {
@@ -76,7 +76,7 @@ DeferedResult RabbitClient::declareExchange( const std::string & exchangeName,
     return _jobQueue.addJob( declareExchangeMessage );
 }
 
-DeferedResult RabbitClient::declareQueue( const std::string & queueName, 
+DeferredResult RabbitClient::declareQueue( const std::string & queueName, 
            bool durable,
            bool exclusive, 
            bool autoDelete) const
@@ -88,7 +88,7 @@ DeferedResult RabbitClient::declareQueue( const std::string & queueName,
     return _jobQueue.addJob( declareQueueMessage );
 }
 
-DeferedResult RabbitClient::removeQueue( const std::string & queueName ) const
+DeferredResult RabbitClient::removeQueue( const std::string & queueName ) const
 {
     RemoveQueueMessage * removeQueueMessage = new RemoveQueueMessage( queueName );
     return _jobQueue.addJob( removeQueueMessage );

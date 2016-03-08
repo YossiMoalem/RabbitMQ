@@ -17,7 +17,7 @@ RabbitConnectionHandler::RabbitConnectionHandler( OnMessageReceivedCB onMsgRecei
 void RabbitConnectionHandler::doPublish( const std::string & exchangeName, 
         const std::string & routingKey, 
         const std::string & message, 
-        DeferedResultSetter operationSucceeded ) const
+        DeferredResultSetter operationSucceeded ) const
 {
     _channel->publish( exchangeName, routingKey, message );
     operationSucceeded->set_value( true );
@@ -26,9 +26,8 @@ void RabbitConnectionHandler::doPublish( const std::string & exchangeName,
 void RabbitConnectionHandler::doBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        DeferedResultSetter operationSucceeded ) const
+        DeferredResultSetter operationSucceeded ) const
 {
-//    PRINT_DEBUG(DEBUG, "binding: " << routingKey);
     _channel->bindQueue( exchangeName, queueName, routingKey );
 
     auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
@@ -43,9 +42,8 @@ void RabbitConnectionHandler::doBindQueue( const std::string & exchangeName,
 void RabbitConnectionHandler::doUnBindQueue( const std::string & exchangeName, 
         const std::string & queueName, 
         const std::string & routingKey, 
-        DeferedResultSetter operationSucceeded ) const
+        DeferredResultSetter operationSucceeded ) const
 {
-//    PRINT_DEBUG(DEBUG, "unbinding: " << routingKey);
     _channel->unbindQueue( exchangeName, queueName, routingKey );
     auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
     unBindHndl.onSuccess([ operationSucceeded ]() {
@@ -115,7 +113,7 @@ void RabbitConnectionHandler::onClosed(AMQP::Connection *connection)
 
 void RabbitConnectionHandler::login( const std::string & userName,
         const std::string & password,
-        DeferedResultSetter operationSucceeded )
+        DeferredResultSetter operationSucceeded )
 {
     _connectionState.loggingIn( operationSucceeded );
     Login login( userName, password );
@@ -126,20 +124,19 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
         bool isDurable, 
         bool isExclusive, 
         bool isAutoDelete,
-        DeferedResultSetter operationSucceeded,
+        DeferredResultSetter operationSucceeded,
         OnMessageReceivedCB onMsgReceivedCB ) const
 {
-    PRINT_DEBUG(DEBUG, "declaring queue: " << queueName);
+    PRINT_DEBUG(DEBUG, "Declaring queue: " << queueName);
     int flags = 0;
     if( isDurable )       flags |= AMQP::durable;
-    // TODO: why was it commented out?!
     if( isExclusive )     flags |= AMQP::exclusive;
     if( isAutoDelete )    flags |= AMQP::autodelete; 
 
     AMQP::Table arguments;
-//    arguments["x-dead-letter-exchange"] = "some-exchange";
-    arguments["x-message-ttl"] = 30 * 1000; //time in ms before message is discarded
+//    arguments["x-dead-letter-exchange"] = "exchange-that-expired-messages-goes-to";
 //    arguments["x-expires"] = 7200 * 1000; //time in ms before queue is automatically deleted if idle
+    arguments["x-message-ttl"] = 30 * 1000; //time in ms before message is discarded
 
     auto & queueHndl = _channel->declareQueue( queueName, flags, arguments );
     queueHndl.onSuccess([ this, queueName, operationSucceeded, onMsgReceivedCB ]() { 
@@ -159,7 +156,7 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
 }
 
 void RabbitConnectionHandler::removeQueue( const std::string & queueName,
-        DeferedResultSetter operationSucceeded ) const
+        DeferredResultSetter operationSucceeded ) const
 {
     PRINT_DEBUG(DEBUG, "removing queue: " << queueName);
     int flags = 0;
@@ -178,7 +175,7 @@ void RabbitConnectionHandler::removeQueue( const std::string & queueName,
 void RabbitConnectionHandler::declareExchange( const std::string & exchangeName,
         ExchangeType type, 
         bool isDurable,
-        DeferedResultSetter operationSucceeded ) const
+        DeferredResultSetter operationSucceeded ) const
 {
     PRINT_DEBUG(DEBUG, "declaring exchange: " << exchangeName);
     int flags = 0;

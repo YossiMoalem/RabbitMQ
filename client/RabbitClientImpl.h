@@ -15,30 +15,29 @@ namespace AMQP{
 class RabbitClientImpl : public boost::noncopyable
 {
  public:
-   RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
-           const std::string& _exchangeName,
-           const std::string& _lucExchangeName,
-           const std::string& _consumerID,
-           CallbackType       _onMessageCB );
+   RabbitClientImpl(const ConnectionDetails & connectionDetails, 
+           const std::string& exchangeName,
+           const std::string& consumerID,
+           CallbackType       onMessageCallback );
 
    ReturnStatus start();
 
    ReturnStatus stop( bool immediate );
 
-   ReturnStatus sendMessage(const std::string& _message,
-       const std::string& _destination,
-       const std::string& _senderID,
-       DeliveryType _deliveryType) const;
+   ReturnStatus sendMessage(const std::string& message,
+       const std::string& destination,
+       const std::string& senderID,
+       DeliveryType deliveryType) const;
 
-   ReturnStatus sendMessage(const std::string& _message, 
-       const std::string& _destination, 
-       const std::string& _senderID,
-       const std::string& _excName,
-       DeliveryType _deliveryType) const;
+   ReturnStatus sendMessage(const std::string& message, 
+       const std::string& destination, 
+       const std::string& senderID,
+       const std::string& exchangeName,
+       DeliveryType deliveryType) const;
 
-   ReturnStatus bind(const std::string& _key, DeliveryType _deliveryType);
+   ReturnStatus bind(const std::string& key, DeliveryType deliveryType);
 
-   ReturnStatus unbind(const std::string& _key, DeliveryType _deliveryType);
+   ReturnStatus unbind(const std::string& key, DeliveryType deliveryType);
 
    bool         connected () const;
 
@@ -63,9 +62,7 @@ class RabbitClientImpl : public boost::noncopyable
  private:
    AMQPConnection           _AMQPConnection;
    const std::string        _exchangeName;
-   const std::string        _lucExchangeName;
    const std::string        _queueName;
-   //CallbackType             _onMessageReceivedCB;
    mutable CallbackHandler          _callbackHandler;
 };
 

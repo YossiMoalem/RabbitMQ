@@ -105,7 +105,7 @@ void RabbitEventLoop::_handleOutput()
     }
     catch( const std::exception &  e )
     {
-        PRINT_DEBUG( DEBUG,  "send failedclosing event loop. exception: "<< e.what() );
+        PRINT_DEBUG( DEBUG,  "Send failed. Closing event loop. Exception: "<< e.what() );
         stop();
     }
 }

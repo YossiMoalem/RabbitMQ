@@ -4,6 +4,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <errno.h>
 #include <unistd.h>
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
@@ -55,7 +56,7 @@ class RawSocket : boost::noncopyable
 
             if( _socketFd < 0 )
             {
-                PRINT_DEBUG(DEBUG, "Error creating Socket");
+                PRINT_DEBUG(DEBUG, "Error creating Socket. errno: " <<errno );
             } else {
                 if( ::connect(_socketFd, 
                             currentAddress->ai_addr, 
@@ -72,45 +73,41 @@ class RawSocket : boost::noncopyable
         return connected;
     }
 
-    bool send( SmartBuffer & sbuffer)
+    bool send( SmartBuffer & buffer)
     {
-        ssize_t bytesSent = ::send( _socketFd, sbuffer.data(), sbuffer.size(), MSG_NOSIGNAL);
+        ssize_t bytesSent = ::send( _socketFd, buffer.data(), buffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
             PRINT_DEBUG(DEBUG, "Send failed with errno: " <<errno);
-            //TODO: throw a real AMQPException
-            throw "Socket down?";
+          throw std::runtime_error( "Closed Socket" );
         }
         else
         {
-            sbuffer.shrink( bytesSent );
-            if ( !sbuffer.empty() )
+            buffer.shrink( bytesSent );
+            if ( ! buffer.empty() )
                 return false;
+            return true;
         }
-        return true;
     }
 
-    bool read( SmartBuffer & sbuffer)
+    bool read( SmartBuffer & buffer)
     {
-        const int buffSize = 4096;
-        char buff[buffSize];
+        static constexpr  int buffSize = 4096;
+        char buff[ buffSize ];
         bzero( buff, buffSize );
         ssize_t bytesRead = ::read( _socketFd, buff, buffSize);
         if( bytesRead < 0 )
         {
-            if( errno != 11 /* not EWOULDBLOCK, EAGAIN */)
-              PRINT_DEBUG(DEBUG, "ERROR RECEIVING!: errno = " <<errno);
-          throw "Socket down?";
-            return false;
+            if( errno != EWOULDBLOCK && errno !=  EAGAIN )
+                PRINT_DEBUG(DEBUG, "ERROR RECEIVING!: errno = " <<errno);
+          throw std::runtime_error( "Closed Socket" );
         }
         if( bytesRead == 0 )
         {
           PRINT_DEBUG(DEBUG, "read 0 bytes.");
-//          return false;
-          //TODO: throw a real AMQPException
-          throw "Socket down?";
+          throw std::runtime_error( "Closed Socket" );
         }
-        sbuffer.append(buff, bytesRead);
+        buffer.append(buff, bytesRead);
         return true;
     }
 

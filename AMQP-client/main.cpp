@@ -31,12 +31,12 @@ void runConsumer()
             PRINT_DEBUG(DEBUG, "Consumer: sent Time: " << sentNSec << " currentTime " << tv.tv_nsec <<":"<< tv.tv_sec << " TripTime (microSec) : " << tripTime );
             return 0; } );
     amqpClient.init( connectionDetails );
-    DeferedResult loginStatus = amqpClient.login();
+    DeferredResult loginStatus = amqpClient.login();
     loginStatus.wait();
     if ( loginStatus.get() )
     {
         std::string exchangeName( EXC );
-        DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
+        DeferredResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
                 AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )
@@ -46,7 +46,7 @@ void runConsumer()
             PRINT_DEBUG(DEBUG, "Error declaring exchange");
             exit( 1 );
         }
-        DeferedResult declareQueueResult = amqpClient.declareQueue( QUEUE );
+        DeferredResult declareQueueResult = amqpClient.declareQueue( QUEUE );
         declareQueueResult.wait();
         if( declareQueueResult.get() )
         {
@@ -55,7 +55,7 @@ void runConsumer()
             PRINT_DEBUG(DEBUG, "Error declaring queue");
             exit( 1 );
         }
-        DeferedResult bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
+        DeferredResult bindResult = amqpClient.bindQueue( EXC, QUEUE, KEY1 );
         bindResult.wait();
 
         if( bindResult.get() )
@@ -76,13 +76,13 @@ void runProducer()
     RabbitConnectionDetails connectionDetails ( USER, PASSWORD, RABBIT_IP2, RABBIT_PORT );
     RabbitClient amqpClient( nullptr );
     amqpClient.init( connectionDetails );
-    DeferedResult loginStatus = amqpClient.login();
+    DeferredResult loginStatus = amqpClient.login();
     loginStatus.wait();
     if ( loginStatus.get() )
     {
 
         std::string exchangeName( EXC );
-        DeferedResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
+        DeferredResult declareExchangeResult = amqpClient.declareExchange( exchangeName, 
                 AMQP::topic );
         declareExchangeResult.wait();
         if( declareExchangeResult.get() )

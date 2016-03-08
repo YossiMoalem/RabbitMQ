@@ -38,8 +38,8 @@ class ConnectionDetails
         _connectionData( i_userName,i_password,i_host,port )
     {}
 
-    AMQP::RabbitConnectionDetails getFirstHost();
-    AMQP::RabbitConnectionDetails getNextHost();
+    AMQP::RabbitConnectionDetails firstHost();
+    AMQP::RabbitConnectionDetails nextHost();
     void reset();
     bool isLastHost () const;
     void addAlternateHost(const std::string& i_host);
@@ -48,11 +48,9 @@ class ConnectionDetails
  private:
     struct ConnectionDetailsData
     {
-        friend class ConnectionDetails;
-     private:
         ConnectionDetailsData( const std::string & userName,
             const std::string & password,
-            const std::string & hosts,
+            const std::string & host,
             int port);
 
         std::string _userName;

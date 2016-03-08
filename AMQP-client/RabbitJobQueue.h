@@ -13,8 +13,8 @@ class RabbitJobQueue
 {
  public:
    RabbitJobQueue( );
-   DeferedResult addJob( RabbitMessageBase * job );
-   DeferedResult addJobToFront( RabbitMessageBase * job );
+   DeferredResult addJob( RabbitMessageBase * job );
+   DeferredResult addJobToFront( RabbitMessageBase * job );
    bool tryPop( RabbitMessageBase *& message );
    void clear();
    int getFD() const;

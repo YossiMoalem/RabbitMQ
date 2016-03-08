@@ -16,7 +16,6 @@
 #define USER "yossi"
 #define PASSWORD "yossipassword"
 #define EXCHANGE_NAME "EXC1"
-#define LUC_EXCHANGE_NAME "EXC2"
 
 static const unsigned int timeToConnect = 2;
 static const unsigned int timeToBindUnbind = 3;
@@ -32,7 +31,7 @@ class BindTester
    int operator ()()
    {
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, EXCHANGE_NAME, LUC_EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string destination, DeliveryType, std::string message )->int {
                std::cout <<"Free CB:: Received: "<<message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -126,14 +125,14 @@ class MeasureTester
    {
        RABBIT_DEBUG("Tester:: Tester Started");
        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, EXCHANGE_NAME, LUC_EXCHANGE_NAME, MY_NAME, [ this ] ( std::string o_sender,
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [ this ] ( std::string o_sender,
                    std::string destination, 
                    DeliveryType deliveryType , 
                    std::string message )->int {
                return onMessageReceive( o_sender, destination, deliveryType, message );
                } ) ;
                client.start();
-               while( ! client.isConnected() )
+               while( ! client.connected() )
                    sleep( 1 );
                RABBIT_DEBUG("Tester:: Tester Connected");
                RABBIT_DEBUG("Going to send " << numOfMessagesToSend << " Messages");
@@ -186,7 +185,7 @@ class RepeatedBindTester
        ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
        cnd.addAlternateHost("10.10.10.10");
        cnd.addAlternatePort(25);
-       RabbitClient client (cnd, EXCHANGE_NAME, LUC_EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                <<" From : "<< o_sender << std::endl;
                return 0;
@@ -211,7 +210,7 @@ class ContinousSendTester
    {
        std::string myID ("MyId");
      ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-       RabbitClient client (cnd, EXCHANGE_NAME, LUC_EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+       RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                std::cout <<"Free CB:: Received: "<< o_message 
                         <<" From : "<< o_sender << std::endl;
                return 0;
@@ -248,7 +247,7 @@ class ManyBindTester
         std::string myID ("MyId");
 
         ConnectionDetails cnd( USER, PASSWORD, RABBIT_IP1, RABBIT_PORT );
-        RabbitClient client (cnd, EXCHANGE_NAME, LUC_EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
+        RabbitClient client (cnd, EXCHANGE_NAME, MY_NAME, [] ( std::string o_sender, std::string o_destination, DeliveryType, std::string o_message )->int {
                 std::cout <<"Free CB:: Received: "<< o_message 
                 <<" From : "<< o_sender << std::endl;
                 return 0;

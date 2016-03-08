@@ -23,12 +23,12 @@ class RabbitMessageBase
     RabbitMessageBase( const RabbitMessageBase& ) = delete;
     RabbitMessageBase& operator= (const RabbitMessageBase& ) = delete;
 
-    DeferedResultSetter resultSetter()
+    DeferredResultSetter resultSetter()
     {
         return _returnValueSetter;
     }
 
-    DeferedResult deferedResult()
+    DeferredResult deferedResult()
     {
         return _returnValueSetter->get_future();
     }
@@ -41,7 +41,7 @@ class RabbitMessageBase
     virtual void handle( ) = 0;
 
  protected:
-    DeferedResultSetter     _returnValueSetter;
+    DeferredResultSetter     _returnValueSetter;
     RabbitJobHandler*      _jobHandler;
 };
 

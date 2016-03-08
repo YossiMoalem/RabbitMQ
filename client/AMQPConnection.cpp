@@ -11,7 +11,6 @@
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
         const std::string & exchangeName ,
-        const std::string & lucExchangeName ,
         const std::string & queueName,
         const std::string & routingKey,
         AMQP::OnMessageReceivedCB i_onMessageReceiveCB ) :
@@ -22,7 +21,6 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
     _stop( false ),
     _isConnected( false ),
     _exchangeName( exchangeName ),
-    _lucExchangeName( lucExchangeName ),
     _queueName( queueName ),
     _routingKey( routingKey )
 {}
@@ -40,7 +38,7 @@ ReturnStatus AMQPConnection::connectLoop()
     while ( _stop == false )
     {
         PRINT_DEBUG(DEBUG, "started AMQPConnection::connectLoop() ");
-        AMQP::RabbitConnectionDetails connectionDetails = _connectionDetails.getNextHost();
+        AMQP::RabbitConnectionDetails connectionDetails = _connectionDetails.nextHost();
 
         bool connected = _connectionHandler.init( connectionDetails );
         if ( connected )
@@ -51,48 +49,39 @@ ReturnStatus AMQPConnection::connectLoop()
                 PRINT_DEBUG(DEBUG, "Login failed. Disconnecting...");
                 _connectionHandler.stop( true );
             } else {
-                bool declareExchangeSucceeded = _declareExchange();
+                bool declareExchangeSucceeded = _declareExchange( _exchangeName );
                 if ( ! declareExchangeSucceeded )
                 {
-                    PRINT_DEBUG(DEBUG, "error declaring main exchange");
+                    PRINT_DEBUG(DEBUG, "error declaring exchange");
                     _connectionHandler.stop( true );
                 } else {
-                    bool declareExchangeSucceeded = _declareExchange(_lucExchangeName);
-                    if ( ! declareExchangeSucceeded )
+                    bool removeQueueSucceeded = _removeQueue();
+                    if ( ! removeQueueSucceeded )
                     {
-                        PRINT_DEBUG(DEBUG, "error declaring luc exchange");
+                        PRINT_DEBUG(DEBUG, "error removing queue");
                         _connectionHandler.stop( true );
                     }
                     else
                     {
-                        bool removeQueueSucceeded = _removeQueue();
-                        if ( ! removeQueueSucceeded )
+                        bool declareQueueSucceeded = _declareQueue();
+                        if ( ! declareQueueSucceeded )
                         {
-                            PRINT_DEBUG(DEBUG, "error removing queue");
+                            PRINT_DEBUG(DEBUG, "error declaring queue");
                             _connectionHandler.stop( true );
                         }
                         else
                         {
-                            bool declareQueueSucceeded = _declareQueue();
-                            if ( ! declareQueueSucceeded )
+                            //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
+                            bool bindQueueSucceeded = true;
+                            if ( ! bindQueueSucceeded )
                             {
-                                PRINT_DEBUG(DEBUG, "error declaring queue");
+                                PRINT_DEBUG(DEBUG, "error binding queue");
                                 _connectionHandler.stop( true );
-                            }
-                            else
-                            {
-        //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
-                                bool bindQueueSucceeded = true;
-                                if ( ! bindQueueSucceeded )
-                                {
-                                    PRINT_DEBUG(DEBUG, "error binding queue");
-                                    _connectionHandler.stop( true );
-                                } else {
-                                    _isConnected = true;
-                                    rebind();
-                                    PRINT_DEBUG(DEBUG, "CONNECTED");
-                                    _connectionDetails.reset();
-                                }
+                            } else {
+                                _isConnected = true;
+                                rebind();
+                                PRINT_DEBUG(DEBUG, "CONNECTED");
+                                _connectionDetails.reset();
                             }
                         }
                     }
@@ -117,11 +106,6 @@ bool AMQPConnection::_login() const
         PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
     }
     return ( status == std::future_status::ready && loginStatus.get() );
-}
-
-bool AMQPConnection::_declareExchange() const
-{
-    return _declareExchange( _exchangeName );
 }
 
 bool AMQPConnection::_declareExchange( const std::string & exchName ) const

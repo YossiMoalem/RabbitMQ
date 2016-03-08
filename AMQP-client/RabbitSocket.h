@@ -23,6 +23,8 @@ class RabbitSocket
        {
            _readFD = _socket.readFD();
            _writeFD = _socket.writeFD();
+           assert( _readFD > 0 );
+           assert( _writeFD > 0 );
        }
        return connected;
    }
@@ -62,14 +64,14 @@ class RabbitSocket
    { _socket.close(); }
 
    int readFD() const noexcept
-   { return _readFD; }
+   { assert( _readFD > 0 ); return _readFD; }
 
    int writeFD() const 
-   { return _writeFD; }
+   { assert( _writeFD > 0 ); return _writeFD; }
 
  private:
-   int                              _readFD;
-   int                              _writeFD;
+   int                              _readFD = 0;
+   int                              _writeFD = 0;
    RawSocket                        _socket;
    SmartBuffer                      _incomingBuffer;
    SmartBuffer                      _outgoingBuffer;

@@ -12,9 +12,9 @@ namespace AMQP{
 class ConnectionState : boost::noncopyable
 {
  public:
-   ConnectionState ( std::function< void() >  onDisconnectCB ) :
+   ConnectionState ( std::function< void() >  onDisconnectCallback ) :
        _currentConnectionState( CurrentConnectionState::Disconnected ),
-       _onDisconnectCB( onDisconnectCB )
+       _onDisconnectCallback( onDisconnectCallback )
     {}
 
    bool disconnected()
@@ -35,7 +35,7 @@ class ConnectionState : boost::noncopyable
                _currentConnectionState != CurrentConnectionState::SocketConnecting &&
                _currentConnectionState != CurrentConnectionState::Disconnected )
        {
-           _onDisconnectCB();
+           _onDisconnectCallback();
        }
        _currentConnectionState = CurrentConnectionState::Disconnected;
        return true;
@@ -55,7 +55,7 @@ class ConnectionState : boost::noncopyable
        return true;
    }
 
-   bool loggingIn( DeferedResultSetter loginResultSetter )
+   bool loggingIn( DeferredResultSetter loginResultSetter )
    {
        PRINT_DEBUG(DEBUG, "entered ConnectionState::loggingIn");
        if( _currentConnectionState != CurrentConnectionState::LoggingIn )
@@ -76,16 +76,13 @@ class ConnectionState : boost::noncopyable
            _loginResultSetter->set_value( true );
            _loginResultSetter.reset();
            _currentConnectionState = CurrentConnectionState::LoggedIn;
-       }
-       // TODO: remove this else
-       else
-       {
+       } else {
            PRINT_DEBUG(DEBUG, "loggedIn() was called at least twice. ignoring");
        }
        return true;
    }
 
-   bool disconnecting( DeferedResultSetter disconnectResultSetter )
+   bool disconnecting( DeferredResultSetter disconnectResultSetter )
    {
        if( _currentConnectionState == CurrentConnectionState::Disconnected )
        {
@@ -122,9 +119,9 @@ class ConnectionState : boost::noncopyable
    };
 
    CurrentConnectionState   _currentConnectionState;
-   DeferedResultSetter      _loginResultSetter;
-   DeferedResultSetter      _disconnectResultSetter;
-   std::function< void() >  _onDisconnectCB;
+   DeferredResultSetter      _loginResultSetter;
+   DeferredResultSetter      _disconnectResultSetter;
+   std::function< void() >  _onDisconnectCallback;
 };
 
 } //namespace AMQP

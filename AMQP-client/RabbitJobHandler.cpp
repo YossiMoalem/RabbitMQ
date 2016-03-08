@@ -24,7 +24,7 @@ RabbitJobHandler::~RabbitJobHandler( )
 
 bool RabbitJobHandler::start( const RabbitConnectionDetails & connectionParams )
 {
-    DeferedResultSetter connectedReturnValueSetter( new std::promise< bool > );
+    DeferredResultSetter connectedReturnValueSetter( new std::promise< bool > );
     auto connectedReturnValue = connectedReturnValueSetter->get_future();
     _eventLoopThread = std::thread( std::bind( &RabbitJobHandler::doStart, this, 
                 connectionParams, connectedReturnValueSetter ) );
@@ -40,7 +40,7 @@ bool RabbitJobHandler::start( const RabbitConnectionDetails & connectionParams )
 }
 
 void RabbitJobHandler::doStart( const RabbitConnectionDetails & connectionParams, 
-        DeferedResultSetter connectedReturnValueSetter )
+        DeferredResultSetter connectedReturnValueSetter )
 {
     bool connected = _connection->connect( connectionParams );
     connectedReturnValueSetter->set_value( connected );
@@ -52,7 +52,7 @@ void RabbitJobHandler::doStart( const RabbitConnectionDetails & connectionParams
     }
 }
 
-void RabbitJobHandler::stopEventLoop( DeferedResultSetter returnValueSetter )
+void RabbitJobHandler::stopEventLoop( DeferredResultSetter returnValueSetter )
 {
     if( _connectionState.disconnecting( returnValueSetter ) )
     {

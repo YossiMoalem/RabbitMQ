@@ -19,37 +19,37 @@ class RabbitClient : private boost::noncopyable
     * Initiate event loop
     *
     * If it failes, leaves the system unchanged
-    * If it secceeds, need to call stop() to terminate the service
+    * If it succeeds, need to call stop() to terminate the service
     **/
    bool init( const RabbitConnectionDetails & connectionParams );
 
-   DeferedResult login() const;
+   DeferredResult login() const;
 
-   DeferedResult stop( bool immediate ) const;
+   DeferredResult stop( bool immediate ) const;
 
-   DeferedResult declareQueue( const std::string & queueName, 
+   DeferredResult declareQueue( const std::string & queueName, 
            bool durable = false, 
            bool exclusive = false, 
            bool autoDelete = false ) const;
 
-   DeferedResult removeQueue( const std::string & queueName ) const;
+   DeferredResult removeQueue( const std::string & queueName ) const;
 
    /**
     * ExchangeType: as defined at amqpcpp/exchangetype.h
     **/
-   DeferedResult declareExchange( const std::string & exchangeName, 
+   DeferredResult declareExchange( const std::string & exchangeName, 
            ExchangeType type = AMQP::fanout, 
            bool durable = false ) const ;
 
-   DeferedResult bindQueue( const std::string & exchangeName, 
+   DeferredResult bindQueue( const std::string & exchangeName, 
            const std::string & queueName, 
            const std::string & routingKey) const;
 
-   DeferedResult unBindQueue( const std::string & exchangeName,
+   DeferredResult unBindQueue( const std::string & exchangeName,
            const std::string & queueName, 
            const std::string & routingKey) const;
 
-   DeferedResult publish( const std::string & exchangeName, 
+   DeferredResult publish( const std::string & exchangeName, 
            const std::string & routingKey, 
            const std::string & message ) const;
 

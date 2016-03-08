@@ -8,7 +8,7 @@ RabbitJobQueue::RabbitJobQueue( ):
     _jobQueue( []( RabbitMessageBase* message ) { delete message; } )
 {}
 
-DeferedResult RabbitJobQueue::addJob ( RabbitMessageBase * job )
+DeferredResult RabbitJobQueue::addJob ( RabbitMessageBase * job )
 {
     auto result = job->deferedResult();
     job->setHandler( _jobHandler );
@@ -16,7 +16,7 @@ DeferedResult RabbitJobQueue::addJob ( RabbitMessageBase * job )
     return result;
 }
 
-DeferedResult RabbitJobQueue::addJobToFront ( RabbitMessageBase * job )
+DeferredResult RabbitJobQueue::addJobToFront ( RabbitMessageBase * job )
 {
     auto result = job->deferedResult();
     job->setHandler( _jobHandler );

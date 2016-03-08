@@ -1,62 +1,62 @@
 #include "RabbitClient.h"
 #include "RabbitClientImpl.h"
 
-RabbitClient::RabbitClient(const ConnectionDetails & i_connectionDetails, 
-    const std::string& i_exchangeName,
-    const std::string& i_lucExchangeName,
-    const std::string& i_consumerID,
-    CallbackType        i_onMessageCB ) :
-  m_pRabbitClient( new RabbitClientImpl (i_connectionDetails,
-        i_exchangeName,
-        i_lucExchangeName,
-        i_consumerID,
-        i_onMessageCB ) )
+RabbitClient::RabbitClient(const ConnectionDetails & connectionDetails, 
+    const std::string & exchangeName,
+    const std::string & consumerID,
+    CallbackType        onMessageCallback ) :
+  _rabbitClient( new RabbitClientImpl (connectionDetails,
+        exchangeName,
+        consumerID,
+        onMessageCallback ) )
 {}
 
 ReturnStatus RabbitClient::start()
 { 
-    return m_pRabbitClient->start(); 
+    return _rabbitClient->start(); 
 }
 
 ReturnStatus RabbitClient::stop(bool immediate)
 { 
-    return m_pRabbitClient->stop(immediate);
+    return _rabbitClient->stop(immediate);
 }
 
-ReturnStatus RabbitClient::sendUnicast(const std::string& i_message, 
-        const std::string& i_destination, 
-        const std::string& i_senderID,
-        const std::string& i_excName)
+ReturnStatus RabbitClient::sendUnicast(const std::string & message, 
+        const std::string & destination, 
+        const std::string & senderID,
+        const std::string & exchangeName)
 { 
-    return m_pRabbitClient->sendMessage(i_message,i_destination, i_senderID, i_excName,  DeliveryType::Unicast);
+    return _rabbitClient->sendMessage(message,destination, senderID, exchangeName,  DeliveryType::Unicast);
 }
 
-ReturnStatus RabbitClient::sendMulticast(const std::string& i_message, const std::string& i_senderID, const std::string& i_excName)
+ReturnStatus RabbitClient::sendMulticast(const std::string & message, 
+    const std::string & senderID, 
+    const std::string & exchangeName)
 { 
-    return m_pRabbitClient->sendMessage(i_message, "", i_senderID, i_excName, DeliveryType::Multicast);
+    return _rabbitClient->sendMessage(message, "", senderID, exchangeName, DeliveryType::Multicast);
 }
 
-ReturnStatus RabbitClient::bindToSelf(const std::string& i_key)
+ReturnStatus RabbitClient::bindToSelf(const std::string & key)
 { 
-    return m_pRabbitClient->bind(i_key, DeliveryType::Unicast); 
+    return _rabbitClient->bind(key, DeliveryType::Unicast); 
 }
 
-ReturnStatus RabbitClient::bindToDestination(const std::string& i_key)
+ReturnStatus RabbitClient::bindToDestination(const std::string & key)
 { 
-    return m_pRabbitClient->bind(i_key, DeliveryType::Multicast); 
+    return _rabbitClient->bind(key, DeliveryType::Multicast); 
 }
 
-ReturnStatus RabbitClient::unbindFromSelf(const std::string& i_key)
+ReturnStatus RabbitClient::unbindFromSelf(const std::string & key)
 { 
-    return m_pRabbitClient->unbind(i_key, DeliveryType::Unicast); 
+    return _rabbitClient->unbind(key, DeliveryType::Unicast); 
 }
 
-ReturnStatus RabbitClient::unbindFromDestination(const std::string& i_key)
+ReturnStatus RabbitClient::unbindFromDestination(const std::string & key)
 { 
-    return m_pRabbitClient->unbind(i_key, DeliveryType::Multicast); 
+    return _rabbitClient->unbind(key, DeliveryType::Multicast); 
 }
 
-bool RabbitClient::isConnected() const
+bool RabbitClient::connected() const
 {
-  return m_pRabbitClient->connected();
+  return _rabbitClient->connected();
 }

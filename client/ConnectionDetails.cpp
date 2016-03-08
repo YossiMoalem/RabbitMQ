@@ -6,21 +6,12 @@
 
 ConnectionDetails::ConnectionDetailsData::ConnectionDetailsData( const std::string & userName,
         const std::string & password,
-        const std::string & hosts,
+        const std::string & host,
         int port) :
     _userName( userName ),
     _password( password )
 { 
-    std::vector<char> chars( hosts.c_str(), hosts.c_str() + hosts.size() + 1u );
-    char * singleHost;
-    char * delimiters = " ,|;";
-    singleHost = strtok( &chars[0], delimiters );
-    while ( singleHost != NULL )
-    {
-        fprintf( stderr, "Adding host: %s\n",singleHost );
-        _hosts.push_back( singleHost );
-        singleHost = strtok( NULL, delimiters );
-    }
+    _hosts.push_back( host );
     _ports.push_back( port );
 }
 
@@ -40,7 +31,7 @@ void ConnectionDetails::reset()
     _currentPort = _connectionData._ports.end();
 }
 
-AMQP::RabbitConnectionDetails ConnectionDetails::getFirstHost()
+AMQP::RabbitConnectionDetails ConnectionDetails::firstHost()
 {
     _currentHost = _connectionData._hosts.begin();
     _currentPort = _connectionData._ports.begin();
@@ -50,12 +41,12 @@ AMQP::RabbitConnectionDetails ConnectionDetails::getFirstHost()
             *_currentPort );
 }
 
-AMQP::RabbitConnectionDetails ConnectionDetails::getNextHost()
+AMQP::RabbitConnectionDetails ConnectionDetails::nextHost()
 {
     if (_currentHost == _connectionData._hosts.end() &&
             _currentPort == _connectionData._ports.end())
     {
-        return getFirstHost();
+        return firstHost();
     }
     ++_currentHost;
     if (_currentHost == _connectionData._hosts.end())

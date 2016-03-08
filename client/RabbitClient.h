@@ -12,31 +12,30 @@ class RabbitClientImpl;
 class RabbitClient : public boost::noncopyable
 {
  public:
-   RabbitClient(const ConnectionDetails & i_connectionDetails, 
-           const std::string& i_exchangeName,
-           const std::string& i_lucExchangeName,
-           const std::string& i_consumerID,
-           CallbackType       i_onMessageCB );
+   RabbitClient(const ConnectionDetails & connectionDetails, 
+		   const std::string & exchangeName,
+		   const std::string & consumerID,
+		   CallbackType       onMessageCallback );
 
    ReturnStatus start();
    ReturnStatus stop(bool immediate);
 
-   ReturnStatus sendUnicast      (	const std::string& i_message,
-							const std::string& i_destination,
-							const std::string& i_senderID,
-							const std::string& i_excName);
-   ReturnStatus sendMulticast    (const std::string& i_message,
-							const std::string& i_senderID,
-							const std::string& i_excName);
+   ReturnStatus sendUnicast      (	const std::string & message,
+		   const std::string & destination,
+		   const std::string & senderID,
+		   const std::string & exchangeName);
+   ReturnStatus sendMulticast    (const std::string & message,
+		   const std::string & senderID,
+		   const std::string & exchangeName);
 
-   ReturnStatus bindToSelf           (const std::string& i_key);
-   ReturnStatus bindToDestination    (const std::string& i_key);
-   ReturnStatus unbindFromSelf       (const std::string& i_key);
-   ReturnStatus unbindFromDestination(const std::string& i_key);
-   bool isConnected() const; 
+   ReturnStatus bindToSelf           (const std::string & key);
+   ReturnStatus bindToDestination    (const std::string & key);
+   ReturnStatus unbindFromSelf       (const std::string & key);
+   ReturnStatus unbindFromDestination(const std::string & key);
+   bool connected() const; 
 
  private:
-   RabbitClientImpl* m_pRabbitClient;
+   RabbitClientImpl* _rabbitClient;
 
 };
 

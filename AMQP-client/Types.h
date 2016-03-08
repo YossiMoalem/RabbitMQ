@@ -7,8 +7,8 @@
 namespace AMQP{
 class Message;
 
-using DeferedResult = std::future< bool >;
-using DeferedResultSetter = std::shared_ptr< std::promise< bool > >;
+using DeferredResult = std::future< bool >;
+using DeferredResultSetter = std::shared_ptr< std::promise< bool > >;
 using OnMessageReceivedCB = std::function<int( const AMQP::Message& )> ;
 #define dummyResultSetter nullptr
 
