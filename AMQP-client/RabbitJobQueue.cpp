@@ -4,15 +4,20 @@
 
 namespace AMQP {
 
-RabbitJobQueue::RabbitJobQueue( ):
-    _jobQueue( []( RabbitMessageBase* message ) { delete message; } )
-{}
+RabbitJobQueue::RabbitJobQueue()
+{
+    _jobQueue.setDisposeMethod( [] ( RabbitMessageBase * message ) 
+            {
+                message->resultSetter()->set_value( false );
+                delete message;
+                } ) ;
+}
 
 DeferredResult RabbitJobQueue::addJob ( RabbitMessageBase * job )
 {
     auto result = job->deferedResult();
     job->setHandler( _jobHandler );
-    _jobQueue.push( job );
+    _jobQueue.pushBack( job );
     return result;
 }
 
@@ -31,7 +36,7 @@ bool RabbitJobQueue::tryPop( RabbitMessageBase *& message )
 
 void RabbitJobQueue::clear()
 {
-    _jobQueue.clear();
+    _jobQueue.flush();
 }
 
 int RabbitJobQueue::getFD() const

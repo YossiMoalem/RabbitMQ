@@ -12,7 +12,9 @@ class RabbitJobHandler;
 class RabbitJobQueue
 {
  public:
-   RabbitJobQueue( );
+   RabbitJobQueue();
+   RabbitJobQueue( const RabbitJobQueue &  ) = delete;
+   RabbitJobQueue & operator= (const RabbitJobQueue & ) = delete;
    DeferredResult addJob( RabbitMessageBase * job );
    DeferredResult addJobToFront( RabbitMessageBase * job );
    bool tryPop( RabbitMessageBase *& message );
@@ -21,8 +23,8 @@ class RabbitJobQueue
    void setHandler( RabbitJobHandler * jobHandler );
 
  private:
-   BlockingQueue< RabbitMessageBase * >  _jobQueue;
-   RabbitJobHandler *                    _jobHandler;
+   SelectableBlockingQueue< RabbitMessageBase * >   _jobQueue;
+   RabbitJobHandler *                               _jobHandler;
 };
 } //namespace AMQP
 #endif //RABBIT_JOB_QUEUE

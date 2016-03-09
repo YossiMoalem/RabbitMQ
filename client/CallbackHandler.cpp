@@ -12,7 +12,7 @@ void CallbackHandler::addMessage( const std::string & sender,
         const std::string & text )
 {
     MessageData * newMessage = new MessageData( sender, destination, deliveryType, text);
-    _messageQueue.push( newMessage );
+    _messageQueue.pushBack( newMessage );
 }
 
 void CallbackHandler::doStart()
