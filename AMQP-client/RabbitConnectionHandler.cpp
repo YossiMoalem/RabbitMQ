@@ -28,13 +28,11 @@ void RabbitConnectionHandler::doBindQueue( const std::string & exchangeName,
         const std::string & routingKey, 
         DeferredResultSetter operationSucceeded ) const
 {
-    _channel->bindQueue( exchangeName, queueName, routingKey );
-
-    auto & bindHndl = _channel->bindQueue( exchangeName, queueName, routingKey );
-    bindHndl.onSuccess( [ operationSucceeded ]() {
+    auto & bindHandle = _channel->bindQueue( exchangeName, queueName, routingKey );
+    bindHandle.onSuccess( [ operationSucceeded ]() {
             operationSucceeded->set_value( true );
-            });
-    bindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+            } ) ;
+    bindHandle.onError( [ operationSucceeded ] ( const char* message ) {
             operationSucceeded->set_value( false );
             } ) ;
 }
@@ -45,11 +43,11 @@ void RabbitConnectionHandler::doUnBindQueue( const std::string & exchangeName,
         DeferredResultSetter operationSucceeded ) const
 {
     _channel->unbindQueue( exchangeName, queueName, routingKey );
-    auto & unBindHndl = _channel->unbindQueue( exchangeName, queueName, routingKey );
-    unBindHndl.onSuccess([ operationSucceeded ]() {
+    auto & unBindHandle = _channel->unbindQueue( exchangeName, queueName, routingKey );
+    unBindHandle.onSuccess([ operationSucceeded ]() {
             operationSucceeded->set_value( true );
             });
-    unBindHndl.onError( [ operationSucceeded ] ( const char* message ) {
+    unBindHandle.onError( [ operationSucceeded ] ( const char* message ) {
              operationSucceeded->set_value( false );
              PRINT_DEBUG(DEBUG, "failed binding");
              } ) ;
@@ -97,9 +95,11 @@ void RabbitConnectionHandler::onData(AMQP::Connection *connection, const char *d
 
 void RabbitConnectionHandler::onError(AMQP::Connection *connection, const char *message)
 {
-    //todo: this function is being called when we get a formal close connection from the broker or when formally closing broker.
-    //todo: the consumer is unaware that he lost connectivity, but it must, so it can reconnect
-    //todo: not every onError, is caused by formal disconnect... we should be aware of the difference and maybe just call _connection.close() + reconnect
+    //TODO: this function is being called when we get a formal close connection from the broker 
+    // or when formally closing broker.
+    // the consumer is unaware that he lost connectivity, but it must, so it can reconnect
+    // not every onError, is caused by formal disconnect... 
+    //we should be aware of the difference and maybe just call _connection.close() + reconnect
     _channel.reset( );
     PRINT_DEBUG(DEBUG, "(onError)Error: "<< message);
     _connectionState.disconnected();
@@ -138,8 +138,8 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
 //    arguments["x-expires"] = 7200 * 1000; //time in ms before queue is automatically deleted if idle
     arguments["x-message-ttl"] = 30 * 1000; //time in ms before message is discarded
 
-    auto & queueHndl = _channel->declareQueue( queueName, flags, arguments );
-    queueHndl.onSuccess([ this, queueName, operationSucceeded, onMsgReceivedCB ]() { 
+    auto & queueHandle = _channel->declareQueue( queueName, flags, arguments );
+    queueHandle.onSuccess([ this, queueName, operationSucceeded, onMsgReceivedCB ]() { 
             PRINT_DEBUG(DEBUG, "Queue declared successfully");
             operationSucceeded->set_value( true );
             _channel->consume( queueName.c_str() ).onReceived([ onMsgReceivedCB, this ](const AMQP::Message &message, 
@@ -149,7 +149,7 @@ void RabbitConnectionHandler::declareQueue( const std::string & queueName,
                 _channel->ack( deliveryTag );
                 } ) ;
             }); 
-    queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
+    queueHandle.onError( [ operationSucceeded ] ( const char* message ) {
             PRINT_DEBUG(DEBUG, "Failed declaring queue. error: " << message);
             operationSucceeded->set_value( false );
             } );
@@ -161,12 +161,12 @@ void RabbitConnectionHandler::removeQueue( const std::string & queueName,
     PRINT_DEBUG(DEBUG, "removing queue: " << queueName);
     int flags = 0;
 
-    auto & queueHndl = _channel->removeQueue( queueName, flags );
-    queueHndl.onSuccess([ this, queueName, operationSucceeded ]() {
+    auto & queueHandle = _channel->removeQueue( queueName, flags );
+    queueHandle.onSuccess([ this, queueName, operationSucceeded ]() {
             PRINT_DEBUG(DEBUG, "Queue removed successfully");
             operationSucceeded->set_value( true );
             });
-    queueHndl.onError( [ operationSucceeded ] ( const char* message ) {
+    queueHandle.onError( [ operationSucceeded ] ( const char* message ) {
             PRINT_DEBUG(DEBUG, "Failed removing queue. error: " << message);
             operationSucceeded->set_value( false );
             } );
@@ -181,12 +181,12 @@ void RabbitConnectionHandler::declareExchange( const std::string & exchangeName,
     int flags = 0;
     if( isDurable )     flags |= AMQP::durable;
 
-    auto & exchangeHndl = _channel->declareExchange( exchangeName, type, flags );
-    exchangeHndl.onSuccess([ operationSucceeded ]() { 
+    auto & exchangeHandle = _channel->declareExchange( exchangeName, type, flags );
+    exchangeHandle.onSuccess([ operationSucceeded ]() { 
             PRINT_DEBUG(DEBUG, "Exchange declared successfully");
             operationSucceeded->set_value( true );
             });
-    exchangeHndl.onError( [ operationSucceeded ] (const char* message ) {
+    exchangeHandle.onError( [ operationSucceeded ] (const char* message ) {
                 operationSucceeded->set_value( false );
                 PRINT_DEBUG(DEBUG, "Failed declaring exchange. error: " << message);
                 } ) ;

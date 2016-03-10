@@ -1,20 +1,19 @@
 #include "RabbitClientImpl.h"
-#include "CallbackHandler.h"
 
 RabbitClientImpl::RabbitClientImpl( const ConnectionDetails & connectionDetails, 
         const std::string & defaultExchangeName, 
         const std::string & consumerID,
-        CallbackType        onMessageCallback ) :
+        HandleMessageCallback_t onMessageCallback ) :
     _AMQPConnection( connectionDetails, 
             _exchangesName,
             consumerID, 
             "*",
             [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
     _queueName( consumerID ),
-    _callbackHandler( onMessageCallback )
+    _receivedMessageHandler( onMessageCallback )
 {
     _exchangesName.push_back( defaultExchangeName );
-    _callbackHandler.start();
+    _receivedMessageHandler.start();
 }
 
 ReturnStatus RabbitClientImpl::start()
@@ -70,7 +69,7 @@ bool RabbitClientImpl::connected() const
     DeliveryType deliveryType;
     std::string  text;
     deserializePostMessage( message.message(), sender,destination,deliveryType, text );
-    _callbackHandler.addMessage( sender, destination, deliveryType, text );
+    _receivedMessageHandler.addMessage( sender, destination, deliveryType, text );
     return 0;
 }
 

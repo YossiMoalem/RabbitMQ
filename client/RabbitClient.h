@@ -15,7 +15,7 @@ class RabbitClient : public boost::noncopyable
    RabbitClient(const ConnectionDetails & connectionDetails, 
 		   const std::string & exchangeName,
 		   const std::string & consumerID,
-		   CallbackType       onMessageCallback );
+		   HandleMessageCallback_t onMessageCallback );
 
    ReturnStatus start();
    ReturnStatus stop(bool immediate);

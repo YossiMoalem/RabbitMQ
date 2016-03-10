@@ -7,9 +7,6 @@
 namespace AMQP {
 class RabbitJobHandler;
 
-/********************************************************************************\
- * RabbitMessageBase
- ********************************************************************************/
 class RabbitMessageBase
 {
  public:
@@ -45,9 +42,6 @@ class RabbitMessageBase
     RabbitJobHandler*      _jobHandler;
 };
 
-/********************************************************************************\
- * PostMessage
- ********************************************************************************/
 class PostMessage : public RabbitMessageBase
 {
  public:
@@ -67,9 +61,6 @@ class PostMessage : public RabbitMessageBase
     std::string _message;
 };
 
-/********************************************************************************\
- * BindMessage
- ********************************************************************************/
 class BindMessage : public RabbitMessageBase
 {
  public:
@@ -89,9 +80,6 @@ class BindMessage : public RabbitMessageBase
     std::string _routingKey;
 };
 
-/********************************************************************************\
- * UnbindMessage
- ********************************************************************************/
 class UnBindMessage : public RabbitMessageBase
 {
  public:
@@ -111,9 +99,6 @@ class UnBindMessage : public RabbitMessageBase
     std::string _routingKey;
 };
 
-/********************************************************************************\
- * StopMessage
- ********************************************************************************/
 class StopMessage : public RabbitMessageBase
 {
  public:
@@ -123,9 +108,6 @@ class StopMessage : public RabbitMessageBase
     virtual void handle( ) override;
 };
 
-/********************************************************************************\
- * LoginMessage
- ********************************************************************************/
 class LoginMessage : public RabbitMessageBase
 {
  public:
@@ -142,9 +124,6 @@ class LoginMessage : public RabbitMessageBase
     std::string _password;
 };
 
-/********************************************************************************\
- * DeclareExchange
- ********************************************************************************/
 class DeclareExchangeMessage : public RabbitMessageBase
 {
  public:
@@ -164,9 +143,6 @@ class DeclareExchangeMessage : public RabbitMessageBase
    bool             _durable;
 };
 
-/********************************************************************************\
- * DeclareQueue
- ********************************************************************************/
 class DeclareQueueMessage : public RabbitMessageBase
 {
  public:
@@ -189,9 +165,6 @@ class DeclareQueueMessage : public RabbitMessageBase
    bool            _autoDelete;
 };
 
-/********************************************************************************\
- * RemoveQueue
- ********************************************************************************/
 class RemoveQueueMessage : public RabbitMessageBase
 {
  public:

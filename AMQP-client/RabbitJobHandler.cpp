@@ -4,13 +4,13 @@
 
 namespace AMQP {
 
-RabbitJobHandler::RabbitJobHandler( OnMessageReceivedCB onMsgReceivedCB, RabbitJobQueue & jobQueue ) :
+RabbitJobHandler::RabbitJobHandler( OnMessageReceivedCallbacl onMsgReceivedCallbacl, RabbitJobQueue & jobQueue ) :
     _connectionState( [ this ] () { 
         _heartbeat.invalidate();
         _eventLoop->stop();
         _connection->closeSocket();
         } ), 
-    _connection( new RabbitConnection( onMsgReceivedCB, _connectionState ) ),
+    _connection( new RabbitConnection( onMsgReceivedCallbacl, _connectionState ) ),
     _heartbeat( *_connection ),
     _jobQueue( jobQueue ),
     _eventLoop( new RabbitEventLoop( _jobQueue, this ) )

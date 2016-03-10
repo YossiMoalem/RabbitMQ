@@ -26,9 +26,8 @@ int RabbitEventLoop::start( int  brokerReadFD ,
     int maxFD =  std::max( queueEventFD, 
             std::max( brokerWriteFD, brokerReadFD ) ) + 1;
 
-    timeval heartbeatIdenInterval;
-    heartbeatIdenInterval.tv_sec = 15;
-    heartbeatIdenInterval.tv_usec = 0;
+    timeval heartbeatTimeout;
+    _resetTimeout( heartbeatTimeout, _heartbeatInitialTimeout );
 
     while( ! _stop )
     {
@@ -44,13 +43,13 @@ int RabbitEventLoop::start( int  brokerReadFD ,
             FD_SET( brokerWriteFD, & writeFdSet );
         }
 
-        int res = select( maxFD, & readFdSet, & writeFdSet, NULL, &heartbeatIdenInterval);
+        int res = select( maxFD, & readFdSet, & writeFdSet, NULL, &heartbeatTimeout);
         if( res > 0 )
         {
             if( FD_ISSET( brokerReadFD, & readFdSet ) )
             {
                 _handleInput();
-                _resetTimeout( heartbeatIdenInterval );
+                _resetTimeout( heartbeatTimeout );
             }
             if( FD_ISSET( queueEventFD, & readFdSet ) )
             {
@@ -64,7 +63,7 @@ int RabbitEventLoop::start( int  brokerReadFD ,
         }
         else if ( res == 0 ){
             _jobHandler->handleTimeout();
-            _resetTimeout( heartbeatIdenInterval );
+            _resetTimeout( heartbeatTimeout );
         }
         else
         {
@@ -81,9 +80,9 @@ void RabbitEventLoop::stop()
     _stop = true;
 }
 
-void RabbitEventLoop::_resetTimeout( timeval & timeoutTimeval )
+void RabbitEventLoop::_resetTimeout( timeval & timeoutTimeval, unsigned int heartbreatTimeoutInSec )
 {
-    timeoutTimeval.tv_sec = 7;
+    timeoutTimeval.tv_sec = heartbreatTimeoutInSec;
     timeoutTimeval.tv_usec = 0;
 }
 

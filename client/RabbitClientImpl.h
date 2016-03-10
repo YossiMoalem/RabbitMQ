@@ -6,9 +6,8 @@
 #include <vector>
 
 #include "AMQPConnection.h"
-#include "CallbackHandler.h"
+#include "ReceivedMessageHandler.h"
 
-class ConnectionDetails;
 namespace AMQP{
     class Message; 
 }
@@ -19,7 +18,7 @@ class RabbitClientImpl : public boost::noncopyable
    RabbitClientImpl(const ConnectionDetails & connectionDetails, 
            const std::string & defaultExchangeName,
            const std::string & consumerID,
-           CallbackType       onMessageCallback );
+           HandleMessageCallback_t onMessageCallback );
 
    ReturnStatus start();
 
@@ -67,7 +66,7 @@ class RabbitClientImpl : public boost::noncopyable
    AMQPConnection                   _AMQPConnection;
    std::vector< std::string >       _exchangesName;
    const std::string                _queueName;
-   mutable CallbackHandler          _callbackHandler;
+   mutable ReceivedMessageHandler _receivedMessageHandler;
 };
 
 

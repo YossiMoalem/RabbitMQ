@@ -67,18 +67,10 @@ ReturnStatus AMQPConnection::connectLoop()
                             PRINT_DEBUG(DEBUG, "error declaring queue");
                             _connectionHandler.stop( true );
                         } else {
-                            //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
-                            bool bindQueueSucceeded = true;
-                            if ( ! bindQueueSucceeded )
-                            {
-                                PRINT_DEBUG(DEBUG, "error binding queue");
-                                _connectionHandler.stop( true );
-                            } else {
-                                _isConnected = true;
-                                rebind();
-                                PRINT_DEBUG(DEBUG, "CONNECTED");
-                                _connectionDetails.reset();
-                            }
+                            _isConnected = true;
+                            rebind();
+                            PRINT_DEBUG(DEBUG, "CONNECTED");
+                            _connectionDetails.reset();
                         }
                     }
                 }
@@ -144,7 +136,6 @@ bool AMQPConnection::_declareQueue() const
 
 bool AMQPConnection::_removeQueue() const
 {
-    // TODO: change to exclusive (_queueName, false, true, false)
     std::future< bool > removeQueueResult = _connectionHandler.removeQueue(
             _queueName );
     std::future_status status = removeQueueResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
@@ -155,16 +146,6 @@ bool AMQPConnection::_removeQueue() const
     return ( status == std::future_status::ready && removeQueueResult.get() );
 }
 
-bool AMQPConnection::_bindQueue() const
-{
-    std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangesName[ 0 ], _queueName, _routingKey );
-    std::future_status status = bindResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
-    if( status != std::future_status::ready )
-    {
-        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
-    }
-    return ( status == std::future_status::ready && bindResult.get() );
-}
 ReturnStatus AMQPConnection::stop( bool immediate )
 {
     _stop = true;

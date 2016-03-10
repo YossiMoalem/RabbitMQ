@@ -34,10 +34,10 @@ class SmartBuffer : boost::noncopyable
         return _buffer.data();
     }
 
-    size_t shrink( size_t elementsToRemove )
+    size_t shrink( size_t consumedElements )
     {
-        elementsToRemove = std::min( elementsToRemove, size() );
-        _buffer.erase ( _buffer.begin(), _buffer.begin() + elementsToRemove );
+        consumedElements = std::min( consumedElements, size() );
+        _buffer.erase ( _buffer.begin(), _buffer.begin() + consumedElements );
         return size();
     }
 

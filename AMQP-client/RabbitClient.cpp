@@ -18,8 +18,8 @@ bool RabbitClient::init( const RabbitConnectionDetails & connectionParams )
 
 DeferredResult RabbitClient::login() const
 {
-    LoginMessage * loginMessage = new LoginMessage( _connectionParams._userName, 
-            _connectionParams._password );
+    LoginMessage * loginMessage = new LoginMessage( _connectionParams.userName, 
+            _connectionParams.password );
     return _jobQueue.addJob( loginMessage);
 }
 

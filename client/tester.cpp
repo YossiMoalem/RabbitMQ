@@ -8,13 +8,11 @@
 
 #define MY_NAME "USR1"
 #define OTHER_NAME "Kuku"
-#define RABBIT_IP1 "test.mb.hubs.liveu.tv"
-#define RABBIT_IP2 "54.235.137.169"
-#define RABBIT_IP3 "184.169.148.90"
-#define RABBIT_IP4 "54.241.242.26"
+//#define RABBIT_IP1 "test.mb.hubs.liveu.tv"
+#define RABBIT_IP1 "75.101.155.196"
 #define RABBIT_PORT 5672
-#define USER "yossi"
-#define PASSWORD "yossipassword"
+#define USER "hub1"
+#define PASSWORD "hub1password"
 #define EXCHANGE_NAME "EXC1"
 
 static const unsigned int timeToConnect = 2;

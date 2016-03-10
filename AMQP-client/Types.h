@@ -18,20 +18,20 @@ struct RabbitConnectionDetails
    RabbitConnectionDetails()
    {}
 
-   RabbitConnectionDetails(const std::string& i_userName,
-           const std::string& i_password,
-           const std::string& i_host,
+   RabbitConnectionDetails(const std::string& userName,
+           const std::string& password,
+           const std::string& host,
            int port) :
-       _userName( i_userName), 
-       _password( i_password), 
-       _host( i_host),
-       _port( port )
+       userName( userName), 
+       password( password), 
+       host( host),
+       port( port )
     {}
 
-   std::string  _userName;
-   std::string  _password;
-   std::string  _host;
-   int          _port;
+   std::string  userName;
+   std::string  password;
+   std::string  host;
+   int          port;
 };
 
 } //namespace AMQP

@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <unistd.h>
+#include <assert.h>
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Debug.h"
@@ -25,6 +26,7 @@ class RawSocket : boost::noncopyable
 
     bool connect(const std::string & address, const std::string & port )
     {
+        assert (_socketFd == 0 );
         addrinfo hints;
         addrinfo * resolvedAddr;
         addrinfo * currentAddress;
@@ -75,23 +77,22 @@ class RawSocket : boost::noncopyable
 
     bool send( SmartBuffer & buffer)
     {
+        assert (_socketFd > 0 );
         ssize_t bytesSent = ::send( _socketFd, buffer.data(), buffer.size(), MSG_NOSIGNAL);
         if (bytesSent < 0)
         {
             PRINT_DEBUG(DEBUG, "Send failed with errno: " <<errno);
-          throw std::runtime_error( "Closed Socket" );
+            throw std::runtime_error( "Closed Socket" );
         }
-        else
-        {
-            buffer.shrink( bytesSent );
-            if ( ! buffer.empty() )
-                return false;
-            return true;
-        }
+        buffer.shrink( bytesSent );
+        if ( ! buffer.empty() )
+            return false;
+        return true;
     }
 
     bool read( SmartBuffer & buffer)
     {
+        assert (_socketFd > 0 );
         static constexpr  int buffSize = 4096;
         char buff[ buffSize ];
         bzero( buff, buffSize );
@@ -114,20 +115,23 @@ class RawSocket : boost::noncopyable
     void close()
     {
         ::close( _socketFd );
+        _socketFd = 0;
     }
 
     int writeFD() const 
     {
+        assert (_socketFd > 0 );
         return _socketFd;
     }
 
     int readFD() const 
     {
+        assert (_socketFd > 0 );
         return _socketFd;
     }
 
  private:
-   int _socketFd;
+   int _socketFd = 0;
 };
 
 } //namespace AMQP

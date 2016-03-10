@@ -25,9 +25,9 @@ enum class ReturnStatus
     OperationFailed
 };
 
-typedef std::function<int (	std::string		o_senderID,
-              std::string   o_destination,
-							DeliveryType	o_deliveryType,
-              std::string		o_messageText )> CallbackType;
+typedef std::function<int (	std::string		senderID,
+              std::string   destination,
+              DeliveryType	deliveryType,
+              std::string	messageText )> HandleMessageCallback_t;
 
 #endif

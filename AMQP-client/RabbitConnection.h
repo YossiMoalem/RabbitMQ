@@ -110,8 +110,8 @@ class RabbitConnection
    {
        _connectionState.socketConnecting();
        _socket->clear();
-       PRINT_DEBUG(DEBUG, "Connecting to : "<<connectionParams._host<<":"<<connectionParams._port);
-       if( ! _socket->connect( connectionParams._host, connectionParams._port ) )
+       PRINT_DEBUG(DEBUG, "Connecting to : "<<connectionParams.host<<":"<<connectionParams.port);
+       if( ! _socket->connect( connectionParams.host, connectionParams.port ) )
        {
            _connectionState.disconnected();
            PRINT_DEBUG(DEBUG, "Error creating socket");

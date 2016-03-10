@@ -51,7 +51,6 @@ class AMQPConnection : boost::noncopyable
    bool _login() const;
    bool _declareQueue() const;
    bool _removeQueue() const;
-   bool _bindQueue() const;
 
  private:
    AMQP::RabbitClient                 _connectionHandler;

@@ -23,12 +23,15 @@ class RabbitEventLoop
    void _handleQueue( );
    void _handleInput( );
    void _handleOutput( );
-   void _resetTimeout( timeval & timeoutTimeval );
+   void _resetTimeout( timeval & timeoutTimeval, unsigned int timeoutInSec = _heartbeatTimeout );
 
  private:
    volatile bool                            _stop = false;
    RabbitJobHandler  *                      _jobHandler;
    RabbitJobQueue &                         _jobQueue;
+   static constexpr unsigned int                _heartbeatTimeout = 7;
+   static constexpr unsigned int                _heartbeatInitialTimeout = 15;
+
 };
 
 } //namespace AMQP

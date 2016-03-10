@@ -15,9 +15,9 @@ class RabbitJobQueue;
 class RabbitJobHandler
 {
  public:
-   using OnMessageReceivedCB = std::function<int( const AMQP::Message& )> ;
+   using OnMessageReceivedCallbacl = std::function<int( const AMQP::Message& )> ;
 
-   RabbitJobHandler( OnMessageReceivedCB onMsgReceivedCB, RabbitJobQueue& jobQueue ) ;
+   RabbitJobHandler( OnMessageReceivedCallbacl onMsgReceivedCallbacl, RabbitJobQueue& jobQueue ) ;
    ~RabbitJobHandler( );
 
    DeferredResult addJob ( RabbitMessageBase * job );

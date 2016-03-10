@@ -4,7 +4,7 @@
 RabbitClient::RabbitClient( const ConnectionDetails & connectionDetails, 
     const std::string & defaultExchangeName,
     const std::string & consumerID,
-    CallbackType        onMessageCallback ) :
+    HandleMessageCallback_t        onMessageCallback ) :
   _rabbitClient( new RabbitClientImpl ( connectionDetails,
         defaultExchangeName,
         consumerID,

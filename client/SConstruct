@@ -7,11 +7,11 @@ env.Append( LIBS = [  "RabbitClientL2", "amqpcpp" ] )
 env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
 
 sources = Split ("""
+    ReceivedMessageHandler.cpp
     ConnectionDetails.cpp
     RabbitClient.cpp
     RabbitClientImpl.cpp
     AMQPConnection.cpp
-    CallbackHandler.cpp
     """)
 
 appSources = sources + [ "tester.cpp" ]
