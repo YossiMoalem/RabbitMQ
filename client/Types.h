@@ -21,7 +21,8 @@ enum class ReturnStatus
 {
     Ok,
     ClientDisconnected,
-    ClientSuttingDown
+    ClientSuttingDown,
+    OperationFailed
 };
 
 typedef std::function<int (	std::string		o_senderID,

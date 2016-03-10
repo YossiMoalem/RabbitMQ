@@ -1,20 +1,19 @@
 #include "RabbitClientImpl.h"
 #include "CallbackHandler.h"
 
-RabbitClientImpl::RabbitClientImpl(const ConnectionDetails & _connectionDetails, 
-        const std::string& _exchangeName, 
-        const std::string& _consumerID,
-        CallbackType        _onMessageCallback ) :
-    _AMQPConnection( _connectionDetails, 
-            _exchangeName,
-            _consumerID, 
+RabbitClientImpl::RabbitClientImpl( const ConnectionDetails & connectionDetails, 
+        const std::string & defaultExchangeName, 
+        const std::string & consumerID,
+        CallbackType        onMessageCallback ) :
+    _AMQPConnection( connectionDetails, 
+            _exchangesName,
+            consumerID, 
             "*",
-            //createRoutingKey( _consumerID, _consumerID, DeliveryType::Unicast ),
             [ this ] ( const AMQP::Message & message ) {  return onMessageReceived( message ); } ),
-    _exchangeName(_exchangeName),
-    _queueName(_consumerID),
-    _callbackHandler( _onMessageCallback )
+    _queueName( consumerID ),
+    _callbackHandler( onMessageCallback )
 {
+    _exchangesName.push_back( defaultExchangeName );
     _callbackHandler.start();
 }
 
@@ -28,36 +27,35 @@ ReturnStatus RabbitClientImpl::stop( bool immediate )
     return _AMQPConnection.stop( immediate );
 }
 
-//use default exchange
-ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
-        const std::string& _destination,
-        const std::string& _senderID,
-        DeliveryType _deliveryType) const
+ReturnStatus RabbitClientImpl::sendMessage(const std::string & message,
+        const std::string & destination,
+        const std::string & senderID,
+        DeliveryType deliveryType) const
 {
-    return sendMessage( _message, _destination, _senderID, _exchangeName, _deliveryType );
+    return sendMessage( message, destination, senderID, defaultExchangeName(), deliveryType );
 }
 
-ReturnStatus RabbitClientImpl::sendMessage(const std::string& _message,
-        const std::string& _destination, 
-        const std::string& _senderID,
-        const std::string& _exchangeName,
-        DeliveryType _deliveryType) const
+ReturnStatus RabbitClientImpl::sendMessage(const std::string & message,
+        const std::string & destination, 
+        const std::string & senderID,
+        const std::string & exchangeName,
+        DeliveryType deliveryType) const
 {
-    std::string routingKey = createRoutingKey( _senderID, _destination, _deliveryType);
-    std::string serializedMessage = serializePostMessage( _senderID, _destination,_deliveryType, _message );
-    return _AMQPConnection.publish( _exchangeName, routingKey, serializedMessage );
+    std::string routingKey = createRoutingKey( senderID, destination, deliveryType );
+    std::string serializedMessage = serializePostMessage( senderID, destination, deliveryType, message );
+    return _AMQPConnection.publish( exchangeName, routingKey, serializedMessage );
 }
 
-ReturnStatus RabbitClientImpl::bind(const std::string& _key, DeliveryType _deliveryType)
+ReturnStatus RabbitClientImpl::bind(const std::string & key, DeliveryType deliveryType)
 { 
-    std::string routingKey = createRoutingKey( _key, _key, _deliveryType );
-    return _AMQPConnection.bind( _exchangeName, _queueName, routingKey );
+    std::string routingKey = createRoutingKey( key, key, deliveryType );
+    return _AMQPConnection.bind( defaultExchangeName(), _queueName, routingKey );
 }
 
-ReturnStatus RabbitClientImpl::unbind(const std::string& _key, DeliveryType _deliveryType)
+ReturnStatus RabbitClientImpl::unbind(const std::string & key, DeliveryType deliveryType)
 { 
-    std::string routingKey = createRoutingKey( _key, _key, _deliveryType );
-    return _AMQPConnection.unBind( _exchangeName, _queueName, routingKey );
+    std::string routingKey = createRoutingKey( key, key, deliveryType );
+    return _AMQPConnection.unBind( defaultExchangeName(), _queueName, routingKey );
 }
 
 bool RabbitClientImpl::connected() const
@@ -119,5 +117,18 @@ std::string RabbitClientImpl::createRoutingKey( const std::string & sender,
     else
         routingKey = sender + MULTICAST_SUFFIX;
     return routingKey;
+}
 
+
+ReturnStatus RabbitClientImpl::declareExchange ( const std::string & exchangeName, unsigned int waitTime )
+{
+    bool exchangeAdded =  _AMQPConnection.declareExchange( exchangeName, waitTime );
+    if ( exchangeAdded )
+        _exchangesName.push_back( exchangeName );
+    return exchangeAdded ? ReturnStatus::Ok : ReturnStatus::OperationFailed;
+}
+
+const std::string & RabbitClientImpl::defaultExchangeName() const
+{
+    return _exchangesName[ 0 ];
 }

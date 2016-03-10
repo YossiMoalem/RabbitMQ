@@ -10,7 +10,7 @@
 #define MAX_WAIT_TIME_FOR_ANSWER_IN_SEC 10
 
 AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
-        const std::string & exchangeName ,
+        const std::vector< std::string > & exchangesName ,
         const std::string & queueName,
         const std::string & routingKey,
         AMQP::OnMessageReceivedCB i_onMessageReceiveCB ) :
@@ -20,7 +20,7 @@ AMQPConnection::AMQPConnection( const ConnectionDetails & connectionDetails,
     _connectionDetails( connectionDetails ),
     _stop( false ),
     _isConnected( false ),
-    _exchangeName( exchangeName ),
+    _exchangesName( exchangesName ),
     _queueName( queueName ),
     _routingKey( routingKey )
 {}
@@ -49,7 +49,7 @@ ReturnStatus AMQPConnection::connectLoop()
                 PRINT_DEBUG(DEBUG, "Login failed. Disconnecting...");
                 _connectionHandler.stop( true );
             } else {
-                bool declareExchangeSucceeded = _declareExchange( _exchangeName );
+                bool declareExchangeSucceeded = _declareExchanges();
                 if ( ! declareExchangeSucceeded )
                 {
                     PRINT_DEBUG(DEBUG, "error declaring exchange");
@@ -60,17 +60,13 @@ ReturnStatus AMQPConnection::connectLoop()
                     {
                         PRINT_DEBUG(DEBUG, "error removing queue");
                         _connectionHandler.stop( true );
-                    }
-                    else
-                    {
+                    } else {
                         bool declareQueueSucceeded = _declareQueue();
                         if ( ! declareQueueSucceeded )
                         {
                             PRINT_DEBUG(DEBUG, "error declaring queue");
                             _connectionHandler.stop( true );
-                        }
-                        else
-                        {
+                        } else {
                             //                        bool bindQueueSucceeded = _bindQueue(); //TODO: remove this/next line
                             bool bindQueueSucceeded = true;
                             if ( ! bindQueueSucceeded )
@@ -97,6 +93,20 @@ ReturnStatus AMQPConnection::connectLoop()
     return ReturnStatus::Ok;
 }
 
+bool AMQPConnection::declareExchange ( const std::string & exchangeName, unsigned int waitTime ) const
+{
+    std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
+            exchangeName,
+            AMQP::topic,
+            false );
+    std::future_status status = declareExchangeResult.wait_for(std::chrono::seconds( waitTime ));
+    if( status != std::future_status::ready )
+    {
+        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
+    }
+    return ( status == std::future_status::ready && declareExchangeResult.get() );
+}
+
 bool AMQPConnection::_login() const
 {
     std::future< bool > loginStatus = _connectionHandler.login();
@@ -108,18 +118,12 @@ bool AMQPConnection::_login() const
     return ( status == std::future_status::ready && loginStatus.get() );
 }
 
-bool AMQPConnection::_declareExchange( const std::string & exchName ) const
+bool AMQPConnection::_declareExchanges() const
 {
-    std::future< bool > declareExchangeResult = _connectionHandler.declareExchange( 
-            exchName,
-            AMQP::topic,
-            false );
-    std::future_status status = declareExchangeResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
-    if( status != std::future_status::ready )
-    {
-        PRINT_DEBUG(DEBUG, "Did not get answer in time. Consider it as failure");
-    }
-    return ( status == std::future_status::ready && declareExchangeResult.get() );
+    for ( const auto & exchangeName : _exchangesName )
+        if ( declareExchange( exchangeName, MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ) == false )
+            return false;
+    return true;
 }
 
 bool AMQPConnection::_declareQueue() const
@@ -153,7 +157,7 @@ bool AMQPConnection::_removeQueue() const
 
 bool AMQPConnection::_bindQueue() const
 {
-    std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangeName, _queueName, _routingKey );
+    std::future< bool > bindResult = _connectionHandler.bindQueue( _exchangesName[ 0 ], _queueName, _routingKey );
     std::future_status status = bindResult.wait_for(std::chrono::seconds( MAX_WAIT_TIME_FOR_ANSWER_IN_SEC ));
     if( status != std::future_status::ready )
     {
@@ -198,7 +202,6 @@ ReturnStatus AMQPConnection::_bind( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
-//TODO: uncomment next line
     _connectionHandler.bindQueue( exchangeName, queueName, routingKey ); //.get();
     return ReturnStatus::Ok;
 }
@@ -220,7 +223,6 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
     {
         return  ReturnStatus::ClientDisconnected;
     }
-    //TODO: uncomment next line
     _connectionHandler.unBindQueue( exchangeName, queueName, routingKey );
     return ReturnStatus::Ok;
 }
@@ -228,10 +230,8 @@ ReturnStatus AMQPConnection::_unBind( const std::string & exchangeName,
 ReturnStatus AMQPConnection::rebind()
 {
     std::lock_guard< std::mutex > lock ( _bindingsSetMutex );
-//    PRINT_DEBUG(DEBUG, "REBINDING: - amount: " << _bindingsSet.size());
     for ( const std::string& routingKey: _bindingsSet )
-        AMQPConnection::_bind( _exchangeName, _queueName, routingKey );
-//    PRINT_DEBUG(DEBUG, "FINISHED REBINDING");
+        AMQPConnection::_bind( _exchangesName[ 0 ], _queueName, routingKey );
     return ReturnStatus::Ok;
 }
 

@@ -11,7 +11,7 @@ class AMQPConnection : boost::noncopyable
 {
  public:
    AMQPConnection( const ConnectionDetails & connectionDetails,
-           const std::string & exchangeName ,
+           const std::vector< std::string > & exchangesName ,
            const std::string & queueName,
            const std::string & routingKey,
            AMQP::OnMessageReceivedCB i_onMessageReceiveCB ) ;
@@ -36,6 +36,7 @@ class AMQPConnection : boost::noncopyable
 
    bool connected() const;
    ReturnStatus rebind();
+   bool declareExchange ( const std::string & exchangeName, unsigned int waitTime ) const;
 
  private:
    ReturnStatus _bind( const std::string & exchangeName,
@@ -46,7 +47,7 @@ class AMQPConnection : boost::noncopyable
            const std::string & queueName,
            const std::string routingKey) const;
 
-   bool _declareExchange( const std::string & exchangeName ) const;
+   bool _declareExchanges() const;
    bool _login() const;
    bool _declareQueue() const;
    bool _removeQueue() const;
@@ -58,7 +59,7 @@ class AMQPConnection : boost::noncopyable
    bool                             _stop;
    std::atomic_bool                 _isConnected;
    std::thread                      _startLoopThread;
-   std::string                      _exchangeName;
+   const std::vector< std::string > & _exchangesName;
    std::string                      _queueName;
    std::string                      _routingKey;
    std::unordered_set< std::string> _bindingsSet;

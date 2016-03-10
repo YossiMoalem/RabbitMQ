@@ -3,6 +3,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <string>
+#include <vector>
 
 #include "AMQPConnection.h"
 #include "CallbackHandler.h"
@@ -16,28 +17,30 @@ class RabbitClientImpl : public boost::noncopyable
 {
  public:
    RabbitClientImpl(const ConnectionDetails & connectionDetails, 
-           const std::string& exchangeName,
-           const std::string& consumerID,
+           const std::string & defaultExchangeName,
+           const std::string & consumerID,
            CallbackType       onMessageCallback );
 
    ReturnStatus start();
 
    ReturnStatus stop( bool immediate );
 
-   ReturnStatus sendMessage(const std::string& message,
-       const std::string& destination,
-       const std::string& senderID,
+   ReturnStatus sendMessage(const std::string & message,
+       const std::string & destination,
+       const std::string & senderID,
        DeliveryType deliveryType) const;
 
-   ReturnStatus sendMessage(const std::string& message, 
-       const std::string& destination, 
-       const std::string& senderID,
-       const std::string& exchangeName,
+   ReturnStatus sendMessage(const std::string & message, 
+       const std::string & destination, 
+       const std::string & senderID,
+       const std::string & exchangeName,
        DeliveryType deliveryType) const;
 
-   ReturnStatus bind(const std::string& key, DeliveryType deliveryType);
+   ReturnStatus declareExchange ( const std::string & exchangeName, unsigned int waitTime );
 
-   ReturnStatus unbind(const std::string& key, DeliveryType deliveryType);
+   ReturnStatus bind(const std::string & key, DeliveryType deliveryType);
+
+   ReturnStatus unbind(const std::string & key, DeliveryType deliveryType);
 
    bool         connected () const;
 
@@ -58,11 +61,12 @@ class RabbitClientImpl : public boost::noncopyable
    std::string createRoutingKey( const std::string & sender, 
                     const std::string & destination,
                     DeliveryType deliveryType ) const;
+   const std::string & defaultExchangeName() const;
 
  private:
-   AMQPConnection           _AMQPConnection;
-   const std::string        _exchangeName;
-   const std::string        _queueName;
+   AMQPConnection                   _AMQPConnection;
+   std::vector< std::string >       _exchangesName;
+   const std::string                _queueName;
    mutable CallbackHandler          _callbackHandler;
 };
 

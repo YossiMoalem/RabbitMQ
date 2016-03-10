@@ -23,15 +23,17 @@ class RabbitClient : public boost::noncopyable
    ReturnStatus sendUnicast      (	const std::string & message,
 		   const std::string & destination,
 		   const std::string & senderID,
-		   const std::string & exchangeName);
+		   const std::string & defaultExchangeName);
+
    ReturnStatus sendMulticast    (const std::string & message,
 		   const std::string & senderID,
 		   const std::string & exchangeName);
 
-   ReturnStatus bindToSelf           (const std::string & key);
-   ReturnStatus bindToDestination    (const std::string & key);
-   ReturnStatus unbindFromSelf       (const std::string & key);
-   ReturnStatus unbindFromDestination(const std::string & key);
+   ReturnStatus declareExchange		 ( const std::string & exchangeName, unsigned int waitTime );
+   ReturnStatus bindToSelf           ( const std::string & key );
+   ReturnStatus bindToDestination    ( const std::string & key );
+   ReturnStatus unbindFromSelf       ( const std::string & key );
+   ReturnStatus unbindFromDestination( const std::string & key );
    bool connected() const; 
 
  private:
