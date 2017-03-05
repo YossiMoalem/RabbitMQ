@@ -1,6 +1,6 @@
-*/.sconsign.dblite
-*/.a
-*/.o
-*/tester
-*/RabbitTest
-*/.so
+*.sconsign.dblite
+*.a
+*.so
+*.o
+tester
+RabbitTest
