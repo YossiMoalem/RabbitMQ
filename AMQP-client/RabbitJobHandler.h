@@ -6,7 +6,7 @@
 
 namespace AMQP {
 
-class RabbitConnectionDetails;
+struct RabbitConnectionDetails;
 class RabbitMessageBase;
 class RabbitEventLoop;
 class RabbitConnection;

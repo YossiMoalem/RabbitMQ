@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace AMQP {
-class RabbitConnectionDetails;
+struct RabbitConnectionDetails;
 }
 
 class ConnectionDetails
