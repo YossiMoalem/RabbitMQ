@@ -1,10 +1,14 @@
-env = Environment( CXX = "g++-4.8" )
+import os
+
+env = Environment( CXX = "clang++" )
 
 env.Append( CPPPATH = [ "/usr/local/include", "include/", "../AMQP-client", "../AMQP-CPP" ] )
 env.Append( CCFLAGS = [ "-Wall", "-pedantic", "-g", "-O0", "-gdwarf-2", "-std=c++11" ] )
 env.Append( LIBPATH = [ "../AMQP-client/", ".", "../AMQP-CPP" ] )
 env.Append( LIBS = [  "RabbitClientL2", "amqpcpp" ] )
 env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
+
+env["ENV"].update(x for x in os.environ.items() if x[0].startswith("CCC_"))
 
 sources = Split ("""
     ReceivedMessageHandler.cpp

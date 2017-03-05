@@ -1,7 +1,7 @@
-CPP			    = g++-4.8
+CPP			    = clang++
 RM			    = rm -f
 CPPFLAGS		= -Wall -c -I. -g -std=c++11 -gdwarf-2
-LD			    = g++-4.8
+LD			    = clang++
 LD_FLAGS		= -Wall -shared -O2
 SHARED_LIB		= libamqpcpp.so
 STATIC_LIB		= $(SHARED_LIB:%.so=%.a)
@@ -25,7 +25,8 @@ clean:
 	${RM} *.obj *~* ${SHARED_OBJECTS} ${STATIC_OBJECTS} ${SHARED_LIB} ${STATIC_LIB}
 
 ${SHARED_OBJECTS}:
-	${CPP} ${CPPFLAGS} -flto -fpic -o $@ ${@:%.o=%.cpp}
+	${CPP} ${CPPFLAGS} -fpic -o $@ ${@:%.o=%.cpp}
+#${CPP} ${CPPFLAGS} -flto -fpic -o $@ ${@:%.o=%.cpp}
 
 ${STATIC_OBJECTS}:
 	${CPP} ${CPPFLAGS} -o $@ ${@:%.s.o=%.cpp}

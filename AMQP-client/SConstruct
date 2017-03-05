@@ -1,4 +1,5 @@
-env = Environment( CXX = "g++-4.8" )
+import os
+env = Environment( CXX = "clang++" )
 
 env.Append( CPPPATH = [ "/usr/local/include", "include/", "../AMQP-client", "../AMQP-CPP" ] )
 env.Append( CCFLAGS = [ "-Wall", "-pedantic", "-g", "-O0", "-std=c++11", "-gdwarf-2" ] )
@@ -6,6 +7,8 @@ env.Append( LIBPATH = [ ".", "../.." ] )
 #librt.so is for clock_gettime, in the test program
 env.Append ( LIBS = [ "amqpcpp", "rt" ] )
 env.Append( LINKFLAGS = [ "-pthread", "-std=c++11" ] )
+
+env["ENV"].update(x for x in os.environ.items() if x[0].startswith("CCC_"))
 
 sources = Split ("""
     RabbitClient.cpp
